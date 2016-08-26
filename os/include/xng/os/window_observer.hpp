@@ -1,7 +1,7 @@
 #pragma once
 
 #include <xng/os/forward_decl.hpp>
-#include <glm/glm.hpp>
+#include <xng/math.hpp>
 
 namespace xng
 {
@@ -12,8 +12,7 @@ namespace xng
 			virtual void on_create(window * wnd) {}
 			virtual void on_destroy(window * wnd) {}
 
-			virtual void on_resize(window * wnd, const glm::ivec2 & windowSize, const glm::ivec2 & clientSize) {}
-
+			virtual void on_resize(window * wnd, const math::uint2 & windowSize, const math::uint2 & clientSize) {}
 		};
 	}
 }

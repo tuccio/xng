@@ -2,7 +2,6 @@
 
 #include <xng/core.hpp>
 #include <xng/res/resource_loader.hpp>
-#include <xng/res/resource_ptr.hpp>
 
 #include <cassert>
 #include <string>
@@ -25,19 +24,19 @@ namespace xng
 	{
 		class resource_manager;
 
+		typedef uint32_t resource_id;
+		typedef boost::property_tree::basic_ptree<std::string, std::string> resource_parameters;
+
 		class resource
 		{
 
 		public:
 
-			using id_type = uint32_t;
-			using parameters_type = boost::property_tree::basic_ptree<std::string, std::string>;
-
 			resource(void);
 
 			resource(const char * name,
-				parameters_type params = parameters_type(),
-				std::shared_ptr<resource_loader> loader = std::shared_ptr<resource_loader>(),
+				const resource_parameters & params = resource_parameters(),
+				resource_loader_ptr loader = resource_loader_ptr(),
 				resource_manager * owner = nullptr);
 
 			resource(const resource &) = delete;
@@ -49,10 +48,10 @@ namespace xng
 			const char * get_name(void) const;
 			xng_resource_status get_status(void) const;
 
-			id_type get_id(void) const;
+			resource_id get_id(void) const;
 			size_t get_size(void) const;
 
-			const parameters_type & get_parameters(void) const;
+			const resource_parameters & get_parameters(void) const;
 
 			void lock(void);
 			void unlock(void);
@@ -73,16 +72,16 @@ namespace xng
 			resource_manager * m_owner;
 
 			xng_resource_status m_status;
-			id_type m_id;
-			size_t m_size;
-			std::string m_name;
+			resource_id         m_id;
+			size_t              m_size;
+			std::string         m_name;
 
 			std::shared_ptr<resource_loader> m_loader;
 
 			mutable uint32_t   m_references;
 			mutable std::mutex m_mutex;
 
-			parameters_type m_parameters;
+			resource_parameters m_parameters;
 
 			void recalculate_size_internal(void);
 
@@ -90,10 +89,10 @@ namespace xng
 
 			friend class resource_manager;
 
-			template <typename T>
+			template <typename T, typename E>
 			friend class resource_ptr;
 
-			void set_id(id_type id);
+			void set_id(resource_id id);
 			void set_owner(resource_manager * owner);
 			void set_name(const char * name);
 
@@ -105,7 +104,7 @@ namespace xng
 		
 		};
 
-		inline resource::parameters_type default_parameters(void) { return resource::parameters_type(); }
+		inline resource_parameters default_parameters(void) { return resource_parameters(); }
 
 	}
 }

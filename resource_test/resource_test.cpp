@@ -111,8 +111,9 @@ int main(int argc, char * argv[])
 	auto logger = std::make_unique<xng::core::logger>(&std::cout);
 
 	xng::res::resource_factory factory;
+	std::unique_ptr<reverse_name_manager> reverseNameManager = std::make_unique<reverse_name_manager>();
 
-	factory.register_manager(new reverse_name_manager);
+	factory.register_manager(reverseNameManager.get());
 
 	const int N = 64;
 
@@ -128,7 +129,14 @@ int main(int argc, char * argv[])
 		thread.join();
 	}
 
-	XNG_LOG("Result", g_success ? "Test successful." : "Test failed.");
+	XNG_LOG("Consistency Test", g_success ? "Successful." : "Failed.");
+
+	factory.unregister_manager(reverseNameManager->get_type());
+
+	if (reverseNameManager->get_used_space() == 0)
+	{
+		XNG_LOG("Cleanup Test", g_success ? "Successful." : "Failed.");
+	}
 
 	return 0;
 }

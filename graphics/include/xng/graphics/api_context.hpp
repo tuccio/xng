@@ -12,7 +12,7 @@ namespace xng
 
 		struct api_context
 		{
-			api_context(void) : m_vsync(false) {}
+			api_context(void) {}
 			virtual ~api_context(void) {}
 
 			virtual bool init(os::native_window_handle handle, xng_api_version version = XNG_API_DEFAULT, bool debug = false) = 0;
@@ -23,23 +23,17 @@ namespace xng
 			virtual void use(void) {}
 			virtual void dispose(void) {}
 
+			virtual void frame_start(void) {}
 			virtual void frame_complete(void) = 0;
 
 			virtual void on_resize(uint32_t width, uint32_t height) {}
 
-			inline bool get_vsync(void) const
-			{
-				return m_vsync;
-			}
-
-			inline void set_vsync(bool vsync)
-			{
-				m_vsync = vsync;
-			}
+			virtual void set_vsync(bool vsync) = 0;
+			virtual bool get_vsync(void) const = 0;
 			
 		private:
 
-			bool m_vsync;
+			uint64_t m_frame;
 
 		};
 	}

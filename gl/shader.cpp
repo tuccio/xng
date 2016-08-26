@@ -73,7 +73,24 @@ bool shader::compile(xng_gl_shader_type type, const char * str, const shader_mac
 {
 	if (create_shader(type))
 	{
-		glShaderSource(m_shader, 1, &str, nullptr);
+		std::stringstream ss;
+
+		if (macros)
+		{
+			std::stringstream ss;
+			
+			for (int i = 0; macros[i].name; ++i)
+			{
+				ss << "#define " << macros[i].name << " " << macros[i].definition << std::endl;
+			}
+		}
+
+		const char * source[] = {
+			ss.str().c_str(),
+			str
+		};
+
+		glShaderSource(m_shader, 2, source, nullptr);
 		glCompileShader(m_shader);
 
 		GLint success;

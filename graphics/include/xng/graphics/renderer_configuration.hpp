@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <mutex>
 
-#include <glm/glm.hpp>
+#include <xng/math.hpp>
 
 #include <boost/preprocessor/tuple.hpp>
 #include <boost/preprocessor/seq.hpp>
@@ -51,6 +51,6 @@
 //};
 
 XNG_GRAPHICS_RENDER_VARIABLES(
-	(glm::ivec2, render_resolution, XNG_RV_RENDER_RESOLUTION, glm::ivec2(1280, 720))
+	(xng::math::uint2, render_resolution, XNG_RV_RENDER_RESOLUTION, xng::math::uint2(1280, 720))
 	(float, shadow_map_bias, XNG_RV_SHADOW_MAP_BIAS, 0.f)
 )

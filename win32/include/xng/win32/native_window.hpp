@@ -6,8 +6,7 @@
 
 #include <xng/core.hpp>
 #include <xng/os/window_observer.hpp>
-
-#include <glm/glm.hpp>
+#include <xng/math.hpp>
 
 namespace xng
 {
@@ -39,8 +38,8 @@ namespace xng
 
 			native_handle get_native_handle(void);
 
-			glm::ivec2 get_window_size(void);
-			glm::ivec2 get_client_size(void);
+			math::uint2 get_window_size(void);
+			math::uint2 get_client_size(void);
 
 		private:
 

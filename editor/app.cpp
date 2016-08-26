@@ -11,6 +11,8 @@
 
 #include <fstream>
 
+#include <mutex>
+
 namespace xng
 {
 	namespace editor
@@ -23,12 +25,15 @@ namespace xng
 
 			app(void) :
 				m_editor(nullptr),
-				m_debug(false)
+				m_debug(false),
+				m_timer(this)
 			{
 #ifdef XNG_DEBUG
 				m_debug = true;
 #endif
 			}
+
+			~app(void) {}
 
 			bool OnInit(void) override
 			{
@@ -44,11 +49,13 @@ namespace xng
 				m_editor = new frame("XNG Editor", wxDefaultPosition, wxSize(1280, 720));
 				m_panel  = m_editor->get_render_panel();
 
-				set_render_loop_status(true);
+				initialize_resource_managers();
 
 				g_scene = std::make_unique<graphics::scene>();
 
 				// Initialize API
+
+				m_renderMutex.lock();
 				
 				if (!initialize_api(m_panel->GetHandle(), XNG_API_GL_4_5, m_debug) ||
 					!initialize_renderer(XNG_API_GL_4_5))
@@ -58,11 +65,13 @@ namespace xng
 				}
 				else
 				{
+					set_render_loop_status(true);
+
 					m_editor->Maximize();
 					m_editor->Show(true);
 
 					wxSize size = m_panel->GetSize();
-					g_renderer->get_configuration()->set_render_resolution(glm::ivec2(size.x, size.y));
+					g_renderer->get_configuration()->set_render_resolution(xng::math::uint2(size.x, size.y));
 					g_apiContext->on_resize(size.x, size.y);
 
 					create_menu();
@@ -98,6 +107,13 @@ namespace xng
 				default:
 					return false;
 				}
+			}
+
+			void initialize_resource_managers(void)
+			{
+				res::resource_factory * f = new res::resource_factory;
+
+				f->register_manager(new graphics::mesh_manager);
 			}
 
 			bool initialize_api(os::native_window_handle handle, xng_api_version api, bool debug)
@@ -179,10 +195,12 @@ namespace xng
 			{
 				if (on)
 				{
+					m_renderMutex.unlock();
 					m_timer.Start(10);
 				}
 				else
 				{
+					m_renderMutex.lock();
 					m_timer.Stop();
 				}
 			}
@@ -205,13 +223,11 @@ namespace xng
 
 			void render(void)
 			{
-				if (g_scene &&
-					g_apiContext &&
-					g_renderer)
-				{
-					g_renderer->render(g_scene.get(), nullptr);
-					g_apiContext->frame_complete();
-				}
+				std::lock_guard<std::mutex> lock(m_renderMutex);
+
+				g_apiContext->frame_start();
+				g_renderer->render(g_scene.get(), nullptr);
+				g_apiContext->frame_complete();
 			}
 
 			void update_title(void)
@@ -301,6 +317,8 @@ namespace xng
 
 			std::string     m_apiVersion;
 			xng_api_version m_currentAPI;
+
+			std::mutex m_renderMutex;
 
 		};
 	}

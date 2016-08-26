@@ -31,6 +31,9 @@ namespace xng
 
 			DXGI_SAMPLE_DESC get_msaa_sample_desc(DXGI_FORMAT format, uint32_t msaa) const;
 
+			void set_vsync(bool vsync) override;
+			bool get_vsync(void) const override;
+
 		private:
 
 			com_ptr<ID3D11Device>           m_device;
@@ -39,6 +42,7 @@ namespace xng
 			com_ptr<ID3D11RenderTargetView> m_backBufferRTV;
 
 			DXGI_FORMAT m_backBufferFormat;
+			bool m_vsync;
 
 			bool create_back_buffer_view(void);
 

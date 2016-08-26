@@ -2,6 +2,9 @@
 
 #include <xng/graphics/renderer.hpp>
 #include <xng/gl/shader_program.hpp>
+#include <xng/gl/vao_manager.hpp>
+#include <xng/gl/ring_buffer.hpp>
+#include <xng/gl/uber_shader.hpp>
 
 namespace xng
 {
@@ -22,8 +25,13 @@ namespace xng
 
 			void process_rv_updates(graphics::render_variables * rvars);
 
-			shader_program m_program;
+			gl_api_context * m_context;
 
+			uber_shader      m_program;
+			vao_manager      m_vaos;
+						     
+			ring_buffer      m_bPerObject;
+			
 		};
 	}
 }

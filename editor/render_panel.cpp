@@ -24,7 +24,7 @@ void render_panel::on_resize(wxSizeEvent & event)
 	if (g_renderer)
 	{
 		wxSize size = event.GetSize();
-		g_renderer->get_configuration()->set_render_resolution(glm::ivec2(size.x, size.y));
+		g_renderer->get_configuration()->set_render_resolution(xng::math::uint2(size.x, size.y));
 		g_apiContext->on_resize(size.x, size.y);
 	}
 }

@@ -11,6 +11,13 @@ resource_factory::~resource_factory(void)
 
 void resource_factory::clear(void)
 {
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	for (auto it = m_managers.begin(); it != m_managers.end(); ++it)
+	{
+		it->second->clear();
+	}
+
 	m_managers.clear();
 }
 
@@ -27,6 +34,7 @@ void resource_factory::unregister_manager(const char * type)
 
 	if (it != m_managers.end())
 	{
+		it->second->clear();
 		m_managers.erase(it);
 	}
 }

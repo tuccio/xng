@@ -1,49 +1,49 @@
 #include <xng/graphics/camera.hpp>
 
-#include <glm/gtc/matrix_transform.hpp>
-
 using namespace xng;
 using namespace xng::graphics;
+using namespace xng::math;
 
 camera::camera(void) :
 	m_position(0),
 	m_orientation(1, 0, 0, 0),
-	m_fovy(glm::pi<float>()),
+	m_fovy(XNG_PI),
 	m_ratio(1.f),
 	m_znear(0.1f),
-	m_zfar(1000.f) {}
+	m_zfar(1000.f),
+	m_coordSystem(XNG_COORDINATE_SYSTEM_OPENGL) {}
 
-void camera::look_at(const glm::vec3 & eye, const glm::vec3 & up, const glm::vec3 & target)
+void camera::look_at(const float3 & eye, const float3 & up, const float3 & target)
 {
-	m_viewMatrix      = glm::lookAtRH(eye, target, up);
+	m_viewMatrix      = look_at_rh(eye, up, target);
 	m_position        = eye;
-	m_orientation     = glm::conjugate(glm::quat_cast(m_viewMatrix)),
+	m_orientation     = conjugate(to_quaternion(m_viewMatrix)),
 	m_viewMatrixDirty = false;
 }
 
-void camera::move(const glm::vec3 & delta)
+void camera::move(const float3 & delta)
 {
-	m_position += delta.x * right() + delta.y * up() + delta.z * forward();
+	m_position = m_position + delta.x * right() + delta.y * up() + delta.z * forward();
 	m_viewMatrixDirty = true;
 }
 
-const glm::vec3 & camera::get_position(void) const
+const float3 & camera::get_position(void) const
 {
 	return m_position;
 }
 
-void camera::set_position(const glm::vec3 & position)
+void camera::set_position(const float3 & position)
 {
 	m_position        = position;
 	m_viewMatrixDirty = true;
 }
 
-const glm::quat & camera::get_orientation(void) const
+const quaternion & camera::get_orientation(void) const
 {
 	return m_orientation;
 }
 
-void camera::set_orientation(const glm::quat & orientation)
+void camera::set_orientation(const quaternion & orientation)
 {
 	m_orientation     = orientation;
 	m_viewMatrixDirty = true;
@@ -62,12 +62,12 @@ void camera::set_fovy(float fovy)
 
 float camera::get_fovx(void) const
 {
-	return 2 * glm::atan(glm::tan(m_fovy * .5f) * m_ratio);
+	return 2 * std::atan(std::tan(m_fovy * .5f) * m_ratio);
 }
 
 void camera::set_fovx(float fovx)
 {
-	m_fovy                  = 2 * glm::atan(glm::tan(fovx * .5f) / m_ratio);
+	m_fovy                  = 2 * std::atan(std::tan(fovx * .5f) / m_ratio);
 	m_projectionMatrixDirty = true;
 }
 
@@ -104,40 +104,110 @@ void camera::set_zfar(float zfar)
 	m_projectionMatrixDirty = true;
 }
 
-const glm::mat4 & camera::get_view_matrix(void) const
+xng_coordinate_system camera::get_coordinate_system(void) const
+{
+	return m_coordSystem;
+}
+
+void camera::set_coordinate_system(xng_coordinate_system coordinateSystem)
+{
+	m_projectionMatrixDirty = m_viewMatrixDirty = coordinateSystem != m_coordSystem,
+	m_coordSystem = coordinateSystem;
+}
+
+XNG_INLINE void gl_view_matrix(float4x4 & viewMatrix, const float3 & position, const quaternion & orientation)
+{
+	viewMatrix = transpose(to_rotation4(orientation));
+	viewMatrix._30 = -dot(to_float3(viewMatrix.r[0]), position);
+	viewMatrix._31 = -dot(to_float3(viewMatrix.r[1]), position);
+	viewMatrix._32 = -dot(to_float3(viewMatrix.r[2]), position);
+}
+
+XNG_INLINE void directx_view_matrix(float4x4 & viewMatrix, const float3 & position, const quaternion & orientation)
+{
+	viewMatrix = transpose(to_rotation4(orientation));
+	viewMatrix._30 = -dot(to_float3(viewMatrix.r[0]), position);
+	viewMatrix._31 = -dot(to_float3(viewMatrix.r[1]), position);
+	viewMatrix._32 = -dot(to_float3(viewMatrix.r[2]), position);
+}
+
+const float4x4 & camera::get_view_matrix(void) const
 {
 	if (m_viewMatrixDirty)
 	{
-		m_viewMatrix = glm::mat4_cast(glm::conjugate(m_orientation));
-		m_viewMatrix[3][0] = -glm::dot(glm::vec3(m_viewMatrix[0][0], m_viewMatrix[0][1], m_viewMatrix[0][2]), m_position);
-		m_viewMatrix[3][1] = -glm::dot(glm::vec3(m_viewMatrix[1][0], m_viewMatrix[1][1], m_viewMatrix[1][2]), m_position);
-		m_viewMatrix[3][2] = -glm::dot(glm::vec3(m_viewMatrix[2][0], m_viewMatrix[2][1], m_viewMatrix[2][2]), m_position);
+		switch (m_coordSystem)
+		{
+		case XNG_COORDINATE_SYSTEM_DIRECTX:
+			directx_view_matrix(m_viewMatrix, m_position, m_orientation);
+			break;
+		default:
+			gl_view_matrix(m_viewMatrix, m_position, m_orientation);
+			break;
+		}
 		m_viewMatrixDirty = false;
 	}
 	return m_viewMatrix;
 }
 
-const glm::mat4 & camera::get_projection_matrix(void) const
+	// TODO: Just do everything right handed
+
+XNG_INLINE void gl_projection_matrix(float4x4 & projectionMatrix, float fovy, float ratio, float znear, float zfar)
+{
+	float w = std::atan(fovy * .5f);
+	float h = w / ratio;
+	float invNmF = 1.f / (zfar - znear);
+
+	projectionMatrix = float4x4 {
+		w, 0.f, 0.f, 0.f,
+		0.f, h, 0.f, 0.f,
+		0.f, 0.f, zfar * invNmF, 1.f,
+		0.f, 0.f, -znear * zfar * invNmF ,0.f
+	};
+}
+
+XNG_INLINE void directx_projection_matrix(float4x4 & projectionMatrix, float fovy, float ratio, float znear, float zfar)
+{
+	float w = std::atan(fovy * .5f);
+	float h = w / ratio;
+	float invNmF = 1.f / (zfar - znear);
+
+	projectionMatrix = float4x4{
+		w, 0.f, 0.f, 0.f,
+		0.f, h, 0.f, 0.f,
+		0.f, 0.f, zfar * invNmF, 1.f,
+		0.f, 0.f, -znear * zfar * invNmF ,0.f
+	};
+}
+
+const float4x4 & camera::get_projection_matrix(void) const
 {
 	if (m_projectionMatrixDirty)
 	{
-		m_projectionMatrix = glm::perspectiveRH(m_fovy * .5f, m_ratio, m_znear, m_zfar);
+		switch (m_coordSystem)
+		{
+		case XNG_COORDINATE_SYSTEM_DIRECTX:
+			directx_projection_matrix(m_viewMatrix, m_fovy, m_ratio, m_znear, m_zfar);
+			break;
+		default:
+			gl_projection_matrix(m_viewMatrix, m_fovy, m_ratio, m_znear, m_zfar);
+			break;
+		}
 		m_projectionMatrixDirty = false;
 	}
 	return m_projectionMatrix;
 }
 
-const glm::vec3 camera::forward(void)
+const float3 camera::forward(void)
 {
-	return m_orientation * glm::vec3(0, 0, -1);
+	return transform(float3(0, 0, -1), m_orientation);
 }
 
-const glm::vec3 camera::right(void)
+const float3 camera::right(void)
 {
-	return m_orientation * glm::vec3(1, 0, 0);
+	return transform(float3(1, 0, 0), m_orientation);
 }
 
-const glm::vec3 camera::up(void)
+const float3 camera::up(void)
 {
-	return m_orientation * glm::vec3(0, 1, 0);
+	return transform(float3(0, 1, 0), m_orientation);
 }

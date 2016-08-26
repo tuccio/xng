@@ -11,8 +11,11 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DXNG_DEBUG")
 
+add_definitions(-DXNG_INLINE=inline)
+
 if (WIN32)
 	add_definitions(-DNOMINMAX)
+	add_definitions(-DXNG_VECTORCALL=__vectorcall)
 endif ()
 
 if (MSVC)
@@ -24,11 +27,6 @@ endif()
 
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
-
-# Include GLM
-
-include_directories(thirdparty/glm/include)
-add_definitions(-DGLM_FORCE_RADIANS)
 
 # Search for OpenGL
 
@@ -54,7 +52,7 @@ endif ()
 
 # Gather XNG components to compile
 
-set(XNG_COMPONENTS core res graphics os editor launcher)
+set(XNG_COMPONENTS core res math graphics os editor launcher)
 
 if (XNG_USE_GLES_2_0 OR XNG_USE_GLES_3_0 OR XNG_USE_GL_4_5)
 
@@ -132,3 +130,4 @@ xng_components_add(${XNG_COMPONENTS})
 # Test stuff
 
 add_subdirectory(resource_test)
+add_subdirectory(math_test)

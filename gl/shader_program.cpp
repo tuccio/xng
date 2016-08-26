@@ -1,10 +1,10 @@
 #include <xng/gl/shader_program.hpp>
 #include <xng/core.hpp>
-
-#include <glm/gtc/type_ptr.hpp>
+#include <xng/gl/errors.hpp>
 
 using namespace xng;
 using namespace xng::gl;
+using namespace xng::math;
 
 shader_program::shader_program(void) : m_program(0), m_linked(false) {}
 
@@ -23,7 +23,7 @@ void shader_program::clear(void)
 {
 	if (m_program)
 	{
-		glDeleteProgram(m_program);
+		XNG_GL_CHECK(glDeleteProgram(m_program));
 		m_program = 0;
 		m_linked  = false;
 	}
@@ -33,11 +33,16 @@ bool shader_program::attach_shader(const shader * s)
 {
 	if ((m_program || create_program()) && s && *s)
 	{
-		glAttachShader(m_program, s->get());
+		XNG_GL_CHECK(glAttachShader(m_program, s->get()));
 		return true;
 	}
 
 	return false;
+}
+
+void shader_program::detach_shader(const shader * s)
+{
+	XNG_GL_CHECK(glDetachShader(m_program, s->get()));
 }
 
 bool shader_program::link(void)
@@ -46,10 +51,10 @@ bool shader_program::link(void)
 
 	if (m_program)
 	{
-		glLinkProgram(m_program);
+		XNG_GL_CHECK(glLinkProgram(m_program));
 
 		GLint success;
-		glGetProgramiv(m_program, GL_LINK_STATUS, &success);
+		XNG_GL_CHECK(glGetProgramiv(m_program, GL_LINK_STATUS, &success));
 
 		m_linked = success != GL_FALSE;
 	}
@@ -67,10 +72,10 @@ std::string shader_program::get_linking_error(void) const
 	if (m_program)
 	{
 		GLint length;
-		glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &length);
+		XNG_GL_CHECK(glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &length));
 
 		std::string errorLog(length, '\0');
-		glGetProgramInfoLog(m_program, length, &length, &errorLog[0]);
+		XNG_GL_CHECK(glGetProgramInfoLog(m_program, length, &length, &errorLog[0]));
 
 		return errorLog;
 	}
@@ -83,12 +88,12 @@ std::string shader_program::get_linking_error(void) const
 void shader_program::use(void) const
 {
 	assert(m_linked && "Trying to use an unlinked program.");
-	glUseProgram(m_program);
+	XNG_GL_CHECK(glUseProgram(m_program));
 }
 
 void shader_program::dispose(void) const
 {
-	glUseProgram(0);
+	XNG_GL_CHECK(glUseProgram(0));
 }
 
 bool shader_program::create_program(void)
@@ -107,73 +112,73 @@ shader_program::operator bool() const
 
 GLint shader_program::get_uniform_location(const char * uniform) const
 {
-	return glGetUniformLocation(m_program, uniform);
+	return XNG_GL_RETURN_CHECK(glGetUniformLocation(m_program, uniform));
 }
 
 /* float */
 
 void shader_program::set_uniform(GLint location, GLfloat x)
 {
-	glUniform1f(location, x);
+	XNG_GL_CHECK(glUniform1f(location, x));
 }
 
-void shader_program::set_uniform(GLint location, const glm::vec2 & x)
+void shader_program::set_uniform(GLint location, const float2 & x)
 {
-	glUniform2fv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform2fv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::vec3 & x)
+void shader_program::set_uniform(GLint location, const float3 & x)
 {
-	glUniform3fv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform3fv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::vec4 & x)
+void shader_program::set_uniform(GLint location, const float4 & x)
 {
-	glUniform4fv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform4fv(location, 1, x.data()));
 }
 
 /* double */
 
 void shader_program::set_uniform(GLint location, GLdouble x)
 {
-	glUniform1d(location, x);
+	XNG_GL_CHECK(glUniform1d(location, x));
 }
 
-void shader_program::set_uniform(GLint location, const glm::dvec2 & x)
+void shader_program::set_uniform(GLint location, const double2 & x)
 {
-	glUniform2dv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform2dv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::dvec3 & x)
+void shader_program::set_uniform(GLint location, const double3 & x)
 {
-	glUniform3dv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform3dv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::dvec4 & x)
+void shader_program::set_uniform(GLint location, const double4 & x)
 {
-	glUniform4dv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform4dv(location, 1, x.data()));
 }
 
 /* int */
 
 void shader_program::set_uniform(GLint location, GLint x)
 {
-	glUniform1i(location, x);
+	XNG_GL_CHECK(glUniform1i(location, x));
 }
 
-void shader_program::set_uniform(GLint location, const glm::ivec2 & x)
+void shader_program::set_uniform(GLint location, const int2 & x)
 {
-	glUniform2iv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform2iv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::ivec3 & x)
+void shader_program::set_uniform(GLint location, const int3 & x)
 {
-	glUniform3iv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform3iv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::ivec4 & x)
+void shader_program::set_uniform(GLint location, const int4 & x)
 {
-	glUniform4iv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform4iv(location, 1, x.data()));
 }
 
 
@@ -181,37 +186,37 @@ void shader_program::set_uniform(GLint location, const glm::ivec4 & x)
 
 void shader_program::set_uniform(GLint location, GLuint x)
 {
-	glUniform1ui(location, x);
+	XNG_GL_CHECK(glUniform1ui(location, x));
 }
 
-void shader_program::set_uniform(GLint location, const glm::uvec2 & x)
+void shader_program::set_uniform(GLint location, const uint2 & x)
 {
-	glUniform2uiv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform2uiv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::uvec3 & x)
+void shader_program::set_uniform(GLint location, const uint3 & x)
 {
-	glUniform3uiv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform3uiv(location, 1, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::uvec4 & x)
+void shader_program::set_uniform(GLint location, const uint4 & x)
 {
-	glUniform4uiv(location, 1, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniform4uiv(location, 1, x.data()));
 }
 
 /* matrices */
 
-void shader_program::set_uniform(GLint location, const glm::mat2 & x)
+void shader_program::set_uniform(GLint location, const float2x2 & x)
 {
-	glUniformMatrix2fv(location, 1, GL_FALSE, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniformMatrix2fv(location, 1, GL_FALSE, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::mat3 & x)
+void shader_program::set_uniform(GLint location, const float3x3 & x)
 {
-	glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniformMatrix3fv(location, 1, GL_FALSE, x.data()));
 }
 
-void shader_program::set_uniform(GLint location, const glm::mat4 & x)
+void shader_program::set_uniform(GLint location, const float4x4 & x)
 {
-	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(x));
+	XNG_GL_CHECK(glUniformMatrix4fv(location, 1, GL_FALSE, x.data()));
 }

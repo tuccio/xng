@@ -1,12 +1,17 @@
 #pragma once
 
+#include <xng/res/resource.hpp>
+
 namespace xng
 {
 	namespace res
 	{
 
+		template <typename Resource, typename Enable = std::is_base_of<resource, Resource>>
+		class resource_ptr;
+
 		template <typename Resource>
-		class resource_ptr
+		class resource_ptr<Resource>
 		{
 
 		public:

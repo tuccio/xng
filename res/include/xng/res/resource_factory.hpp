@@ -29,8 +29,8 @@ namespace xng
 			template <typename Resource = resource>
 			resource_ptr<Resource> create(const char * type,
 				const char * name,
-				const resource::parameters_type & parameters = resource::parameters_type(),
-				std::shared_ptr<resource_loader> loader = std::shared_ptr<resource_loader>()) const
+				const resource_parameters & parameters = resource_parameters(),
+				resource_loader_ptr loader = resource_loader_ptr()) const
 			{
 				resource_ptr<Resource> r;
 				std::lock_guard<std::mutex> lock(m_mutex);

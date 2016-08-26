@@ -71,6 +71,8 @@ bool wgl_api_context::init(HWND hWnd, xng_api_version version, bool debug)
 					{
 						tempContext.make_current();
 
+						glewExperimental = GL_TRUE;
+
 						if (XNG_GL_RETURN_CHECK(glewInit()) == GLEW_OK)
 						{
 							GLint majorVersion = 0;
@@ -112,6 +114,8 @@ bool wgl_api_context::init(HWND hWnd, xng_api_version version, bool debug)
 							};
 							auto p = wglCreateContextAttribsARB;
 							m_hGLRC = wglCreateContextAttribsARB(hDC, 0, attribs);
+
+							on_init();
 						}
 					}
 				}
@@ -164,6 +168,17 @@ void wgl_api_context::dispose(void)
 void wgl_api_context::frame_complete(void)
 {
 	swap_buffers();
+	increase_frame_index();
+}
+
+void wgl_api_context::set_vsync(bool vsync)
+{
+	wglSwapIntervalEXT(vsync ? 1 : 0);
+}
+
+bool wgl_api_context::get_vsync(void) const
+{
+	return wglGetSwapIntervalEXT() == 0 ? false : true;
 }
 
 bool wgl_api_context::is_supported(const char * extension)

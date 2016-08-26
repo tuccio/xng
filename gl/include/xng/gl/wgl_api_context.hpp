@@ -34,6 +34,9 @@ namespace xng
 
 			void frame_complete(void) override;
 
+			void set_vsync(bool vsync) override;
+			bool get_vsync(void) const override;
+
 			bool is_supported(const char * extension) override;
 
 			void make_current(void) const;

@@ -93,18 +93,18 @@ std::string native_window::get_caption(void) const
 	return s;
 }
 
-glm::ivec2 native_window::get_window_size(void)
+math::uint2 native_window::get_window_size(void)
 {
 	RECT rect;
 	GetWindowRect(m_hWnd, &rect);
-	return glm::ivec2(rect.right - rect.left, rect.bottom - rect.top);
+	return math::uint2(rect.right - rect.left, rect.bottom - rect.top);
 }
 
-glm::ivec2 native_window::get_client_size(void)
+math::uint2 native_window::get_client_size(void)
 {
 	RECT rect;
 	GetClientRect(m_hWnd, &rect);
-	return glm::ivec2(rect.right - rect.left, rect.bottom - rect.top);
+	return math::uint2(rect.right - rect.left, rect.bottom - rect.top);
 }
 
 /* Window class */

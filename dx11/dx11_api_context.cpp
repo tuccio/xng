@@ -87,7 +87,7 @@ bool dx11_api_context::is_initialized(void) const
 
 void dx11_api_context::frame_complete(void)
 {
-	m_swapChain->Present(get_vsync() ? 1 : 0, 0);
+	m_swapChain->Present(m_vsync ? 1 : 0, 0);
 }
 
 void dx11_api_context::on_resize(uint32_t width, uint32_t height)
@@ -143,4 +143,14 @@ DXGI_SAMPLE_DESC dx11_api_context::get_msaa_sample_desc(DXGI_FORMAT format, uint
 	}
 
 	return sampleDesc;
+}
+
+void dx11_api_context::set_vsync(bool vsync)
+{
+	m_vsync = vsync;
+}
+
+bool dx11_api_context::get_vsync(void) const
+{
+	return m_vsync;
 }

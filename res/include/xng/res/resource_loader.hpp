@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 namespace xng
 {
@@ -19,6 +20,14 @@ namespace xng
 			virtual void unload(resource *) = 0;
 
 		};
+
+		typedef std::shared_ptr<resource_loader> resource_loader_ptr;
+
+		template <typename Loader, typename ... Args>
+		resource_loader_ptr make_resource_loader(Args && ... args)
+		{
+			return resource_loader_ptr(new Loader(std::forward<Args>(args) ...));
+		}
 
 		class dynamic_resource_loader :
 			public resource_loader

@@ -6,9 +6,11 @@ using namespace xng::res;
 resource_manager::resource_manager(const char * type, size_t spaceThreshold) :
 	m_type(type), m_lastID(0), m_spaceThreshold(spaceThreshold), m_usedSpace(0) {}
 
+resource_manager::~resource_manager(void) {}
+
 resource_ptr<resource> resource_manager::create(
 	const char * name,
-	const resource::parameters_type & parameters,
+	const resource_parameters & parameters,
 	std::shared_ptr<resource_loader> loader)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
@@ -17,11 +19,11 @@ resource_ptr<resource> resource_manager::create(
 	if (name[0] == '\0' || !(r = find_by_name_internal(name)))
 	{
 		std::lock_guard<std::mutex> garbageLock(m_garbageMutex);
-		garbage_collection_internal();
+		garbage_collection_lazy_internal();
 
-		r = create_impl(name, loader);
+		r = create_impl(name, parameters, loader);
 
-		resource::id_type id = ++m_lastID;
+		resource_id id = ++m_lastID;
 		r->set_id(id);
 		r->set_owner(this);
 
@@ -34,13 +36,43 @@ resource_ptr<resource> resource_manager::create(
 	}
 
 	return r;
-} 
+}
+
+void resource_manager::clear(void)
+{
+	garbage_collection_full_internal();
+
+#ifdef XNG_DEBUG
+	if (m_usedSpace != 0)
+	{
+		auto stream = XNG_LOG_STREAM();
+
+		stream << "Cleanup incomplete for type \"" << get_type() << "\". Space used is "
+			<< m_usedSpace << "/" << m_spaceThreshold << ". Follows a list of objects still alive:" << std::endl;
+
+		for (auto p : m_resources)
+		{
+			if (p.second->get_name())
+			{
+				stream << p.second->get_name();
+			}
+			else
+			{
+				stream << "<Unnamed object #" << p.second->get_id() << ">";
+			}
+			stream << std::endl;
+		}
+
+		XNG_LOG("Resource Manager", stream);
+	}
+#endif
+}
 
 void resource_manager::garbage_collection(void)
 {
 	std::lock_guard<std::mutex> garbageLock(m_garbageMutex);
 	std::lock_guard<std::mutex> lock(m_mutex);
-	garbage_collection_internal();
+	garbage_collection_full_internal();
 }
 
 resource_ptr<resource> resource_manager::find_by_name(const char * name) const
@@ -49,7 +81,7 @@ resource_ptr<resource> resource_manager::find_by_name(const char * name) const
 	return find_by_name_internal(name);
 }
 
-resource_ptr<resource> resource_manager::find_by_id(resource::id_type id) const
+resource_ptr<resource> resource_manager::find_by_id(resource_id id) const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	return find_by_id_internal(id);
@@ -68,7 +100,7 @@ resource_ptr<resource> resource_manager::find_by_name_internal(const char * name
 	return r;
 }
 
-resource_ptr<resource> resource_manager::find_by_id_internal(resource::id_type id) const
+resource_ptr<resource> resource_manager::find_by_id_internal(resource_id id) const
 {
 	resource_ptr<resource> r;
 	auto it = m_resources.find(id);
@@ -99,6 +131,12 @@ void resource_manager::set_space_threshold(size_t spaceThreshold)
 	m_spaceThreshold = spaceThreshold;
 }
 
+size_t resource_manager::get_used_space(void) const
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	return m_usedSpace;
+}
+
 /* Garbage collection */
 
 void resource_manager::collect_resource(resource * r)
@@ -107,7 +145,7 @@ void resource_manager::collect_resource(resource * r)
 	m_garbage.push_front(r);
 }
 
-void resource_manager::garbage_collection_internal(void)
+void resource_manager::garbage_collection_lazy_internal(void)
 {
 	garbage_clear_duplicates_internal();
 
@@ -126,6 +164,27 @@ void resource_manager::garbage_collection_internal(void)
 		XNG_LOG_STREAM() <<
 			"Unable to free up enough memory to respect the space constraint for resource type \"" << 
 			m_type << "\". Current space usage: (" << m_usedSpace << "/" << m_spaceThreshold << ").");
+}
+
+void resource_manager::garbage_collection_full_internal(void)
+{
+	garbage_clear_duplicates_internal();
+
+	while (!m_garbage.empty())
+	{
+		resource * r = m_garbage.back();
+		m_garbage.pop_back();
+
+		if (r->unload())
+		{
+			free_resource_internal(r);
+		}
+	}
+
+	XNG_LOG_IF(m_usedSpace > m_spaceThreshold,
+		XNG_LOG_STREAM() <<
+		"Unable to free up enough memory to respect the space constraint for resource type \"" <<
+		m_type << "\". Current space usage: (" << m_usedSpace << "/" << m_spaceThreshold << ").");
 }
 
 void resource_manager::garbage_clear_duplicates_internal(void)

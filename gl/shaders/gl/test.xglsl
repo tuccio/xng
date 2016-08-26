@@ -1,0 +1,22 @@
+#version 450
+
+#xng section(vertex)
+
+layout(location = 0) in vec3 position;
+
+void main()
+{
+	gl_Position = vec4(position, 1);
+}
+
+#xng section(fragment)
+
+layout (binding = 0) buffer bPerObject
+{
+	vec4 color;
+}; 
+
+void main()
+{
+	gl_FragColor = color;
+}

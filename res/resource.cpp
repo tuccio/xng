@@ -6,7 +6,7 @@ using namespace xng::res;
 resource::resource(void) :
 	m_owner(nullptr), m_loader(nullptr), m_size(0), m_status(XNG_RESOURCE_NOT_LOADED), m_references(0) {}
 
-resource::resource(const char * name, typename resource::parameters_type params, std::shared_ptr<resource_loader> loader, resource_manager * owner) :
+resource::resource(const char * name, const typename resource_parameters & params, resource_loader_ptr loader, resource_manager * owner) :
 	m_name(name), m_owner(owner), m_loader(loader), m_size(0), m_status(XNG_RESOURCE_NOT_LOADED), m_references(0) {}
 
 resource::resource(resource && rhs) :
@@ -22,9 +22,8 @@ resource::resource(resource && rhs) :
 	std::swap(m_references, rhs.m_references);
 }
 
-const typename resource::parameters_type & resource::get_parameters(void) const
+const typename resource_parameters & resource::get_parameters(void) const
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_parameters;
 }
 
@@ -50,23 +49,21 @@ void resource::set_name(const char * name)
 
 xng_resource_status resource::get_status(void) const
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_status;
 }
 
-typename resource::id_type resource::get_id(void) const
+typename resource_id resource::get_id(void) const
 {
 	return m_id;
 }
 
-void resource::set_id(typename resource::id_type id)
+void resource::set_id(typename resource_id id)
 {
 	m_id = id;
 }
 
 size_t resource::get_size(void) const
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_size;
 }
 
