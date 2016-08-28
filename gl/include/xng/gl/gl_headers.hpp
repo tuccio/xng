@@ -7,3 +7,5 @@
 #endif
 
 #include <gl/GL.h>
+
+#include <xng/gl/errors.hpp>

@@ -1,4 +1,4 @@
-#include <xng/graphics/uber_shader_preprocessor.hpp>
+#include <xng/graphics/shader_preprocessor.hpp>
 
 #include <fstream>
 #include <regex>
@@ -6,16 +6,20 @@
 #include <sstream>
 
 using namespace xng::graphics;
+typedef shader_preprocessor::output_type::section section;
 
-bool is_section(const std::string & line, std::string * section)
+bool is_section(const std::string & line, section * s)
 {
-	static std::regex re("^#xng\\s+section\\s*\\(\\s*([a-zA-Z]+)\\s*\\)\\s*$");
+	static std::regex re("^#xng\\s+section\\s*\\(\\s*([a-zA-Z]+)\\s*(:\\s*([a-zA-Z_0-9]+))?\\s*\\)\\s*$");
 
 	std::smatch m;
 
 	if (std::regex_match(line, m, re))
 	{
-		*section = m[1];
+		s->name = m[1];
+		s->entrypoint = m.size() > 2 ? m[3] : std::string();
+		s->content.clear();
+
 		return true;
 	}
 
@@ -37,19 +41,19 @@ bool is_include(const std::string & line, std::string * include)
 	return false;
 }
 
-std::vector<std::string> scan_sections(std::istream & in)
+std::vector<section> scan_sections(std::istream & in)
 {
-	std::vector<std::string> v;
-	std::string section;
+	std::vector<section> v;
 	std::string line;
 	
 	while (!in.eof())
 	{
 		std::getline(in, line);
+		section s;
 
-		if (is_section(line, &section))
+		if (is_section(line, &s))
 		{
-			v.push_back(section);
+			v.push_back(s);
 		}
 	}
 
@@ -69,7 +73,7 @@ std::string extract_path(const char * filename)
 	return f.substr(0, it + 1);
 }
 
-bool uber_shader_preprocessor::preprocess(const char * filename, output_type * out, std::vector<std::string> * errors, uint32_t maxIncludeDepth)
+bool shader_preprocessor::preprocess(const char * filename, output_type * out, std::vector<std::string> * errors, uint32_t maxIncludeDepth)
 {
 	*out = output_type{};
 	
@@ -82,6 +86,10 @@ bool uber_shader_preprocessor::preprocess(const char * filename, output_type * o
 
 	if (!in)
 	{
+		if (errors)
+		{
+			errors->push_back("Cannot open source file.");
+		}
 		return false;
 	}
 
@@ -93,17 +101,18 @@ bool uber_shader_preprocessor::preprocess(const char * filename, output_type * o
 	}
 
 	expandedFile.seekg(0, std::ios::beg);
-	std::vector<std::string> sections = scan_sections(expandedFile);
+	std::vector<section> sections = scan_sections(expandedFile);
 
-	for (auto & section : sections)
+	for (auto & s : sections)
 	{
 		std::stringstream ss;
 
 		expandedFile.clear();
 		expandedFile.seekg(0, std::ios::beg);
 
-		process_section(ss, expandedFile, section.c_str(), errors);
-		out->sections.emplace(section, ss.str());
+		process_section(ss, expandedFile, s.name.c_str(), errors);
+		s.content = ss.str();
+		out->sections.emplace(s.name, std::move(s));
 	}
 
 	/*for (auto & section : out->sections)
@@ -115,7 +124,7 @@ bool uber_shader_preprocessor::preprocess(const char * filename, output_type * o
 }
 
 
-bool uber_shader_preprocessor::expand_includes_recursive(std::ostream & out, std::istream & in, const char * filename, uint32_t depth, uint32_t maxDepth, std::vector<std::string> * errors)
+bool shader_preprocessor::expand_includes_recursive(std::ostream & out, std::istream & in, const char * filename, uint32_t depth, uint32_t maxDepth, std::vector<std::string> * errors)
 {
 	if (depth > maxDepth)
 	{
@@ -148,9 +157,9 @@ bool uber_shader_preprocessor::expand_includes_recursive(std::ostream & out, std
 				
 				if (expand_includes_recursive(includeOS, includeIS, include.c_str(), depth + 1, maxDepth, errors))
 				{
-					notify(&uber_shader_preprocessor_observer::on_include_begin, out, filename, lineNo, include.c_str());
+					notify(&shader_preprocessor_observer::on_include_begin, out, filename, lineNo, include.c_str());
 					std::copy(std::istreambuf_iterator<char>(includeOS), std::istreambuf_iterator<char>(), std::ostream_iterator<char>(out));
-					notify(&uber_shader_preprocessor_observer::on_include_end, out, filename, lineNo, include.c_str());
+					notify(&shader_preprocessor_observer::on_include_end, out, filename, lineNo, include.c_str());
 				}
 			}
 			else if (errors)
@@ -171,10 +180,10 @@ bool uber_shader_preprocessor::expand_includes_recursive(std::ostream & out, std
 	return true;
 }
 
-void uber_shader_preprocessor::process_section(std::ostream & out, std::istream & in, const char * section, std::vector<std::string> * errors)
+void shader_preprocessor::process_section(std::ostream & out, std::istream & in, const char * targetSection, std::vector<std::string> * errors)
 {
 	bool write = true;
-	std::string currentSection;
+	section currentSection;
 	std::string line;
 
 	while (!in.eof())
@@ -183,7 +192,7 @@ void uber_shader_preprocessor::process_section(std::ostream & out, std::istream 
 
 		if (is_section(line, &currentSection))
 		{
-			write = (currentSection == section || currentSection == "common");
+			write = (currentSection.name == targetSection || currentSection.name == "common");
 			out << std::endl;
 		}
 		else if (write)

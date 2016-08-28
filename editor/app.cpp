@@ -92,21 +92,42 @@ namespace xng
 
 			bool initialize_renderer(xng_api_version api)
 			{
+				g_renderer.reset();
+
+				bool initialized = false;
+
 				switch (api)
 				{
 
 				case XNG_API_GL_ES_2_0:
 				case XNG_API_GL_ES_3_0:
 				case XNG_API_GL_4_5:
+					
 					g_renderer = std::unique_ptr<graphics::renderer>(new gl::forward_renderer);
-					return g_renderer->init(g_apiContext.get());
+					initialized = g_renderer->init(g_apiContext.get());
+					break;
 
 				case XNG_API_DIRECTX_11:
 					g_renderer = std::unique_ptr<graphics::renderer>(new dx11::forward_renderer);
-					return g_renderer->init(g_apiContext.get());
+					initialized = g_renderer->init(g_apiContext.get());
+					break;
+
 				default:
-					return false;
+					break;
 				}
+
+				if (initialized)
+				{
+					wxSize size = m_editor->get_render_panel()->GetClientSize();
+					g_renderer->get_configuration()->set_render_resolution(xng::math::uint2(size.x, size.y));
+				}
+				else
+				{
+					wxMessageBox("Unable to initialize renderer.", "Error", wxICON_ERROR);
+					g_renderer.reset();
+				}
+
+				return initialized;
 			}
 
 			void initialize_resource_managers(void)
@@ -119,6 +140,11 @@ namespace xng
 			bool initialize_api(os::native_window_handle handle, xng_api_version api, bool debug)
 			{
 				// Release previous
+
+				res::resource_manager * dx11mesh = res::resource_factory::get_singleton()->unregister_manager("dx11mesh");
+				res::resource_manager * glmesh = res::resource_factory::get_singleton()->unregister_manager("glmesh");
+
+				if (dx11mesh) delete dx11mesh;
 
 				g_renderer.reset();
 				g_apiContext.reset();
@@ -139,6 +165,9 @@ namespace xng
 
 					if (g_apiContext->init(handle, api, m_debug))
 					{
+						res::resource_factory::get_singleton()->
+							register_manager(new gl::gpu_mesh_manager());
+
 						g_apiContext->use();
 						m_apiVersion = (const char*)XNG_GL_RETURN_CHECK(glGetString(GL_VERSION));
 						initialized = true;
@@ -150,10 +179,14 @@ namespace xng
 #ifdef XNG_DX11
 				case XNG_API_DIRECTX_11:
 
-					g_apiContext = std::unique_ptr<graphics::api_context>(new dx11::dx11_api_context);
+					dx11::dx11_api_context * dx11context = new dx11::dx11_api_context;
+					g_apiContext = std::unique_ptr<graphics::api_context>(dx11context);
 
 					if (g_apiContext->init(handle, api, m_debug))
 					{
+						res::resource_factory::get_singleton()->
+							register_manager(new dx11::gpu_mesh_manager(dx11context->get_device()));
+
 						dx11::dx11_api_context * ctx = dynamic_cast<dx11::dx11_api_context*>(g_apiContext.get());
 						D3D_FEATURE_LEVEL featureLevel = ctx->get_device()->GetFeatureLevel();
 						switch (featureLevel)
@@ -177,8 +210,8 @@ namespace xng
 
 				if (!initialized)
 				{
-					g_renderer.reset();
 					g_apiContext.reset();
+					wxMessageBox("Unable to initialize API.", "Error", wxICON_ERROR);
 				}
 				else
 				{
@@ -261,14 +294,15 @@ namespace xng
 
 				enum {
 					IDM_FILE_EXIT,
+					IDM_RENDER_VSYNC,
 					IDM_API_DEBUG, IDM_API_DX11, IDM_API_GL45
 				};
 
 				file->Append(IDM_FILE_EXIT, "Exit", nullptr);
+				render->AppendCheckItem(IDM_RENDER_VSYNC, "VSync")->Check(g_apiContext->get_vsync());
 
 				api->AppendRadioItem(IDM_API_DX11, "DirectX 11")->Check(m_currentAPI == XNG_API_DIRECTX_11);
 				api->AppendRadioItem(IDM_API_GL45, "OpenGL 4.5")->Check(m_currentAPI == XNG_API_GL_4_5);
-				api->AppendCheckItem(IDM_API_DEBUG, "Use debug API")->Check(m_debug);
 
 				menu->Bind(wxEVT_MENU, [=](wxCommandEvent & evt)
 				{
@@ -276,6 +310,9 @@ namespace xng
 					{
 					case IDM_FILE_EXIT:
 						exit();
+						break;
+					case IDM_RENDER_VSYNC:
+						g_apiContext->set_vsync(evt.IsChecked());
 						break;
 					case IDM_API_DEBUG:
 						m_debug = evt.IsChecked();

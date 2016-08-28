@@ -69,14 +69,14 @@ namespace xng
 			}
 
 			float halfTheta    = std::acos(cosHalfTheta);
-			float sinHalfTheta = square_root(1.0 - cosHalfTheta*cosHalfTheta);
+			float sinHalfTheta = square_root(1.f - cosHalfTheta*cosHalfTheta);
 
 			if (fabs(sinHalfTheta) < 0.001f)
 			{
-				return quaternion(a.w * 0.5 + b.w * 0.5,
-					a.x * 0.5 + b.x * 0.5,
-					a.y * 0.5 + b.y * 0.5,
-					a.z * 0.5 + b.z * 0.5);
+				return quaternion(a.w * .5f + b.w * .5f,
+					a.x * .5f + b.x * .5f,
+					a.y * .5f + b.y * .5f,
+					a.z * .5f + b.z * .5f);
 			}
 
 			float ratioA = std::sin((1 - t) * halfTheta) / sinHalfTheta;

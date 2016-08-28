@@ -5,8 +5,8 @@
 #include <fstream>
 #include <iterator>
 
-using namespace xng;
 using namespace xng::gl;
+using namespace xng::graphics;
 
 enum { XNG_GL_SHADER_ERROR_UNCOMPILED = -256, XNG_GL_SHADER_ERROR_FILE_ACCESS, XNG_GL_SHADER_ERROR_COMPILATION, XNG_GL_SHADER_ERROR_CREATION };
 

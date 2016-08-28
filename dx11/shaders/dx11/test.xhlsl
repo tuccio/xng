@@ -1,0 +1,18 @@
+cbuffer cbPerObject : register(b0)
+{
+	float4 color;
+};
+
+#xng section(vertex:main_vs)
+
+float4 main_vs(float3 position : POSITION) : SV_Position
+{
+	return float4(position, 1);
+}
+
+#xng section(pixel:main_ps)
+
+float4 main_ps(float4 position : SV_Position) : SV_Target0
+{
+	return float4(1, 1, 1, 1);
+}

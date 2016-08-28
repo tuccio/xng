@@ -13,4 +13,6 @@
 #include <xng/gl/wgl_api_context.hpp>
 #include <xng/gl/errors.hpp>
 
+#include <xng/gl/gpu_mesh_manager.hpp>
+
 #endif

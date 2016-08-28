@@ -27,6 +27,8 @@ namespace xng
 			void use(void) const;
 			void dispose(void) const;
 
+			bool is_linked(void) const;
+
 			operator bool() const;
 
 			std::string get_linking_error(void) const;

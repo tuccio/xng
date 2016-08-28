@@ -1,8 +1,6 @@
 #pragma once
 
 #include <xng/gl/gl_headers.hpp>
-
-#include <xng/res.hpp>
 #include <xng/graphics.hpp>
 
 #include <unordered_map>
@@ -11,7 +9,7 @@ namespace xng
 {
 	namespace gl
 	{
-		class vao_manager
+		class vertex_buffers_factory
 		{
 
 		public:

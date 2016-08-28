@@ -1,4 +1,4 @@
-#include <xng/gl/vao_manager.hpp>
+#include <xng/gl/vertex_buffers_factory.hpp>
 #include <xng/gl/attributes.hpp>
 #include <xng/gl/errors.hpp>
 
@@ -6,7 +6,7 @@ using namespace xng::graphics;
 using namespace xng::gl;
 using namespace xng::math;
 
-vao_manager::buffers vao_manager::create(mesh_ptr m)
+vertex_buffers_factory::buffers vertex_buffers_factory::create(mesh_ptr m)
 {
 	buffers b = {};
 
@@ -33,7 +33,6 @@ vao_manager::buffers vao_manager::create(mesh_ptr m)
 		XNG_GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->get_num_indices() * sizeof(uint3), m->get_indices(), GL_STATIC_DRAW));
 
 		XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-
 
 		m_buffers[m->get_id()] = b;
 	}

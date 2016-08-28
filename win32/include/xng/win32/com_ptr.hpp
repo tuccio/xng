@@ -10,40 +10,42 @@ namespace xng
 	
 		public:
 	
-			inline com_ptr(void) : m_pointer(nullptr) { }
+			XNG_INLINE com_ptr(void) : m_pointer(nullptr) { }
 	
-			inline com_ptr(ComObject * pointer) : m_pointer(pointer) { if (m_pointer) m_pointer->AddRef(); }
+			XNG_INLINE com_ptr(ComObject * pointer) : m_pointer(pointer) { if (m_pointer) m_pointer->AddRef(); }
 	
-			inline com_ptr(const com_ptr<ComObject> & com) : com_ptr(com.get()) { }
-			inline com_ptr(com_ptr<ComObject> && com) { m_pointer = com.m_pointer; com.m_pointer = nullptr; }
+			XNG_INLINE com_ptr(const com_ptr<ComObject> & com) : com_ptr(com.get()) { }
+			XNG_INLINE com_ptr(com_ptr<ComObject> && com) { m_pointer = com.m_pointer; com.m_pointer = nullptr; }
 	
-			inline ~com_ptr(void) { if (m_pointer) m_pointer->Release(); }
+			XNG_INLINE ~com_ptr(void) { if (m_pointer) m_pointer->Release(); }
 	
-			inline ComObject * get(void) const { return m_pointer; }
+			XNG_INLINE ComObject * get(void) const { return m_pointer; }
 																
-			inline ComObject * const * get_address(void) const { return &m_pointer; }
-			inline ComObject **        get_address(void)       { return &m_pointer; }
+			XNG_INLINE ComObject * const * get_address(void) const { return &m_pointer; }
+			XNG_INLINE ComObject **        get_address(void)       { return &m_pointer; }
 																
-			inline void        reset(void) { if (m_pointer) { m_pointer->Release(); m_pointer = nullptr; } }
-			inline ComObject * release(void) { ComObject * ptr = m_pointer; m_pointer = nullptr; return ptr; }
+			XNG_INLINE void         reset(void) { if (m_pointer) { m_pointer->Release(); m_pointer = nullptr; } }
+			XNG_INLINE ComObject ** reset_and_get_address(void) { reset(); return get_address(); }
+
+			XNG_INLINE ComObject * release(void) { ComObject * ptr = m_pointer; m_pointer = nullptr; return ptr; }
 	
-			inline void swap(com_ptr<ComObject> & com) { std::swap(m_pointer, com.m_pointer); }
+			XNG_INLINE void swap(com_ptr<ComObject> & com) { ComObject * tmp = m_pointer; m_pointer = com.m_pointer; com.m_pointer = tmp; }
 	
-			inline operator bool() const { return m_pointer != nullptr; }
+			XNG_INLINE operator bool() const { return m_pointer != nullptr; }
 	
-			inline ComObject * operator-> (void) const { return m_pointer;  }
+			XNG_INLINE ComObject * operator-> (void) const { return m_pointer;  }
 	
-			inline ComObject * const * operator&(void) const { return &m_pointer; }
-			inline ComObject **        operator&(void) { return &m_pointer; }
+			XNG_INLINE ComObject * const * operator&(void) const { return &m_pointer; }
+			XNG_INLINE ComObject **        operator&(void) { return &m_pointer; }
 	
-			inline bool operator == (const com_ptr<ComObject> & com) { return m_pointer == com.m_pointer; }
-			inline bool operator != (const com_ptr<ComObject> & com) { return m_pointer != com.m_pointer; }
+			XNG_INLINE bool operator == (const com_ptr<ComObject> & com) { return m_pointer == com.m_pointer; }
+			XNG_INLINE bool operator != (const com_ptr<ComObject> & com) { return m_pointer != com.m_pointer; }
 	
-			inline com_ptr & operator= (const com_ptr<ComObject> & com) { reset(); m_pointer = com.m_pointer; m_pointer->AddRef(); return *this; }
-			inline com_ptr & operator= (com_ptr<ComObject> && com)      { reset(); swap(com); return *this; }
+			XNG_INLINE com_ptr & operator= (const com_ptr<ComObject> & com) { reset(); m_pointer = com.m_pointer; if (m_pointer) m_pointer->AddRef(); return *this; }
+			XNG_INLINE com_ptr & operator= (com_ptr<ComObject> && com)      { reset(); swap(com); return *this; }
 	
 			template <typename Interface>
-			inline bool as(com_ptr<Interface> & com) { com.reset(); return S_OK == m_pointer->QueryInterface(IID_PPV_ARGS(com.get_address())); }
+			XNG_INLINE bool as(com_ptr<Interface> & com) { com.reset(); return S_OK == m_pointer->QueryInterface(IID_PPV_ARGS(com.get_address())); }
 	
 		private:
 	

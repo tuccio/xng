@@ -40,7 +40,7 @@ namespace xng
 			mesh(const char * name, const res::resource_parameters & params, res::resource_loader_ptr loader, res::resource_manager * owner);
 			~mesh(void) override;
 
-			bool create(size_t vertices, size_t triangles, unsigned int storage_semantics);
+			bool create(size_t vertices, size_t triangles, uint32_t storage);
 			void clear(void);
 
 			bool add_storage_semantic(mesh_storage_semantic semantic);
@@ -75,8 +75,8 @@ namespace xng
 			XNG_INLINE uint32_t * get_indices(void) { return &m_indices[0].x; }
 			XNG_INLINE const uint32_t * get_indices(void) const { return &m_indices[0].x; }
 
-			std::vector<uint8_t> pack_interleaved_data(void) const;
-			size_t calculate_stride(void) const;
+			std::vector<uint8_t> pack_interleaved_data(bool packPositions, uint32_t flags) const;
+			static size_t calculate_stride(uint32_t flags);
 
 
 		protected:

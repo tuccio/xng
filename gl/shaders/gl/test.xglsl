@@ -1,6 +1,15 @@
 #version 450
 
+layout (binding = 0) buffer bPerObject
+{
+	mat4 viewMatrix;
+	mat4 viewProjectionMatrix;
+	vec4 color;
+}; 
+
 #xng section(vertex)
+//#xng ubervar("XNG_NORMAL_MAP")
+//#xng ubervar("XNG_LIGHT_TYPE": "XNG_DIRECTIONAL", "XNG_SPOTLIGHT")
 
 layout(location = 0) in vec3 position;
 
@@ -10,11 +19,6 @@ void main()
 }
 
 #xng section(fragment)
-
-layout (binding = 0) buffer bPerObject
-{
-	vec4 color;
-}; 
 
 void main()
 {

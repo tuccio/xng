@@ -2,7 +2,7 @@
 
 #include <xng/graphics/renderer.hpp>
 #include <xng/gl/shader_program.hpp>
-#include <xng/gl/vao_manager.hpp>
+#include <xng/gl/vertex_buffers_factory.hpp>
 #include <xng/gl/ring_buffer.hpp>
 #include <xng/gl/uber_shader.hpp>
 
@@ -27,10 +27,10 @@ namespace xng
 
 			gl_api_context * m_context;
 
-			uber_shader      m_program;
-			vao_manager      m_vaos;
-						     
-			ring_buffer      m_bPerObject;
+			uber_shader m_program;
+			ring_buffer m_bPerObject;
+
+			vertex_buffers_factory m_vbFactory;
 			
 		};
 	}

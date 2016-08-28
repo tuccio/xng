@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xng/gl/gl_headers.hpp>
+#include <xng/graphics/shader_types.hpp>
 #include <string>
 
 enum xng_gl_shader_type
@@ -15,12 +16,6 @@ namespace xng
 {
 	namespace gl
 	{
-		struct shader_macro
-		{
-			const char * name;
-			const char * definition;
-		};
-
 		class shader
 		{
 
@@ -34,8 +29,8 @@ namespace xng
 
 			void clear(void);
 
-			bool compile_from_file(xng_gl_shader_type type, const char * filename, const shader_macro * macros = nullptr);
-			bool compile_from_string(xng_gl_shader_type type, const char * str, const shader_macro * macros = nullptr);
+			bool compile_from_file(xng_gl_shader_type type, const char * filename, const graphics::shader_macro * macros = nullptr);
+			bool compile_from_string(xng_gl_shader_type type, const char * str, const graphics::shader_macro * macros = nullptr);
 			std::string get_compilation_error(void) const;
 
 			GLuint get(void) const;
@@ -46,7 +41,7 @@ namespace xng
 		private:
 
 			bool create_shader(xng_gl_shader_type type);
-			bool compile(xng_gl_shader_type type, const char * str, const shader_macro * macros = nullptr);
+			bool compile(xng_gl_shader_type type, const char * str, const graphics::shader_macro * macros = nullptr);
 
 			GLuint m_shader;
 

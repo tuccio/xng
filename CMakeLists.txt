@@ -37,18 +37,8 @@ option(XNG_USE_GLES_2 "Compile with GL ES 2.0 rendering."  OFF)
 option(XNG_USE_GLES_3 "Compile with GL ES 3.0 rendering."  OFF)
 option(XNG_USE_GL_4_5 "Compile with OpenGL 4.5 rendering." ON)
 
-option(XNG_GL_DEBUG "Add checks and overhead to help debugging OpenGL code."      ON)
+option(XNG_GL_DEBUG   "Add checks and overhead to help debugging OpenGL code."    ON)
 option(XNG_DX11_DEBUG "Add checks and overhead to help debugging DirectX11 code." ON)
-
-# Debugging flags
-
-if (XNG_GL_DEBUG)
-	add_definitions(-DXNG_GL_DEBUG)
-endif ()
-
-if (XNG_DX11_DEBUG)
-	add_definitions(-DXNG_DX11_DEBUG)
-endif ()
 
 # Gather XNG components to compile
 
@@ -60,6 +50,10 @@ if (XNG_USE_GLES_2_0 OR XNG_USE_GLES_3_0 OR XNG_USE_GL_4_5)
 	set(XNG_GL_SHADERS_DIR ${CMAKE_SOURCE_DIR}/gl/shaders)
 	
 	add_definitions(-DXNG_GL)
+	
+	if (XNG_GL_DEBUG)
+		add_definitions(-DXNG_GL_DEBUG)
+	endif ()
 	
 	if (XNG_USE_GL_ES_2_0)
 		add_definitions(-DXNG_GLES_2)
@@ -98,7 +92,13 @@ if (WIN32)
 	
 	if (XNG_USE_DX11)
 	
+		if (XNG_DX11_DEBUG)
+			add_definitions(-DXNG_DX11_DEBUG)
+			add_definitions("-DXNG_DX11_GLOBAL_SHADER_FLAGS=D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_OPTIMIZATION_LEVEL0")
+		endif ()
+	
 		set(XNG_DX11_SHADERS_DIR ${CMAKE_SOURCE_DIR}/dx11/shaders)
+		add_definitions(-DXNG_DX11_SHADER_FOLDER="./shaders/dx11/")
 		
 		find_package(DirectX11 REQUIRED)
 		

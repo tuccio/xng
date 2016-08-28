@@ -12,14 +12,14 @@ mesh::~mesh(void)
 	clear();
 }
 
-bool mesh::create(size_t vertices, size_t triangles, unsigned int storage_semantics)
+bool mesh::create(size_t vertices, size_t triangles, uint32_t storage)
 {
 	clear();
 
 	m_numVertices  = vertices;
 	m_numTriangles = triangles;
 
-	m_storageFlags = storage_semantics;
+	m_storageFlags = storage;
 
 	m_indices.resize(m_numTriangles);
 	m_vertices.resize(m_numVertices);
@@ -284,38 +284,24 @@ bool mesh::remove_storage_semantic(mesh_storage_semantic semantic)
 	return false;
 }
 
-std::vector<uint8_t> mesh::pack_interleaved_data(void) const
+std::vector<uint8_t> mesh::pack_interleaved_data(bool packPositions, uint32_t flags) const
 {
-	size_t bufferSize = calculate_size_internal();
+	size_t bufferSize = calculate_stride(flags) * get_num_vertices();
 
 	std::vector<uint8_t> buffer(bufferSize);
-
 	size_t offset = 0;
 
-	// Copy all the vertices
-
 	uint8_t * bufferPosition = &buffer[0];
-	float * tmp = (float*)bufferPosition;
-
-	size_t verticesBufferSize = get_num_vertices() * 3 * sizeof(float);
-	offset += verticesBufferSize;
-
-	std::memcpy(bufferPosition, get_vertices(), verticesBufferSize);
-	bufferPosition += verticesBufferSize;
-
-	// Then copy the indices
-
-	size_t indicesBufferSize = get_num_triangles() * 3 * sizeof(uint32_t);
-
-	offset += indicesBufferSize;
-
-	std::memcpy(bufferPosition, get_indices(), indicesBufferSize);
-	bufferPosition += indicesBufferSize;
-
-	// Now we need to interleave the non vertex data
-
 	std::vector<const uint8_t*> iterators;
 	std::vector<uint32_t> dataSize;
+
+	// Setup all the iterators
+
+	if (packPositions)
+	{
+		iterators.push_back(reinterpret_cast<const uint8_t*>(get_vertices()));
+		dataSize.push_back(3 * sizeof(float));
+	}
 
 	if (has_storage_semantic(XNG_MESH_STORAGE_NORMALS))
 	{
@@ -346,6 +332,8 @@ std::vector<uint8_t> mesh::pack_interleaved_data(void) const
 		}
 	}
 
+	// Copy using the iterators
+
 	for (int vertexIndex = 0; vertexIndex < m_numVertices; vertexIndex++)
 	{
 		for (int iteratorIndex = 0; iteratorIndex < iterators.size(); iteratorIndex++)
@@ -363,22 +351,22 @@ std::vector<uint8_t> mesh::pack_interleaved_data(void) const
 	return buffer;
 }
 
-size_t mesh::calculate_stride(void) const
+size_t mesh::calculate_stride(uint32_t flags)
 {
-	uint32_t texcoordsMultiplier = 1;
-	uint32_t verticesMultiplier = 1;
+	uint32_t texcoordsMultiplier = 0;
+	uint32_t verticesMultiplier  = 1;
 
-	if (m_storageFlags & XNG_MESH_STORAGE_NORMALS)
+	if (flags & XNG_MESH_STORAGE_NORMALS)
 	{
 		++verticesMultiplier;
 	}
 
-	if (m_storageFlags & XNG_MESH_STORAGE_TANGENTS)
+	if (flags & XNG_MESH_STORAGE_TANGENTS)
 	{
 		++verticesMultiplier;
 	}
 
-	if (m_storageFlags & XNG_MESH_STORAGE_BITANGENTS)
+	if (flags & XNG_MESH_STORAGE_BITANGENTS)
 	{
 		++verticesMultiplier;
 	}
@@ -387,7 +375,7 @@ size_t mesh::calculate_stride(void) const
 
 	for (int i = 0; i < XNG_MESH_MAX_TEXCOORDS; i++)
 	{
-		if (m_storageFlags & texcoordFlag)
+		if (flags & texcoordFlag)
 		{
 			++texcoordsMultiplier;
 		}

@@ -103,6 +103,11 @@ bool shader_program::create_program(void)
 	return m_program != 0;
 }
 
+bool shader_program::is_linked(void) const
+{
+	return m_program != 0 && m_linked;
+}
+
 shader_program::operator bool() const
 {
 	return m_program != 0 && m_linked;
