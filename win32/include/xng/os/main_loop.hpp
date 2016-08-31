@@ -1,0 +1,30 @@
+#pragma once
+
+#include <functional>
+
+namespace xng
+{
+	namespace os
+	{
+		typedef std::function<void(void)> main_loop_idle_cb;
+
+		class main_loop
+		{
+
+		public:
+
+			main_loop(void);
+
+			void set_idle_callback(main_loop_idle_cb idle);
+
+			void run(void);
+			void quit(void);
+
+		private:
+
+			main_loop_idle_cb m_idleCB;
+
+		};
+
+	}
+}
