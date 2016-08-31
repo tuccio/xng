@@ -19,7 +19,7 @@ namespace xng
 			bool init(graphics::api_context * context) override;
 			void shutdown(void) override;
 
-			void render(graphics::scene * scene, graphics::camera * camera, graphics::render_resource * target = nullptr) override;
+			void render(graphics::scene * scene, const graphics::camera * camera, graphics::render_resource * target = nullptr) override;
 
 		private:
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xng/os/forward_decl.hpp>
+#include <xng/os/native_window.hpp>
 #include <xng/graphics/api_version.hpp>
 
 #include <cstdint>

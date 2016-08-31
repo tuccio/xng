@@ -14,4 +14,7 @@ source_group("math\\source" FILES ${XNG_MATH_SOURCE_FILES})
 source_group("geometry\\include" FILES ${XNG_GEOMETRY_INCLUDE_FILES})
 source_group("geometry\\source" FILES ${XNG_GEOMETRY_SOURCE_FILES})
 
+include_directories(${XNG_INCLUDE_DIRS})
+
 add_library(xngmath ${XNG_MATH_INCLUDE_FILES} ${XNG_MATH_SOURCE_FILES} ${XNG_GEOMETRY_INCLUDE_FILES} ${XNG_GEOMETRY_SOURCE_FILES})
+add_library(xngmathexp ${XNG_MATH_INCLUDE_FILES} ${XNG_MATH_SOURCE_FILES} ${XNG_GEOMETRY_INCLUDE_FILES} ${XNG_GEOMETRY_SOURCE_FILES})

@@ -32,7 +32,7 @@ void forward_renderer::shutdown(void)
 	m_vbFactory.clear();
 }
 
-void forward_renderer::render(scene * scene, camera * camera, render_resource * target)
+void forward_renderer::render(scene * scene, const camera * camera, render_resource * target)
 {
 	render_variables rvars;
 	process_rv_updates(&rvars);

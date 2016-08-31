@@ -2,8 +2,6 @@
 
 #include <xng/core.hpp>
 #include <xng/dx11/dx11_headers.hpp>
-#include <xng/win32/com_ptr.hpp>
-#include <xng/win32/hr_test.hpp>
 
 #include <xng/graphics/shader_types.hpp>
 
@@ -79,7 +77,6 @@ namespace xng
 			ShaderType ** shader)
 		{
 			using namespace detail;
-			using namespace win32;
 
 			com_ptr<ID3DBlob> code, errors;
 

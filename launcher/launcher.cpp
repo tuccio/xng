@@ -1,42 +1,6 @@
 #include <xng/os.hpp>
-
-static xng::os::window     g_mainWindow;
-static xng::os::main_loop  g_mainLoop;
-static xng::os::gl_context g_glContext;
-
-struct editor_window_observer :
-	public xng::os::window_observer
-{
-	void on_create(xng::os::window * wnd) override
-	{
-		if (!g_glContext.init(&g_mainWindow, xng::gl::XNG_GL_VERSION_ES_2_0))
-		{
-			xng::os::message_box("Error", "Unable to create GL context.", xng::os::MESSAGE_BOX_ERROR, &g_mainWindow);
-			wnd->destroy();
-		}
-
-		g_glContext.make_current();
-		
-		OutputDebugStringA("GL Version: ");
-		OutputDebugStringA((LPCSTR) glGetString(GL_VERSION));
-		OutputDebugStringA("\n");
-	}
-
-	void on_destroy(xng::os::window * wnd) override
-	{
-		g_mainLoop.quit();
-		g_glContext.shutdown();
-	}
-};
-
-void on_idle(void)
-{
-	auto clientSize = g_mainWindow.get_client_size();
-	glViewport(0, 0, clientSize.x, clientSize.y);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	g_glContext.swap_buffers();
-}
+#include <xng/res.hpp>
+#include <xng/engine.hpp>
 
 int CALLBACK WinMain(
 	HINSTANCE hInstance,
@@ -44,21 +8,30 @@ int CALLBACK WinMain(
 	LPSTR     lpCmdLine,
 	int       nCmdShow)
 {
-	editor_window_observer wndObserver;
+	new xng::core::logger(new xng::os::debug_ostream);
 
-	g_mainWindow.add_observer(&wndObserver);
+	xng::res::resource_factory * resourceFactory = new xng::res::resource_factory;
 
-	if (!g_mainWindow.create())
+	resourceFactory->register_manager(new xng::graphics::mesh_manager);
+
+	xng::engine::module_manager * modules = new xng::engine::module_manager;
+
+	modules->register_shared_library("xnggl");
+	modules->register_shared_library("xngdx11");
+	modules->register_shared_library("xngeditor");
+
+	xng::engine::module_factory * renderFactory = modules->find_module_by_type(XNG_MODULE_TYPE_RENDER);
+	xng::engine::module_factory * runtimeFactory = modules->find_module_by_type(XNG_MODULE_TYPE_RUNTIME);
+
+	xng::engine::game * game = new xng::engine::game;
+
+	game->set_render_module(dynamic_cast<xng::engine::render_module*>(renderFactory->create()));
+	game->set_runtime_module(dynamic_cast<xng::engine::runtime_module*>(runtimeFactory->create()));
+
+	if (game->init())
 	{
-		xng::os::message_box("Error", "Unable to create the main window.", xng::os::MESSAGE_BOX_ERROR, &g_mainWindow);
-		return 1;
+		game->run();
 	}
-	
-	g_mainWindow.show();
-
-	g_mainLoop.set_idle_callback(&on_idle);
-	g_mainLoop.run();
 
 	return 0;
 }
-

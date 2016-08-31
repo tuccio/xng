@@ -1,7 +1,6 @@
 #pragma once
 
 #include <xng/dx11/dx11_headers.hpp>
-#include <xng/win32/com_ptr.hpp>
 
 namespace xng
 {
@@ -51,9 +50,9 @@ namespace xng
 
 		private:
 
-			win32::com_ptr<ID3D11VertexShader> m_vertexShader;
-			win32::com_ptr<ID3D11InputLayout>  m_inputLayout;
-			win32::com_ptr<ID3D11PixelShader>  m_pixelShader;
+			com_ptr<ID3D11VertexShader> m_vertexShader;
+			com_ptr<ID3D11InputLayout>  m_inputLayout;
+			com_ptr<ID3D11PixelShader>  m_pixelShader;
 
 		};
 	}

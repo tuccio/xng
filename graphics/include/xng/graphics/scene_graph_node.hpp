@@ -93,6 +93,7 @@ namespace xng
 			void on_child_destruction(scene_graph_node * child);
 
 			virtual void update_impl(void) {}
+			virtual scene_graph_node * clone(void) { return nullptr; }
 
 		private:
 

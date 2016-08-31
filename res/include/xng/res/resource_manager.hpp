@@ -49,7 +49,7 @@ namespace xng
 			size_t       m_usedSpace;
 			std::string  m_type;
 
-			std::unordered_map<std::string, resource*>       m_namedResources;
+			std::unordered_map<std::string, resource*> m_namedResources;
 			std::unordered_map<resource_id, resource*> m_resources;
 
 			std::list<resource*> m_garbage;

@@ -3,8 +3,9 @@ cmake_minimum_required(VERSION 3.4)
 project(xng)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
 # Compiler settings
 
@@ -15,12 +16,13 @@ add_definitions(-DXNG_INLINE=inline)
 
 if (WIN32)
 	add_definitions(-DNOMINMAX)
-	add_definitions(-DXNG_VECTORCALL=__vectorcall)
 endif ()
 
 if (MSVC)
 	# Need to compile wxWidgets with fast fp to use the following
 	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} /fp:fast")
+	add_definitions("-DXNG_EXPORT=__declspec(dllexport)")
+	add_definitions("-DXNG_IMPORT=__declspec(dllimport)")
 endif()
 
 # Search Boost includes
@@ -33,99 +35,67 @@ include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND CMAKE_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/thirdparty/glew/include)
 list(APPEND CMAKE_LIBRARY_PATH thirdparty/glew/lib)
 
-option(XNG_USE_GLES_2 "Compile with GL ES 2.0 rendering."  OFF)
-option(XNG_USE_GLES_3 "Compile with GL ES 3.0 rendering."  OFF)
-option(XNG_USE_GL_4_5 "Compile with OpenGL 4.5 rendering." ON)
-
-option(XNG_GL_DEBUG   "Add checks and overhead to help debugging OpenGL code."    ON)
-option(XNG_DX11_DEBUG "Add checks and overhead to help debugging DirectX11 code." ON)
-
 # Gather XNG components to compile
 
-set(XNG_COMPONENTS core res math graphics os editor launcher)
-
-if (XNG_USE_GLES_2_0 OR XNG_USE_GLES_3_0 OR XNG_USE_GL_4_5)
-
-	set(XNG_USE_GL ON)
-	set(XNG_GL_SHADERS_DIR ${CMAKE_SOURCE_DIR}/gl/shaders)
-	
-	add_definitions(-DXNG_GL)
-	
-	if (XNG_GL_DEBUG)
-		add_definitions(-DXNG_GL_DEBUG)
-	endif ()
-	
-	if (XNG_USE_GL_ES_2_0)
-		add_definitions(-DXNG_GLES_2)
-	endif ()
-	
-	if (XNG_USE_GL_ES_3_0)
-		add_definitions(-DXNG_GLES_3)
-	endif ()
-	
-	if (XNG_USE_GL_4_5)
-		add_definitions(-DXNG_GL_4_5)
-	endif ()
-	
-	find_package(OpenGL REQUIRED)
-	find_package(GLEW)
-	
-	if (GLEW_FOUND OR OPENGL_FOUND)
-		set(XNG_GL_LIBRARIES ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES})
-		set(XNG_GL_INCLUDE_DIRS ${OPENGL_INCLUDE_DIR} ${GLEW_INCLUDE_DIRS})
-	endif ()
-	
-	include_directories(${XNG_GL_INCLUDE_DIRS})
-	
-	set(XNG_COMPONENTS ${XNG_COMPONENTS} gl)
-	
-endif ()
-
-
-if (WIN32)
-
-	add_definitions(-DXNG_WIN32)	
-	set(XNG_COMPONENTS ${XNG_COMPONENTS} win32)
-	add_definitions(-DXNG_GL_SHADER_FOLDER="./shaders/gl/")
-	
-	option(XNG_USE_DX11 "Compile with DirectX 11 rendering." ON)
-	
-	if (XNG_USE_DX11)
-	
-		if (XNG_DX11_DEBUG)
-			add_definitions(-DXNG_DX11_DEBUG)
-			add_definitions("-DXNG_DX11_GLOBAL_SHADER_FLAGS=D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_OPTIMIZATION_LEVEL0")
-		endif ()
-	
-		set(XNG_DX11_SHADERS_DIR ${CMAKE_SOURCE_DIR}/dx11/shaders)
-		add_definitions(-DXNG_DX11_SHADER_FOLDER="./shaders/dx11/")
-		
-		find_package(DirectX11 REQUIRED)
-		
-		add_definitions(-DXNG_DX11)
-		
-		set(XNG_COMPONENTS ${XNG_COMPONENTS} dx11)
-		set(XNG_DX11_LIBRARIES ${DirectX11_LIBRARY})
-		
-	endif()
-	
-endif()
-
-# Utility function to add a component
-
-function(xng_components_add)
+function(xng_add_components)
 	foreach(component IN LISTS ARGV)
-		include_directories(${component}/include)
+		set(XNG_INCLUDE_DIRS ${XNG_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/${component}/include)
+		set(XNG_IMPORT_LIBRARIES ${XNG_IMPORT_LIBRARIES} xng${component})
+		set(XNG_EXPORT_LIBRARIES ${XNG_EXPORT_LIBRARIES} xng${component}exp)
+		set(XNG_COMPONENTS ${XNG_COMPONENTS} ${component})
 	endforeach()
-	
-	foreach(component IN LISTS ARGV)
+	set(XNG_INCLUDE_DIRS ${XNG_INCLUDE_DIRS} PARENT_SCOPE)
+	set(XNG_IMPORT_LIBRARIES ${XNG_IMPORT_LIBRARIES} PARENT_SCOPE)
+	set(XNG_EXPORT_LIBRARIES ${XNG_EXPORT_LIBRARIES} PARENT_SCOPE)
+	set(XNG_COMPONENTS ${XNG_COMPONENTS} PARENT_SCOPE)
+endfunction(xng_add_components)
+
+function(xng_make_components_projects)
+	foreach(component IN LISTS XNG_COMPONENTS)
 		add_subdirectory(${component})
 	endforeach()
-endfunction(xng_components_add)
+endfunction(xng_make_components_projects)
 
-# Add the components
+xng_add_components(core res math graphics engine)
 
-xng_components_add(${XNG_COMPONENTS})
+if (WIN32)
+	add_definitions(-DXNG_WIN32)
+	xng_add_components(win32)
+endif()
+
+xng_make_components_projects()
+
+# Exporter
+
+add_subdirectory(exporter)
+set(XNG_LIBRARIES ${XNG_IMPORT_LIBRARIES} xngexporter)
+
+# Modules
+
+add_subdirectory(gl)
+add_subdirectory(dx11)
+add_subdirectory(editor)
+
+# Launcher
+
+add_subdirectory(launcher)
+
+# Export linking
+
+function(xng_make_exporter)
+	foreach(target IN LISTS ARGV)
+		target_compile_definitions(${target} PRIVATE -DXNG_SHARE_EXPORTER -DXNG_SHARE=XNG_EXPORT)
+	endforeach()
+endfunction(xng_make_exporter)
+
+function(xng_make_importer)
+	foreach(target IN LISTS ARGV)
+		target_compile_definitions(${target} PRIVATE -DXNG_SHARE_IMPORTER -DXNG_SHARE=XNG_IMPORT)
+	endforeach()
+endfunction(xng_make_importer)
+
+xng_make_exporter(${XNG_EXPORT_LIBRARIES} xngexporter)
+xng_make_importer(${XNG_IMPORT_LIBRARIES} xnglauncher xnggl xngdx11 xngeditor)
 
 # Test stuff
 

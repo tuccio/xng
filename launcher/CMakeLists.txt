@@ -9,11 +9,17 @@ if (WIN32)
 	set(XNG_LAUNCHER_PLATFORM WIN32)
 endif ()
 
-add_executable(xnglauncher ${XNG_LAUNCHER_PLATFORM} ${XNG_LAUNCHER_SOURCE_FILES} ${XNG_LAUNCHER_INCLUDE_FILES})
+include_directories(${XNG_INCLUDE_DIRS})
 
-if (WIN32)
-	target_link_libraries(xnglauncher xngwin32)
+add_executable(xnglauncher ${XNG_LAUNCHER_PLATFORM} ${XNG_LAUNCHER_SOURCE_FILES} ${XNG_LAUNCHER_INCLUDE_FILES})
+target_link_libraries(xnglauncher ${XNG_LIBRARIES})
+
+if (XNG_USE_GL)
+	add_dependencies(xnglauncher xnggl)
 endif ()
 
-target_link_libraries(xnglauncher xngcore xnggraphics)
-target_link_libraries(xnglauncher xnggl ${XNG_GL_LIBRARIES})
+if (XNG_USE_DX11)
+	add_dependencies(xnglauncher xngdx11)
+endif ()
+
+add_dependencies(xnglauncher xngeditor)

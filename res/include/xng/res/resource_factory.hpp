@@ -25,6 +25,7 @@ namespace xng
 
 			void register_manager(resource_manager * manager);
 			resource_manager * unregister_manager(const char * type);
+			bool is_registered(const char * type) const;
 
 			template <typename Resource = resource>
 			resource_ptr<Resource> create(const char * type,

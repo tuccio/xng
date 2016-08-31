@@ -1,7 +1,6 @@
 #include <xng/dx11/shader_program.hpp>
 
 using namespace xng::dx11;
-using namespace xng::win32;
 
 void shader_program::use(ID3D11DeviceContext * context) const
 {

@@ -112,7 +112,7 @@ bool wgl_api_context::init(HWND hWnd, xng_api_version version, bool debug)
 								WGL_CONTEXT_FLAGS_ARB,         contextFlags,
 								0
 							};
-							auto p = wglCreateContextAttribsARB;
+
 							m_hGLRC = wglCreateContextAttribsARB(hDC, 0, attribs);
 
 							on_init();

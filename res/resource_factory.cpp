@@ -42,3 +42,11 @@ resource_manager * resource_factory::unregister_manager(const char * type)
 
 	return nullptr;
 }
+
+bool resource_factory::is_registered(const char * type) const
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	auto it = m_managers.find(type);
+
+	return it != m_managers.end();
+}

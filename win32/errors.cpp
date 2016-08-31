@@ -1,8 +1,7 @@
-#include <xng/win32/errors.hpp>
+#include <xng/os/win32_headers.hpp>
+#include <xng/os/errors.hpp>
 
-#include <Windows.h>
-
-std::string xng::win32::get_last_error(void)
+std::string xng::os::get_last_error(void)
 {
 	DWORD error = GetLastError();
 

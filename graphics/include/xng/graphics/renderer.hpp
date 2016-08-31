@@ -16,7 +16,7 @@ namespace xng
 			virtual bool init(api_context * context) { return true; }
 			virtual void shutdown(void)	{}
 
-			virtual void render(scene * scene, camera * camera, render_resource * target = nullptr) = 0;
+			virtual void render(scene * scene, const camera * camera, render_resource * target = nullptr) = 0;
 
 			renderer_configuration * get_configuration(void)
 			{

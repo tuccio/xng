@@ -3,9 +3,9 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
-#include <xng/win32/com_ptr.hpp>
-#include <xng/win32/hr_test.hpp>
+#include <xng/os/com_ptr.hpp>
+#include <xng/os/hr_test.hpp>
 
-namespace xng { namespace dx11 { using namespace xng::win32; } }
+namespace xng { namespace dx11 { using namespace xng::os; } }
 
 #define XNG_DX11_SHADER_FILE(File) (XNG_DX11_SHADER_FOLDER ## File)

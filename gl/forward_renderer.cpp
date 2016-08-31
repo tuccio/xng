@@ -32,8 +32,10 @@ void forward_renderer::shutdown(void)
 	m_program.clear();
 }
 
-void forward_renderer::render(scene * scene, camera * camera, render_resource * target)
+void forward_renderer::render(scene * scene, const camera * camera, render_resource * target)
 {
+	m_context->use();
+
 	graphics::render_variables rvars;
 	process_rv_updates(&rvars);
 

@@ -7,7 +7,7 @@ namespace xng
 	namespace core
 	{
 		template <typename T>
-		struct singleton
+		struct XNG_SHARE singleton
 		{
 
 			singleton(void)
@@ -35,7 +35,12 @@ namespace xng
 
 		};
 
+#ifdef XNG_SHARE_EXPORTER
+
 		template <typename T>
 		T * singleton<T>::s_singleton;
+
+#endif
+
 	}
 }

@@ -2,7 +2,7 @@
 
 #ifdef XNG_WIN32
 
-#include <xng/win32/win32_headers.hpp>
+#include <xng/os/win32_headers.hpp>
 #include <xng/gl/gl_headers.hpp>
 #include <xng/gl/gl_api_context.hpp>
 

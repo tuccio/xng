@@ -10,6 +10,8 @@ ring_buffer::ring_buffer(void) :
 
 bool ring_buffer::init(gl_api_context * context, GLenum target, uint32_t size)
 {
+	context->use();
+
 	m_context = context;
 	m_target  = target;
 
