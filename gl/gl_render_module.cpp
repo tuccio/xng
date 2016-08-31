@@ -12,7 +12,7 @@ const char *          gl_render_module::module_name        = "xnggl45";
 const char *          gl_render_module::module_description = "XNG OpenGL 4.5 Render Module";
 const xng_module_type gl_render_module::module_type        = XNG_MODULE_TYPE_RENDER;
 
-bool gl_render_module::init(native_window_handle window, xng_api_version version)
+bool gl_render_module::init(native_window * window)
 {
 	bool debug = false;
 #ifdef XNG_DX11_DEBUG
@@ -21,20 +21,28 @@ bool gl_render_module::init(native_window_handle window, xng_api_version version
 	m_context  = std::unique_ptr<gl_api_context>(new wgl_api_context);
 	m_renderer = std::make_unique<forward_renderer>();
 
-	if (!m_context->init(window, XNG_API_GL_4_5, debug) || !m_renderer->init(m_context.get()))
+	if (m_context->init(window->get_native_handle(), XNG_API_GL_4_5, debug) && m_renderer->init(m_context.get()))
+	{
+		m_window = window;
+		m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
+		window->add_observer(&m_windowObserver);
+
+		resource_factory::get_singleton()->register_manager(new gpu_mesh_manager);		
+		return true;
+	}
+	else
 	{
 		m_renderer.reset();
 		m_context.reset();
 		return false;
 	}
-
-	resource_factory::get_singleton()->register_manager(new gpu_mesh_manager);
-
-	return true;
 }
 
 void gl_render_module::shutdown(void)
 {
+	m_window->remove_observer(&m_windowObserver);
+	m_window = nullptr;
+
 	delete resource_factory::get_singleton()->unregister_manager("glmesh");
 
 	m_renderer->shutdown();
@@ -48,10 +56,16 @@ bool gl_render_module::is_initialized(void) const
 	return m_context && m_renderer;
 }
 
-void gl_render_module::render(scene * scene, const camera * camera, render_resource * resource)
+void gl_render_module::render(scene * scene, const camera * camera)
 {
+	render_variables rvars;
+	render_variables_updates updates;
+
+	configuration().get_render_variables(&rvars, &updates);
+
 	m_context->frame_start();
-	m_renderer->render(scene, camera, resource);
+	m_renderer->update_render_variables(rvars, updates);
+	m_renderer->render(scene, camera);
 	m_context->frame_complete();
 }
 

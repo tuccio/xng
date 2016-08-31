@@ -26,7 +26,7 @@ namespace xng
 
 				LARGE_INTEGER dt, dtMicro;;
 
-				dt.QuadPart = m_last.QuadPart - newTime.QuadPart;
+				dt.QuadPart = newTime.QuadPart - m_last.QuadPart;
 				m_last = newTime;
 
 				dtMicro.QuadPart = (dt.QuadPart * 1000000) / s_frequencyInitializer.frequency.QuadPart;

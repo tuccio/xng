@@ -11,9 +11,9 @@ using namespace xng::graphics;
 using namespace xng::res;
 using namespace xng::math;
 
-bool forward_renderer::init(api_context * context)
+bool forward_renderer::init(gl_api_context * context)
 {
-	m_context = dynamic_cast<gl_api_context*>(context);
+	m_context = context;
 
 	shader vs, fs;
 
@@ -32,15 +32,12 @@ void forward_renderer::shutdown(void)
 	m_program.clear();
 }
 
-void forward_renderer::render(scene * scene, const camera * camera, render_resource * target)
+void forward_renderer::render(scene * scene, const camera * camera)
 {
 	m_context->use();
 
-	graphics::render_variables rvars;
-	process_rv_updates(&rvars);
-
 	XNG_GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-	XNG_GL_CHECK(glViewport(0, 0, rvars.render_resolution.x, rvars.render_resolution.y));
+	XNG_GL_CHECK(glViewport(0, 0, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
 
 	const shader_program * program = m_program.compile();
 
@@ -120,8 +117,7 @@ void forward_renderer::render(scene * scene, const camera * camera, render_resou
 	program->dispose();
 }
 
-void forward_renderer::process_rv_updates(render_variables * rvars)
+void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)
 {
-	std::set<xng_render_variable> updates;
-	get_render_variables(rvars, &updates);
+	m_rvars = rvars;
 }

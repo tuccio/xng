@@ -18,17 +18,21 @@ namespace xng
 			static const char *          module_description;
 			static const xng_module_type module_type;
 
-			bool init(os::native_window_handle window, xng_api_version version) override;
+			bool init(os::native_window * window) override;
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
 
-			void render(graphics::scene * scene, const graphics::camera * camera, graphics::render_resource * resource) override;
+			void render(graphics::scene * scene, const graphics::camera * camera) override;
 			graphics::api_context * get_api_context(void) override;
 
 		private:
 
 			std::unique_ptr<gl_api_context>   m_context;
 			std::unique_ptr<forward_renderer> m_renderer;
+
+			os::native_window * m_window;
+
+			graphics::realtime_window_observer m_windowObserver;
 
 		};
 	}

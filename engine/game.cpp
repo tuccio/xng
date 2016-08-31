@@ -29,7 +29,7 @@ bool game::init(void)
 
 		XNG_GAME_INIT_MODULE(m_runtime);
 		XNG_GAME_INIT_MODULE(m_scene);
-		XNG_GAME_INIT_MODULE(m_render, m_window->get_native_handle(), XNG_API_DEFAULT);
+		XNG_GAME_INIT_MODULE(m_render, m_window.get());
 
 #undef XNG_GAME_INIT_MODULE
 
@@ -39,8 +39,26 @@ bool game::init(void)
 	return false;
 }
 
+struct game_window_observer :
+	public native_window_observer
+{
+	game_window_observer(main_loop * loop) : m_loop(loop) {}
+
+	void on_destroy(native_window * window)
+	{
+		m_loop->quit();
+	}
+
+private:
+
+	main_loop * m_loop;
+};
+
 void game::run(void)
 {
+	game_window_observer windowObserver(m_mainLoop.get());
+	m_window->add_observer(&windowObserver);
+
 	m_mainLoop->set_idle_callback(
 		[this]()
 	{
@@ -54,7 +72,7 @@ void game::run(void)
 		if (m_render)
 		{
 			std::unique_lock<std::mutex> renderLock(m_renderMutex);
-			m_render->render(nullptr, nullptr, nullptr);
+			m_render->render(nullptr, nullptr);
 		}
 
 		/*if (m_scene)
@@ -101,5 +119,5 @@ void game::rendering_loop(void)
 	std::unique_lock<std::mutex> renderLock(m_renderMutex);
 	while (!m_renderScene) m_renderCV.wait(renderLock);
 
-	m_render->render(m_renderScene, m_renderScene->get_active_camera()->get_camera(), nullptr);
+	m_render->render(m_renderScene, m_renderScene->get_active_camera()->get_camera());
 }

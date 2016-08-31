@@ -1,6 +1,5 @@
 #pragma once
 
-#include <xng/graphics/renderer.hpp>
 #include <xng/dx11/dx11_api_context.hpp>
 #include <xng/dx11/uber_shader.hpp>
 #include <xng/dx11/constant_buffer.hpp>
@@ -10,22 +9,21 @@ namespace xng
 {
 	namespace dx11
 	{
-		class forward_renderer :
-			public graphics::renderer
+		class forward_renderer 
 		{
 
 		public:
 
-			bool init(graphics::api_context * context) override;
-			void shutdown(void) override;
+			bool init(dx11_api_context * context);
+			void shutdown(void);
 
-			void render(graphics::scene * scene, const graphics::camera * camera, graphics::render_resource * target = nullptr) override;
+			void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);
+			void render(graphics::scene * scene, const graphics::camera * camera);
 
 		private:
 
-			void process_rv_updates(graphics::render_variables * rvars);
-			
 			dx11_api_context * m_apiContext;
+			graphics::render_variables m_rvars;
 
 			com_ptr<ID3D11RasterizerState> m_rasterizerState;
 

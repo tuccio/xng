@@ -13,5 +13,6 @@ file(GLOB XNG_EDITOR_INCLUDE_FILES *.hpp *inl)
 include_directories(${XNG_INCLUDE_DIRS})
 
 add_library(xngeditor SHARED ${XNG_EDITOR_SOURCE_FILES} ${XNG_EDITOR_INCLUDE_FILES})
+xng_link_module(xngeditor)
 
 target_link_libraries(xngeditor ${XNG_LIBRARIES} ${wxWidgets_LIBRARIES})

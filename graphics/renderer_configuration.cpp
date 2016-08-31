@@ -10,7 +10,6 @@ renderer_configuration::renderer_configuration(void)
 
 void renderer_configuration::get_render_variables(render_variables * vars, std::set<xng_render_variable> * updates)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
 	*vars    = m_vars;
 	*updates = std::move(m_updates);
 }

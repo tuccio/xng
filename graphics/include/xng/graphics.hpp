@@ -1,8 +1,8 @@
 #pragma once
 
 #include <xng/graphics/api_context.hpp>
-#include <xng/graphics/renderer.hpp>
-#include <xng/graphics/render_resource.hpp>
+#include <xng/graphics/renderer_configuration.hpp>
+#include <xng/graphics/realtime_window_observer.hpp>
 
 #include <xng/graphics/camera.hpp>
 #include <xng/graphics/scene.hpp>

@@ -8,9 +8,9 @@ using namespace xng::graphics;
 using namespace xng::res;
 using namespace xng::math;
 
-bool forward_renderer::init(api_context * context)
+bool forward_renderer::init(dx11_api_context * context)
 {
-	m_apiContext = dynamic_cast<dx11_api_context*>(context);
+	m_apiContext = context;
 
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 	rasterizerDesc.FrontCounterClockwise = TRUE;
@@ -32,11 +32,8 @@ void forward_renderer::shutdown(void)
 	m_vbFactory.clear();
 }
 
-void forward_renderer::render(scene * scene, const camera * camera, render_resource * target)
+void forward_renderer::render(scene * scene, const camera * camera)
 {
-	render_variables rvars;
-	process_rv_updates(&rvars);
-
 	ID3D11Device        * device  = m_apiContext->get_device();
 	ID3D11DeviceContext * context = m_apiContext->get_immediate_context();
 
@@ -45,7 +42,7 @@ void forward_renderer::render(scene * scene, const camera * camera, render_resou
 	ID3D11RenderTargetView * backBuffer = m_apiContext->get_back_buffer_rtv();
 
 	context->ClearRenderTargetView(backBuffer, clearColor);
-	context->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, rvars.render_resolution.x, rvars.render_resolution.y));
+	context->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
 
 	mesh_ptr triangle = resource_factory::get_singleton()->create<mesh>(
 		"mesh", "triangle", resource_parameters(),
@@ -119,8 +116,7 @@ void forward_renderer::render(scene * scene, const camera * camera, render_resou
 	}
 }
 
-void forward_renderer::process_rv_updates(render_variables * rvars)
+void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)
 {
-	std::set<xng_render_variable> updates;
-	get_render_variables(rvars, &updates);
+	m_rvars = rvars;
 }

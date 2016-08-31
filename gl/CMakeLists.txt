@@ -46,6 +46,7 @@ if (XNG_USE_GLES_2_0 OR XNG_USE_GLES_3_0 OR XNG_USE_GL_4_5)
 		
 		include_directories(include ${XNG_INCLUDE_DIRS} ${XNG_GL_INCLUDE_DIRS})
 		add_library(xnggl SHARED ${XNG_GL_SOURCE_FILES} ${XNG_GL_INCLUDE_FILES})
+		xng_link_module(xnggl)
 		
 		target_link_libraries(xnggl ${XNG_LIBRARIES} ${XNG_GL_LIBRARIES})
 		

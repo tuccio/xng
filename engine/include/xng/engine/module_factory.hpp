@@ -27,8 +27,7 @@ namespace xng
 
 			virtual const char * name(void) const = 0;
 			virtual const char * description(void) const = 0;
-			virtual xng_module_type type(void) const = 0;
-			
+			virtual xng_module_type type(void) const = 0;			
 		};
 
 		template <typename Module>

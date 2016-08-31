@@ -1,4 +1,5 @@
 #include <xng/os.hpp>
+#include <xng/graphics.hpp>
 #include <xng/res.hpp>
 #include <xng/engine.hpp>
 

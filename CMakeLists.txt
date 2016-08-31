@@ -7,6 +7,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 
+include(xng)
+
 # Compiler settings
 
 set(CMAKE_CXX_STANDARD 11)
@@ -30,31 +32,12 @@ endif()
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 
-# Search for OpenGL
+# Add glew path for find_package
 
 list(APPEND CMAKE_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/thirdparty/glew/include)
 list(APPEND CMAKE_LIBRARY_PATH thirdparty/glew/lib)
 
 # Gather XNG components to compile
-
-function(xng_add_components)
-	foreach(component IN LISTS ARGV)
-		set(XNG_INCLUDE_DIRS ${XNG_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/${component}/include)
-		set(XNG_IMPORT_LIBRARIES ${XNG_IMPORT_LIBRARIES} xng${component})
-		set(XNG_EXPORT_LIBRARIES ${XNG_EXPORT_LIBRARIES} xng${component}exp)
-		set(XNG_COMPONENTS ${XNG_COMPONENTS} ${component})
-	endforeach()
-	set(XNG_INCLUDE_DIRS ${XNG_INCLUDE_DIRS} PARENT_SCOPE)
-	set(XNG_IMPORT_LIBRARIES ${XNG_IMPORT_LIBRARIES} PARENT_SCOPE)
-	set(XNG_EXPORT_LIBRARIES ${XNG_EXPORT_LIBRARIES} PARENT_SCOPE)
-	set(XNG_COMPONENTS ${XNG_COMPONENTS} PARENT_SCOPE)
-endfunction(xng_add_components)
-
-function(xng_make_components_projects)
-	foreach(component IN LISTS XNG_COMPONENTS)
-		add_subdirectory(${component})
-	endforeach()
-endfunction(xng_make_components_projects)
 
 xng_add_components(core res math graphics engine)
 
@@ -72,9 +55,8 @@ set(XNG_LIBRARIES ${XNG_IMPORT_LIBRARIES} xngexporter)
 
 # Modules
 
-add_subdirectory(gl)
-add_subdirectory(dx11)
-add_subdirectory(editor)
+xng_add_modules(gl dx11 editor)
+xng_make_modules_projects()
 
 # Launcher
 
@@ -82,20 +64,8 @@ add_subdirectory(launcher)
 
 # Export linking
 
-function(xng_make_exporter)
-	foreach(target IN LISTS ARGV)
-		target_compile_definitions(${target} PRIVATE -DXNG_SHARE_EXPORTER -DXNG_SHARE=XNG_EXPORT)
-	endforeach()
-endfunction(xng_make_exporter)
-
-function(xng_make_importer)
-	foreach(target IN LISTS ARGV)
-		target_compile_definitions(${target} PRIVATE -DXNG_SHARE_IMPORTER -DXNG_SHARE=XNG_IMPORT)
-	endforeach()
-endfunction(xng_make_importer)
-
 xng_make_exporter(${XNG_EXPORT_LIBRARIES} xngexporter)
-xng_make_importer(${XNG_IMPORT_LIBRARIES} xnglauncher xnggl xngdx11 xngeditor)
+xng_make_importer(${XNG_IMPORT_LIBRARIES} ${XNG_MODULES_LIBRARIES} xnglauncher)
 
 # Test stuff
 

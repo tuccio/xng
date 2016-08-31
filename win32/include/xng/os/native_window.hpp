@@ -51,7 +51,7 @@ namespace xng
 			static bool register_class(void);
 			static void unregister_class(void);
 
-			static native_window * get_window_object(HWND hWnd);
+			static native_window * get_window_object(native_handle hWnd);
 
 		};
 

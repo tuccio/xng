@@ -30,6 +30,7 @@ if (XNG_USE_DX11)
 	add_library(xngdx11 SHARED ${XNG_DX11_SOURCE_FILES} ${XNG_DX11_INCLUDE_FILES})
 	
 	target_link_libraries(xngdx11 ${XNG_LIBRARIES} ${DirectX11_LIBRARY})
+	xng_link_module(xngdx11)
 	
 	add_custom_command(TARGET xngdx11 PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${XNG_DX11_SHADERS_DIR} $<TARGET_FILE_DIR:xngdx11>/shaders)
 	
