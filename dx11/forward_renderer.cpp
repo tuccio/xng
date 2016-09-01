@@ -44,39 +44,6 @@ void forward_renderer::render(scene * scene, const camera * camera)
 	context->ClearRenderTargetView(backBuffer, clearColor);
 	context->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
 
-	mesh_ptr triangle = resource_factory::get_singleton()->create<mesh>(
-		"mesh", "triangle", resource_parameters(),
-		std::make_shared<dynamic_resource_loader>(
-			[](resource * r)
-	{
-		mesh * m = static_cast<mesh*>(r);
-
-		if (m->create(3, 1, XNG_MESH_STORAGE_NONE))
-		{
-			float vertices[] = {
-				-1.f, -1.f, 0.f,
-				1.f, -1.f, 0.f,
-				0.f,  1.f, 0.f,
-			};
-
-			uint32_t indices[] = {
-				0, 1, 2
-			};
-
-			memcpy(m->get_vertices(), vertices, sizeof(vertices));
-			memcpy(m->get_indices(), indices, sizeof(indices));
-
-			return true;
-		}
-
-		return false;
-	},
-		[](resource * r)
-	{
-		static_cast<mesh*>(r)->clear();
-	}
-	));
-
 	float4 colors[] = {
 		{ 1, 0, 0, 1 },
 		{ 0, 1, 0, 1 },
@@ -85,35 +52,38 @@ void forward_renderer::render(scene * scene, const camera * camera)
 
 	context->RSSetState(m_rasterizerState.get());
 	context->OMSetRenderTargets(1, &backBuffer, nullptr);
+	
+	auto geometry = scene->get_geometry_nodes();
 
-	m_cbPerObject.write(context, &colors[0]);
-	//auto b = m_vbFactory.create(device, triangle);
+	shader_program program = m_program.compile(m_apiContext->get_device());
+	program.use(context);
 
-	//context->IASetVertexBuffers(0, 1, &b.positions, b.strides, b.offsets);
-	//context->IASetIndexBuffer(b.indices.get(), DXGI_FORMAT_R32_UINT, 0);
+	context->PSSetConstantBuffers(0, 1, &m_cbPerObject);
 
-	gpu_mesh_ptr m = make_gpu_mesh(triangle);
-
-	if (m && m->load())
+	for (auto gNode : geometry)
 	{
-		UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
-		UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
 
-		ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
+		gpu_mesh_ptr m = make_gpu_mesh(gNode->get_mesh());
 
-		context->IASetVertexBuffers(0, 1, buffers, strides, offsets);
-		context->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
+		if (m && m->load())
+		{
 
-		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			m_cbPerObject.write(context, &colors[m->get_id() % 3]);
 
-		shader_program program = m_program.compile(m_apiContext->get_device());
+			UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
+			UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
 
-		program.use(context);
+			ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
 
-		context->DrawIndexed(m->get_num_indices(), 0, 0);
+			context->IASetVertexBuffers(0, 1, buffers, strides, offsets);
+			context->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
+			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		program.dispose(context);
+			context->DrawIndexed(m->get_num_indices(), 0, 0);
+		}
 	}
+
+	program.dispose(context);
 }
 
 void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)

@@ -16,9 +16,10 @@ int CALLBACK WinMain(
 
 	xng::engine::module_manager * modules = new xng::engine::module_manager;
 
-	//modules->register_shared_library("xnggl");
+	modules->register_shared_library("xnggl");
 	modules->register_shared_library("xngdx11");
 	modules->register_shared_library("xngeditor");
+	modules->register_shared_library("xngscene");
 
 	xng::engine::module_factory * renderFactory = modules->find_module_by_type(XNG_MODULE_TYPE_RENDER);
 	xng::engine::module_factory * runtimeFactory = modules->find_module_by_type(XNG_MODULE_TYPE_RUNTIME);
@@ -32,6 +33,8 @@ int CALLBACK WinMain(
 	{
 		game->run();
 	}
+
+	game->shutdown();
 
 	return 0;
 }

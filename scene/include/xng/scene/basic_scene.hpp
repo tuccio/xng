@@ -1,0 +1,37 @@
+#include <xng/graphics.hpp>
+
+namespace xng
+{
+	namespace scene
+	{
+		class basic_scene :
+			public graphics::scene
+		{
+
+		public:
+
+			basic_scene(void);
+
+			graphics::scene_graph * get_scene_graph(void);
+
+			geometry_vector frustum_culling_static(const graphics::camera * cam) override;
+			geometry_vector frustum_culling_dynamic(const graphics::camera * cam) override;
+
+			geometry_vector get_geometry_nodes(void) override;
+			camera_vector get_camera_nodes(void) override;
+
+			graphics::scene_graph_camera * get_active_camera(void) override;
+			void set_active_camera(graphics::scene_graph_camera * camera) override;
+
+			void update(void);
+
+			scene * clone(void);
+
+		private:
+
+			graphics::scene_graph m_sceneGraph;
+			graphics::scene_graph_camera * m_activeCamera;
+
+		};
+	}
+}

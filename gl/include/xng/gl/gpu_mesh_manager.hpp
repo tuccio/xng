@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xng/gl/gpu_mesh.hpp>
+#include <xng/gl/gl_api_context.hpp>
 #include <xng/res.hpp>
 
 namespace xng
@@ -13,8 +14,22 @@ namespace xng
 
 		public:
 
-			gpu_mesh_manager(void) :
-				res::resource_manager("glmesh") {}
+			gpu_mesh_manager(gl_api_context * context) :
+				res::resource_manager("glmesh"),
+				m_context(context) {}
+
+			XNG_INLINE gl_api_context * get_context(void)
+			{
+				return m_context;
+			}
+
+			void garbage_collection(void) override
+			{
+				// TODO: Should use a shared context to run in a different thread than the rendering thread
+				m_context->use();
+				resource_manager::garbage_collection();
+				m_context->dispose();
+			}
 
 		protected:
 
@@ -27,6 +42,10 @@ namespace xng
 			{
 				delete resource;
 			}
+
+		private:
+
+			gl_api_context * m_context;
 
 		};
 	}

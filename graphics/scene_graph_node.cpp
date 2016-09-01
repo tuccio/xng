@@ -92,6 +92,11 @@ bool scene_graph_node::is_descendant(scene_graph_node * node) const
 	return false;
 }
 
+scene_graph_node * scene_graph_node::get_parent(void) const
+{
+	return m_parent;
+}
+
 void scene_graph_node::set_parent(scene_graph_node * parent)
 {
 	float4x4 oldMatrix = get_global_matrix();

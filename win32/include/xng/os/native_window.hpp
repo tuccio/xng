@@ -30,16 +30,33 @@ namespace xng
 			bool create(void);
 			void destroy(void);
 
+			bool exists(void) const;
+
 			void show(void);
 			void hide(void);
 
 			void set_caption(const char * title);
 			std::string get_caption(void) const;
 
+			void set_borderless(bool borderless);
+			bool is_borderless(void) const;
+
+			void set_fullscreen(bool fullscreen);
+			bool is_fullscreen(void) const;
+
+			void set_taskbar_icon(bool taskbar);
+			bool has_taskbar_icon(void) const;
+
 			native_handle get_native_handle(void);
 
-			math::uint2 get_window_size(void);
-			math::uint2 get_client_size(void);
+			math::uint2 get_position(void) const;
+			void set_position(const math::uint2 & position);
+
+			math::uint2 get_window_size(void) const;
+			void set_window_size(const math::uint2 & size);
+
+			math::uint2 get_client_size(void) const;
+			void set_client_size(const math::uint2 & size);
 
 		private:
 

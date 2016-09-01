@@ -21,11 +21,12 @@ namespace xng
 		public:
 
 			scene_graph(void);
-			scene_graph(const scene_graph &) = delete;
+			scene_graph(const scene_graph &);
 			scene_graph(scene_graph &&);
 
+			scene_graph & operator= (const scene_graph &);
+
 			scene_graph_node * get_root(void);
-			scene_graph * clone(void);
 
 			template <typename Visitor>
 			void visit(Visitor v)

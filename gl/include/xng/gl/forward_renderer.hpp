@@ -2,9 +2,9 @@
 
 #include <xng/gl/gl_api_context.hpp>
 #include <xng/gl/shader_program.hpp>
-#include <xng/gl/vertex_buffers_factory.hpp>
 #include <xng/gl/ring_buffer.hpp>
 #include <xng/gl/uber_shader.hpp>
+#include <xng/graphics.hpp>
 
 namespace xng
 {
@@ -29,8 +29,6 @@ namespace xng
 
 			uber_shader m_program;
 			ring_buffer m_bPerObject;
-
-			vertex_buffers_factory m_vbFactory;
 
 		};
 	}

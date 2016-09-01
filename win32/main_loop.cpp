@@ -5,7 +5,7 @@
 using namespace xng;
 using namespace xng::os;
 
-main_loop::main_loop(void) {}
+main_loop::main_loop(void) : m_running(false) {}
 
 void main_loop::set_idle_callback(std::function<void()> idle)
 {
@@ -16,7 +16,9 @@ void main_loop::run(void)
 {
 	MSG msg;
 
-	while (true)
+	m_running = true;
+
+	while (m_running)
 	{
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
@@ -24,20 +26,19 @@ void main_loop::run(void)
 			DispatchMessage(&msg);
 		}
 
-		if (msg.message == WM_QUIT)
-		{
-			break;
-		}
-
 		if (m_idleCB)
 		{
 			m_idleCB();
 		}
-		
 	}
+}
+
+bool main_loop::is_running(void) const
+{
+	return m_running;
 }
 
 void main_loop::quit(void)
 {
-	PostQuitMessage(0);
+	m_running = false;
 }

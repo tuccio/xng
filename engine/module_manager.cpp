@@ -4,7 +4,7 @@
 using namespace xng::engine;
 using namespace xng::os;
 
-std::vector<module_factory*> module_manager::modules(void) const
+std::vector<module_factory*> module_manager::get_modules(void) const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_modules;

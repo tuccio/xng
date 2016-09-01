@@ -2,6 +2,7 @@
 
 #include <xng/gl/gpu_mesh.hpp>
 #include <xng/gl/attributes.hpp>
+#include <xng/gl/gpu_mesh_manager.hpp>
 
 #include <xng/graphics/mesh.hpp>
 #include <xng/res.hpp>

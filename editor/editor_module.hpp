@@ -1,4 +1,5 @@
 #include <xng/engine.hpp>
+#include "editor.hpp"
 
 namespace xng
 {
@@ -19,6 +20,11 @@ namespace xng
 			bool is_initialized(void) const override;
 
 			void update(float dt) override;
+
+		private:
+
+			std::unique_ptr<editor> m_editor;
+
 		};
 	}
 }

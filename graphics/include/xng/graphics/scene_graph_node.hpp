@@ -82,6 +82,8 @@ namespace xng
 			bool is_ancestor(scene_graph_node * node) const;
 			bool is_descendant(scene_graph_node * node) const;
 
+			virtual scene_graph_node * clone(scene_graph_node * newParent, scene_graph * newSceneGraph) = 0;
+
 		protected:
 
 			scene_graph_node(xng_scene_graph_node_type type, scene_graph_node * parent, scene_graph * graph) :
@@ -89,20 +91,17 @@ namespace xng
 				m_type(type),
 				m_parent(parent) {}
 
+			scene_graph_node(const scene_graph_node &) = default;
+
 			void on_parent_destruction(void);
 			void on_child_destruction(scene_graph_node * child);
 
 			virtual void update_impl(void) {}
-			virtual scene_graph_node * clone(void) { return nullptr; }
-
-		private:
 
 			xng_scene_graph_node_type m_type;
 
 			scene_graph_node * m_parent;
 			scene_graph      * m_graph;
-
-			bool m_movable;
 
 			std::vector<scene_graph_node*> m_children;
 			std::string m_name;

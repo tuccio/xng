@@ -22,7 +22,7 @@ namespace xng
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
 
-			void render(graphics::scene * scene, const graphics::camera * camera) override;
+			void render(graphics::scene * scene) override;
 			graphics::api_context * get_api_context(void) override;
 
 		private:

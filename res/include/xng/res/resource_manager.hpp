@@ -25,7 +25,7 @@ namespace xng
 				const resource_parameters & parameters = resource_parameters(),
 				resource_loader_ptr loader = resource_loader_ptr());
 
-			void garbage_collection(void);
+			virtual void garbage_collection(void);
 
 			resource_ptr<resource> find_by_name(const char * name) const;
 			resource_ptr<resource> find_by_id(resource_id id) const;

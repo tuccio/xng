@@ -14,5 +14,5 @@ float4 main_vs(float3 position : POSITION) : SV_Position
 
 float4 main_ps(float4 position : SV_Position) : SV_Target0
 {
-	return float4(1, 1, 1, 1);
+	return color;
 }

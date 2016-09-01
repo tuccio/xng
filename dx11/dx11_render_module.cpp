@@ -25,6 +25,8 @@ bool dx11_render_module::init(native_window * window)
 		m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
 		window->add_observer(&m_windowObserver);
 
+		m_windowObserver.on_resize(m_window, m_window->get_window_size(), m_window->get_client_size());
+
 		auto clientSize = window->get_client_size();
 		m_context->on_resize(clientSize.x, clientSize.y);
 
@@ -58,7 +60,7 @@ bool dx11_render_module::is_initialized(void) const
 	return m_context && m_renderer;
 }
 
-void dx11_render_module::render(scene * scene, const camera * camera)
+void dx11_render_module::render(scene * scene)
 {
 	render_variables rvars;
 	render_variables_updates updates;
@@ -67,7 +69,7 @@ void dx11_render_module::render(scene * scene, const camera * camera)
 
 	m_context->frame_start();
 	m_renderer->update_render_variables(rvars, updates);
-	m_renderer->render(scene, camera);
+	m_renderer->render(scene, nullptr);
 	m_context->frame_complete();
 }
 

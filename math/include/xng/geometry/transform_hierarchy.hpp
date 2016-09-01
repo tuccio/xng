@@ -29,7 +29,7 @@ namespace xng
 				m_globalTranslationRotationMatrix(1),
 				m_moved(true) {}
 
-		public:
+			transform_hierarchy(const transform_hierarchy &) = default;
 
 			XNG_INLINE const float4x4 & get_global_matrix(void);
 			XNG_INLINE const float4x4 & get_local_matrix(void);

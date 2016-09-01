@@ -26,41 +26,26 @@ namespace xng
 			void shutdown(void);
 
 			void run(void);
+			bool is_running(void) const;
+			void quit(void);
 
-			XNG_INLINE scene_module * get_scene_module(void) const
-			{
-				return m_scene;
-			}
+			scene_module * get_scene_module(void) const;
+			void set_scene_module(scene_module * scene);
 
-			XNG_INLINE void set_scene_module(scene_module * scene)
-			{
-				m_scene = scene;
-			}
+			render_module * get_render_module(void) const;
+			void set_render_module(render_module * render);
 
-			XNG_INLINE render_module  * get_render_module(void) const
-			{
-				return m_render;
-			}
+			runtime_module * get_runtime_module(void) const;
+			void set_runtime_module(runtime_module * runtime);
 
-			XNG_INLINE void set_render_module(render_module * render)
-			{
-				m_render = render;
-			}
+			os::native_window * get_window(void) const;
 
-			XNG_INLINE runtime_module * get_runtime_module(void) const
-			{
-				return m_runtime;
-			}
+			void set_quit_on_close(bool quitOnClose);
+			bool get_quit_on_close(void) const;
 
-			XNG_INLINE void set_runtime_module(runtime_module * runtime)
-			{
-				m_runtime = runtime;
-			}
-
-			XNG_INLINE os::native_window * get_window(void) const
-			{
-				return m_window.get();
-			}
+			void start_rendering(void);
+			void stop_rendering(void);
+			bool is_rendering(void) const;
 
 		private:
 
@@ -68,11 +53,14 @@ namespace xng
 			std::unique_ptr<os::main_loop>     m_mainLoop;
 			os::high_resolution_timer<float>   m_timer;
 
+			std::unique_ptr<os::native_window_observer> m_quitOnClose;
+
 			scene_module   * m_scene;
 			render_module  * m_render;
 			runtime_module * m_runtime;
 
 			std::atomic<bool> m_running;
+			std::atomic<bool> m_rendering;
 
 			graphics::scene         * m_renderScene;
 			std::mutex                m_renderMutex;

@@ -55,7 +55,7 @@ set(XNG_LIBRARIES ${XNG_IMPORT_LIBRARIES} xngexporter)
 
 # Modules
 
-xng_add_modules(gl dx11 editor)
+xng_add_modules(scene gl dx11 editor)
 xng_make_modules_projects()
 
 # Launcher

@@ -22,7 +22,7 @@ namespace xng
 			
 		public:
 
-			std::vector<module_factory*> modules(void) const;
+			std::vector<module_factory*> get_modules(void) const;
 
 			module_factory * find_module_by_name(const char * name);
 			module_factory * find_module_by_type(xng_module_type type);
