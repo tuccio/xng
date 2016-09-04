@@ -8,18 +8,26 @@ using namespace xng::graphics;
 using namespace xng::res;
 using namespace xng::math;
 
+struct alignas(16) __cbPerObject
+{
+	float4x4 viewMatrix;
+	float4x4 viewProjectionMatrix;
+	float4   color;
+};
+
 bool forward_renderer::init(dx11_api_context * context)
 {
 	m_apiContext = context;
 
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 	rasterizerDesc.FrontCounterClockwise = TRUE;
+	rasterizerDesc.CullMode = D3D11_CULL_BACK;
 
 	ID3D11Device * device = m_apiContext ? m_apiContext->get_device() : nullptr;
 
 	return device != nullptr &&
 		m_program.preprocess(XNG_DX11_SHADER_FILE("test.xhlsl")) &&
-		m_cbPerObject.create<float4>(device) &&
+		m_cbPerObject.create<__cbPerObject>(device) &&
 		!XNG_HR_FAILED(device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState));
 }
 
@@ -32,7 +40,7 @@ void forward_renderer::shutdown(void)
 	m_vbFactory.clear();
 }
 
-void forward_renderer::render(scene * scene, const camera * camera)
+void forward_renderer::render(scene * scene, camera * camera)
 {
 	ID3D11Device        * device  = m_apiContext->get_device();
 	ID3D11DeviceContext * context = m_apiContext->get_immediate_context();
@@ -52,38 +60,55 @@ void forward_renderer::render(scene * scene, const camera * camera)
 
 	context->RSSetState(m_rasterizerState.get());
 	context->OMSetRenderTargets(1, &backBuffer, nullptr);
-	
-	auto geometry = scene->get_geometry_nodes();
 
-	shader_program program = m_program.compile(m_apiContext->get_device());
-	program.use(context);
+	const float4x4 & viewMatrix       = camera->get_directx_view_matrix();
+	const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
 
-	context->PSSetConstantBuffers(0, 1, &m_cbPerObject);
+	float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-	for (auto gNode : geometry)
+	if (scene && camera)
 	{
+		auto geometry = scene->get_geometry_nodes();
 
-		gpu_mesh_ptr m = make_gpu_mesh(gNode->get_mesh());
+		shader_program program = m_program.compile(m_apiContext->get_device());
+		program.use(context);
 
-		if (m && m->load())
+		context->VSSetConstantBuffers(0, 1, &m_cbPerObject);
+		context->PSSetConstantBuffers(0, 1, &m_cbPerObject);
+
+		int ColorIndex = 0;
+
+		for (auto gNode : geometry)
 		{
+			gpu_mesh_ptr m = make_gpu_mesh(gNode->get_mesh());
 
-			m_cbPerObject.write(context, &colors[m->get_id() % 3]);
+			if (m && m->load())
+			{
+				const float4x4 & modelMatrix = gNode->get_global_matrix();
 
-			UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
-			UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
+				__cbPerObject bufferPerObjectData = {
+					viewMatrix * modelMatrix,
+					viewProjectionMatrix * modelMatrix,
+					colors[ColorIndex++ % 3]
+				};
 
-			ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
+				m_cbPerObject.write(context, &bufferPerObjectData);
 
-			context->IASetVertexBuffers(0, 1, buffers, strides, offsets);
-			context->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
-			context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
+				UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
 
-			context->DrawIndexed(m->get_num_indices(), 0, 0);
+				ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
+
+				context->IASetVertexBuffers(0, 1, buffers, strides, offsets);
+				context->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
+				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+				context->DrawIndexed(m->get_num_indices(), 0, 0);
+			}
 		}
-	}
 
-	program.dispose(context);
+		program.dispose(context);
+	}
 }
 
 void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)

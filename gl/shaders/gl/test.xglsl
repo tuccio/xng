@@ -8,19 +8,20 @@ layout (binding = 0) buffer bPerObject
 }; 
 
 #xng section(vertex)
-//#xng ubervar("XNG_NORMAL_MAP")
-//#xng ubervar("XNG_LIGHT_TYPE": "XNG_DIRECTIONAL", "XNG_SPOTLIGHT")
 
 layout(location = 0) in vec3 position;
 
 void main()
 {
-	gl_Position = vec4(position, 1);
+	gl_Position = viewProjectionMatrix * vec4(position, 1);
 }
 
 #xng section(fragment)
 
+out vec4 fragment;
+in vec3 x;
+
 void main()
 {
-	gl_FragColor = color;
+	fragment = color;
 }

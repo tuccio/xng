@@ -20,6 +20,7 @@ namespace xng
 		public:
 
 			camera(void);
+			camera(const camera &) = default;
 
 			void look_at(const math::float3 & eye, const math::float3 & up, const math::float3 & target);
 
@@ -46,15 +47,17 @@ namespace xng
 			float get_zfar(void) const;
 			void set_zfar(float zfar);
 
-			xng_coordinate_system get_coordinate_system(void) const;
-			void set_coordinate_system(xng_coordinate_system coordinateSystem);
-
-			const math::float4x4 & get_view_matrix(void) const;
-			const math::float4x4 & get_projection_matrix(void) const;
+			const math::float4x4 & get_gl_view_matrix(void) const;
+			const math::float4x4 & get_directx_view_matrix(void) const;
+			const math::float4x4 & get_gl_projection_matrix(void) const;
+			const math::float4x4 & get_directx_projection_matrix(void) const;
 
 			const math::float3 forward(void);
+			const math::float3 back(void);
+			const math::float3 left(void);
 			const math::float3 right(void);
 			const math::float3 up(void);
+			const math::float3 down(void);
 
 		private:
 
@@ -66,7 +69,7 @@ namespace xng
 			float m_znear;
 			float m_zfar;
 
-			xng_coordinate_system m_coordSystem;
+			mutable xng_coordinate_system m_coordSystem;
 
 			mutable math::float4x4 m_viewMatrix;
 			mutable math::float4x4 m_projectionMatrix;

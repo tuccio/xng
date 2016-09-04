@@ -111,6 +111,9 @@ namespace xng
 			void set_scene_graph(scene_graph * graph);
 			void set_parent_internal(scene_graph_node * node);
 
+			void on_parent_destruction_internal(void);
+			void on_child_destruction_internal(scene_graph_node * child);
+
 			// Transform hierarchy calls
 
 			XNG_INLINE children_iterator get_transform_hierarchy_children_begin(void) const

@@ -90,9 +90,8 @@ struct render_module_dialog :
 		wxSizer * vSizer = new wxBoxSizer(wxVERTICAL);
 		wxSizer * hSizer = new wxBoxSizer(wxHORIZONTAL);
 
-		wxStaticText  * text = new wxStaticText(this, wxID_ANY,
-			"Pick the rendering module to switch to from this list:",
-			wxDefaultPosition, wxDefaultSize, wxST_NO_AUTORESIZE);
+		wxStaticBoxSizer  * box = new wxStaticBoxSizer(wxVERTICAL, this,
+			"Pick the rendering module to switch to from this list:");
 
 		wxListCtrl * list   = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
 		wxButton   * ok     = new wxButton(this, wxID_OK, "Ok");
@@ -101,8 +100,9 @@ struct render_module_dialog :
 		hSizer->Add(ok, 0, wxLEFT | wxRIGHT, 1);
 		hSizer->Add(cancel, 0, wxLEFT | wxRIGHT, 1);
 
-		vSizer->Add(text, 0, wxLEFT | wxRIGHT | wxTOP, 7);
-		vSizer->Add(list, 1, wxEXPAND | wxALL, 5);
+		box->Add(list, 1, wxEXPAND | wxALL, 5);
+
+		vSizer->Add(box, 0, wxLEFT | wxRIGHT | wxTOP, 7);
 		vSizer->Add(hSizer, 0, wxALIGN_CENTER | wxBOTTOM, 5);
 
 		list->SetMinSize(wxSize(400, 250));

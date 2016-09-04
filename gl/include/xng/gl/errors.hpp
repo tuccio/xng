@@ -13,6 +13,7 @@
 #define XNG_GL_CHECK(Call) { Call; XNG_GL_INTERNAL_LOG_CALL_ERROR(XNG_LOG_DEBUG_LABEL, Call) }
 #define XNG_GL_RETURN_CHECK(Call) ([=](const char * label) { auto value = Call; XNG_GL_INTERNAL_LOG_CALL_ERROR(label, Call); return value; } (XNG_LOG_DEBUG_LABEL))
 #define XNG_GL_CHECK_LAST_ERROR() { XNG_GL_INTERNAL_LOG_LAST_ERROR(XNG_LOG_DEBUG_LABEL, Call); }
+#define XNG_GL_CLEAR_ERROR_STACK() { while (glGetError() != GL_NO_ERROR); }
 
 #else
 

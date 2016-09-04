@@ -11,8 +11,9 @@ namespace xng
 		public:
 
 			basic_scene(void);
+			basic_scene(const basic_scene &) = default;
 
-			graphics::scene_graph * get_scene_graph(void);
+			graphics::scene_graph * get_scene_graph(void) override;
 
 			geometry_vector frustum_culling_static(const graphics::camera * cam) override;
 			geometry_vector frustum_culling_dynamic(const graphics::camera * cam) override;
@@ -23,9 +24,9 @@ namespace xng
 			graphics::scene_graph_camera * get_active_camera(void) override;
 			void set_active_camera(graphics::scene_graph_camera * camera) override;
 
-			void update(void);
+			void update(void) override;
 
-			scene * clone(void);
+			scene * clone(void) override;
 
 		private:
 

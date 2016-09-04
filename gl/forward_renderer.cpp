@@ -32,12 +32,16 @@ void forward_renderer::shutdown(void)
 	m_program.clear();
 }
 
-void forward_renderer::render(scene * scene, const camera * camera)
+void forward_renderer::render(scene * scene, camera * camera)
 {
 	XNG_GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	XNG_GL_CHECK(glViewport(0, 0, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
+	
+	XNG_GL_CHECK(glFrontFace(GL_CCW));
+	XNG_GL_CHECK(glCullFace(GL_BACK));
+	XNG_GL_CHECK(glEnable(GL_CULL_FACE));
 
-	if (scene)
+	if (scene && camera)
 	{
 		const shader_program * program = m_program.compile();
 
@@ -51,6 +55,13 @@ void forward_renderer::render(scene * scene, const camera * camera)
 
 		scene::geometry_vector geometry = scene->get_geometry_nodes();
 
+		const float4x4 & viewMatrix       = camera->get_gl_view_matrix();
+		const float4x4 & projectionMatrix = camera->get_gl_projection_matrix();
+
+		float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+
+		int ColorIndex = 0;
+
 		for (scene_graph_geometry * gNode : geometry)
 		{
 			gpu_mesh_ptr m = make_gpu_mesh(gNode->get_mesh());
@@ -63,14 +74,16 @@ void forward_renderer::render(scene * scene, const camera * camera)
 					float4x4 viewProjectionMatrix;
 					float4   color;
 				};
-
+				
 				GLuint bPerObjectOffset, bPerObjectSize;
 				void * buffer = m_bPerObject.allocate_buffer(sizeof(__bufferPerObject), &bPerObjectOffset, &bPerObjectSize);
 
+				const float4x4 & modelMatrix = gNode->get_global_matrix();
+
 				__bufferPerObject bufferPerObjectData = {
-					float4x4(1),
-					float4x4(1),
-					colors[(m_context->get_frame_index() / 60) % 3]
+					transpose(viewMatrix * modelMatrix),
+					transpose(viewProjectionMatrix * modelMatrix),
+					colors[ColorIndex++ % 3]
 				};
 
 				memcpy(buffer, &bufferPerObjectData, bPerObjectSize);
@@ -82,7 +95,7 @@ void forward_renderer::render(scene * scene, const camera * camera)
 				XNG_GL_CHECK(glDrawElements(GL_TRIANGLES, m->get_num_indices(), m->get_indices_format(), nullptr));
 
 				XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-				XNG_GL_CHECK(glBindVertexArray(0));;
+				XNG_GL_CHECK(glBindVertexArray(0));
 			}
 		}		
 	}

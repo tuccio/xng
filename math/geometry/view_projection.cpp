@@ -6,7 +6,7 @@ namespace xng
 {
 	namespace math
 	{
-		float4x4 look_at_lh(const float3 & position, const float3 & target, const float3 & up)
+		float4x4 look_at_lh(const float3 & position, const float3 & up, const float3 & target)
 		{
 			float3 z = normalize(target - position);
 			float3 x = normalize(cross(up, z));
@@ -20,7 +20,7 @@ namespace xng
 			);
 		}
 
-		float4x4 look_at_rh(const float3 & position, const float3 & target, const float3 & up)
+		float4x4 look_at_rh(const float3 & position, const float3 & up, const float3 & target)
 		{
 			float3 z = normalize(position - target);
 			float3 x = normalize(cross(up, z));

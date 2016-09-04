@@ -68,8 +68,17 @@ void dx11_render_module::render(scene * scene)
 	configuration().get_render_variables(&rvars, &updates);
 
 	m_context->frame_start();
+
 	m_renderer->update_render_variables(rvars, updates);
-	m_renderer->render(scene, nullptr);
+
+	scene_graph_camera * cameraNode = scene ? scene->get_active_camera() : nullptr;
+	camera             * camera     = cameraNode ? cameraNode->get_camera() : nullptr;
+
+	float ratio = rvars.render_resolution.x / (float)rvars.render_resolution.y;
+	camera->set_aspect_ratio(ratio);
+
+	m_renderer->render(scene, scene->get_active_camera()->get_camera());
+
 	m_context->frame_complete();
 }
 

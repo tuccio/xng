@@ -71,3 +71,5 @@ xng_make_importer(${XNG_IMPORT_LIBRARIES} ${XNG_MODULES_LIBRARIES} xnglauncher)
 
 add_subdirectory(resource_test)
 add_subdirectory(math_test)
+
+xng_make_importer(resource_test math_test)

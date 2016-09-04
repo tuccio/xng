@@ -27,9 +27,9 @@ namespace xng
 		XNG_INLINE float4x4 to_translation4(const float3 & lhs)
 		{
 			return float4x4(
-				0.f, 0.f, 0.f, lhs.x,
-				0.f, 0.f, 0.f, lhs.y,
-				0.f, 0.f, 0.f, lhs.z,
+				1.f, 0.f, 0.f, lhs.x,
+				0.f, 1.f, 0.f, lhs.y,
+				0.f, 0.f, 1.f, lhs.z,
 				0.f, 0.f, 0.f, 1.f
 			);
 		}

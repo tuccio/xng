@@ -68,9 +68,7 @@ void basic_scene::update(void)
 
 scene * basic_scene::clone(void)
 {
-	basic_scene * clonedScene = new basic_scene();
-	clonedScene->m_sceneGraph = m_sceneGraph;
-	return clonedScene;
+	return new basic_scene(*this);
 }
 
 scene::geometry_vector basic_scene::get_geometry_nodes(void)

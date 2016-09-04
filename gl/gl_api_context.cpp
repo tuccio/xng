@@ -34,7 +34,7 @@ void gl_api_context::on_init(void)
 	XNG_GL_CHECK(glGetIntegerv(GL_MINOR_VERSION, &m_minorVersion));
 	
 	m_syncObjects = is_supported("GL_ARB_sync");
-
+	
 	if (!m_syncObjects)
 	{
 		XNG_LOG("xng::gl::gl_api_context", "Sync objects are unsopported in current OpenGL context.");

@@ -10,7 +10,15 @@ using namespace xng::math;
 
 scene_graph_node::~scene_graph_node(void)
 {
-	// TODO: Notify destruction
+	for (auto child : m_children)
+	{
+		child->on_parent_destruction();
+	}
+
+	if (m_parent)
+	{
+		m_parent->on_child_destruction(this);
+	}
 }
 
 scene_graph * scene_graph_node::get_scene_graph(void)
@@ -182,4 +190,17 @@ void scene_graph_node::set_name(const char * name)
 xng_scene_graph_node_type scene_graph_node::get_type(void) const
 {
 	return m_type;
+}
+
+void scene_graph_node::on_parent_destruction_internal(void)
+{
+	m_parent = nullptr;
+	delete this;
+}
+
+void scene_graph_node::on_child_destruction_internal(scene_graph_node * child)
+{
+	auto it = std::find(m_children.begin(), m_children.end(), child);
+	assert(it != m_children.end() && "Consistency error: parent children list doesn't contain the child node.");
+	m_children.erase(it);
 }

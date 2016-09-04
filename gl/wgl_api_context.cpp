@@ -142,7 +142,8 @@ bool wgl_api_context::is_initialized(void) const
 void wgl_api_context::make_current(void) const
 {
 	wglMakeCurrent(m_hDC, m_hGLRC);
-	XNG_LOG_IF(XNG_GL_RETURN_CHECK(glewInit()) != GLEW_OK, "Call to glewInit() failed.");
+	XNG_LOG_IF(glewInit() != GLEW_OK, "Call to glewInit() failed.");
+	XNG_GL_CLEAR_ERROR_STACK(); // Silencing glewInit() because it seems to add errors even when succeeding
 }
 
 void wgl_api_context::release_current(void) const

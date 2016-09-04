@@ -16,6 +16,8 @@ namespace xng
 			typedef std::vector<scene_graph_geometry*> geometry_vector;
 			typedef std::vector<scene_graph_camera*>   camera_vector;
 
+			virtual ~scene(void) {}
+
 			virtual scene_graph * get_scene_graph(void) = 0;
 
 			virtual geometry_vector frustum_culling_static(const camera * cam) = 0;

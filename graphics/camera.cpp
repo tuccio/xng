@@ -104,94 +104,91 @@ void camera::set_zfar(float zfar)
 	m_projectionMatrixDirty = true;
 }
 
-xng_coordinate_system camera::get_coordinate_system(void) const
-{
-	return m_coordSystem;
-}
-
-void camera::set_coordinate_system(xng_coordinate_system coordinateSystem)
-{
-	m_projectionMatrixDirty = m_viewMatrixDirty = coordinateSystem != m_coordSystem,
-	m_coordSystem = coordinateSystem;
-}
-
 XNG_INLINE void gl_view_matrix(float4x4 & viewMatrix, const float3 & position, const quaternion & orientation)
 {
-	viewMatrix = transpose(to_rotation4(orientation));
-	viewMatrix._30 = -dot(to_float3(viewMatrix.r[0]), position);
-	viewMatrix._31 = -dot(to_float3(viewMatrix.r[1]), position);
-	viewMatrix._32 = -dot(to_float3(viewMatrix.r[2]), position);
+	viewMatrix     = transpose(to_rotation4(orientation));
+	viewMatrix._03 = -dot(to_float3(viewMatrix.r[0]), position);
+	viewMatrix._13 = -dot(to_float3(viewMatrix.r[1]), position);
+	viewMatrix._23 = -dot(to_float3(viewMatrix.r[2]), position);
 }
 
 XNG_INLINE void directx_view_matrix(float4x4 & viewMatrix, const float3 & position, const quaternion & orientation)
 {
-	viewMatrix = transpose(to_rotation4(orientation));
-	viewMatrix._30 = -dot(to_float3(viewMatrix.r[0]), position);
-	viewMatrix._31 = -dot(to_float3(viewMatrix.r[1]), position);
-	viewMatrix._32 = -dot(to_float3(viewMatrix.r[2]), position);
+	viewMatrix     = transpose(to_rotation4(orientation));
+	viewMatrix._03 = -dot(to_float3(viewMatrix.r[0]), position);
+	viewMatrix._13 = -dot(to_float3(viewMatrix.r[1]), position);
+	viewMatrix._23 = -dot(to_float3(viewMatrix.r[2]), position);
 }
 
-const float4x4 & camera::get_view_matrix(void) const
+const float4x4 & camera::get_gl_view_matrix(void) const
 {
-	if (m_viewMatrixDirty)
+	if (m_viewMatrixDirty || m_coordSystem != XNG_COORDINATE_SYSTEM_OPENGL)
 	{
-		switch (m_coordSystem)
-		{
-		case XNG_COORDINATE_SYSTEM_DIRECTX:
-			directx_view_matrix(m_viewMatrix, m_position, m_orientation);
-			break;
-		default:
-			gl_view_matrix(m_viewMatrix, m_position, m_orientation);
-			break;
-		}
+		gl_view_matrix(m_viewMatrix, m_position, m_orientation);;
+		m_coordSystem     = XNG_COORDINATE_SYSTEM_OPENGL;
 		m_viewMatrixDirty = false;
 	}
 	return m_viewMatrix;
 }
 
-	// TODO: Just do everything right handed
+const float4x4 & camera::get_directx_view_matrix(void) const
+{
+	if (m_viewMatrixDirty || m_coordSystem != XNG_COORDINATE_SYSTEM_DIRECTX)
+	{
+		directx_view_matrix(m_viewMatrix, m_position, m_orientation);;
+		m_coordSystem     = XNG_COORDINATE_SYSTEM_DIRECTX;
+		m_viewMatrixDirty = false;
+	}
+	return m_viewMatrix;
+}
+
+// TODO: Just do everything right handed
 
 XNG_INLINE void gl_projection_matrix(float4x4 & projectionMatrix, float fovy, float ratio, float znear, float zfar)
 {
-	float w = std::atan(fovy * .5f);
-	float h = w / ratio;
-	float invNmF = 1.f / (zfar - znear);
+	float h = std::atan(fovy * .5f);
+	float w = h / ratio;
+	float invFmN = 1.f / (zfar - znear);
 
 	projectionMatrix = float4x4 {
 		w, 0.f, 0.f, 0.f,
 		0.f, h, 0.f, 0.f,
-		0.f, 0.f, zfar * invNmF, 1.f,
-		0.f, 0.f, -znear * zfar * invNmF ,0.f
+		0.f, 0.f, -(zfar + znear) * invFmN, - 2.f * zfar * znear * invFmN,
+		0.f, 0.f, -1.f, 0.f
 	};
 }
 
 XNG_INLINE void directx_projection_matrix(float4x4 & projectionMatrix, float fovy, float ratio, float znear, float zfar)
 {
-	float w = std::atan(fovy * .5f);
-	float h = w / ratio;
-	float invNmF = 1.f / (zfar - znear);
+	float h = std::atan(fovy * .5f);
+	float w = h / ratio;
+	float invNmF = 1.f / (znear - zfar);
 
 	projectionMatrix = float4x4{
 		w, 0.f, 0.f, 0.f,
 		0.f, h, 0.f, 0.f,
-		0.f, 0.f, zfar * invNmF, 1.f,
-		0.f, 0.f, -znear * zfar * invNmF ,0.f
+		0.f, 0.f, zfar * invNmF, znear * zfar * invNmF,
+		0.f, 0.f, -1.f, 0.f
 	};
 }
 
-const float4x4 & camera::get_projection_matrix(void) const
+const float4x4 & camera::get_gl_projection_matrix(void) const
 {
-	if (m_projectionMatrixDirty)
+	if (m_projectionMatrixDirty || m_coordSystem != XNG_COORDINATE_SYSTEM_OPENGL)
 	{
-		switch (m_coordSystem)
-		{
-		case XNG_COORDINATE_SYSTEM_DIRECTX:
-			directx_projection_matrix(m_viewMatrix, m_fovy, m_ratio, m_znear, m_zfar);
-			break;
-		default:
-			gl_projection_matrix(m_viewMatrix, m_fovy, m_ratio, m_znear, m_zfar);
-			break;
-		}
+		gl_projection_matrix(m_projectionMatrix, m_fovy, m_ratio, m_znear, m_zfar);
+		m_coordSystem           = XNG_COORDINATE_SYSTEM_OPENGL;
+		m_projectionMatrixDirty = false;
+	}
+	return m_projectionMatrix;
+}
+
+const float4x4 & camera::get_directx_projection_matrix(void) const
+{
+	if (m_projectionMatrixDirty || m_coordSystem != XNG_COORDINATE_SYSTEM_DIRECTX)
+	{
+		directx_projection_matrix(m_projectionMatrix, m_fovy, m_ratio, m_znear, m_zfar);
+		m_coordSystem = XNG_COORDINATE_SYSTEM_DIRECTX;
 		m_projectionMatrixDirty = false;
 	}
 	return m_projectionMatrix;
@@ -199,15 +196,30 @@ const float4x4 & camera::get_projection_matrix(void) const
 
 const float3 camera::forward(void)
 {
+	return transform(float3(0, 0, 1), m_orientation);
+}
+
+const float3 camera::back(void)
+{
 	return transform(float3(0, 0, -1), m_orientation);
+}
+
+const float3 camera::left(void)
+{
+	return transform(float3(1, 0, 0), m_orientation);
 }
 
 const float3 camera::right(void)
 {
-	return transform(float3(1, 0, 0), m_orientation);
+	return transform(float3(-1, 0, 0), m_orientation);
 }
 
 const float3 camera::up(void)
 {
 	return transform(float3(0, 1, 0), m_orientation);
+}
+
+const float3 camera::down(void)
+{
+	return transform(float3(0, -1, 0), m_orientation);
 }

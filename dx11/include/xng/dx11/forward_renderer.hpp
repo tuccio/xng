@@ -18,7 +18,7 @@ namespace xng
 			void shutdown(void);
 
 			void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);
-			void render(graphics::scene * scene, const graphics::camera * camera);
+			void render(graphics::scene * scene, graphics::camera * camera);
 
 		private:
 

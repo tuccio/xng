@@ -4,7 +4,7 @@
 
 #include "matrix_iterators.hpp"
 
-#define XNG_MATH_ROW_MAJOR_ACCESS(X, N, M, I, J) X[N * J + I]
+#define XNG_MATH_ROW_MAJOR_ACCESS(X, N, M, I, J) X[M * I + J]
 
 namespace xng
 {

@@ -15,6 +15,7 @@ shader::shader(void) : m_shader(0), m_error(XNG_GL_SHADER_ERROR_UNCOMPILED) {}
 shader::shader(shader && rhs)
 {
 	m_shader     = rhs.m_shader;
+	m_type       = rhs.m_type;
 	rhs.m_shader = 0;
 	rhs.m_error  = XNG_GL_SHADER_ERROR_UNCOMPILED;
 }

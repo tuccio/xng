@@ -11,6 +11,8 @@ namespace xng
 
 		public:
 
+			scene_graph_camera(scene_graph_node * parent);
+
 			XNG_INLINE camera * get_camera(void)
 			{
 				return &m_camera;
@@ -20,6 +22,8 @@ namespace xng
 			{
 				return &m_camera;
 			}
+
+			scene_graph_camera * clone(scene_graph_node * newParent, scene_graph * newSceneGraph) override;
 
 		private:
 
