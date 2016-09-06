@@ -51,7 +51,7 @@ namespace xng
 
 			std::unique_ptr<os::native_window> m_window;
 			std::unique_ptr<os::main_loop>     m_mainLoop;
-			os::high_resolution_timer<float>   m_timer;
+			os::high_resolution_stopwatch<float>   m_timer;
 
 			std::unique_ptr<os::native_window_observer> m_quitOnClose;
 
@@ -66,8 +66,10 @@ namespace xng
 			std::mutex                m_renderMutex;
 			std::condition_variable   m_renderCV;
 			std::thread               m_renderingThread;
+			std::thread               m_gameLoopThread;
 
 			void rendering_loop(void);
+			void game_loop(void);
 
 		};
 	}

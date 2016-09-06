@@ -75,41 +75,42 @@ void game::shutdown(void)
 
 void game::run(void)
 {
-	m_mainLoop->set_idle_callback(
-		[this]()
-	{
-		// Actual game loop
+	//m_mainLoop->set_idle_callback(
+	//	[this]()
+	//{
+	//	// Actual game loop
 
-		float dt = m_timer.get_elapsed_seconds();
+	//	float dt = m_timer.get_elapsed_seconds();
 
-		if (m_runtime)
-		{
-			m_runtime->update(dt);
-		}
+	//	if (m_runtime)
+	//	{
+	//		m_runtime->update(dt);
+	//	}
 
-		if (m_scene)
-		{
-			scene * currentScene = m_scene->get_active_scene();
+	//	if (m_scene)
+	//	{
+	//		scene * currentScene = m_scene->get_active_scene();
 
-			if (currentScene)
-			{
-				currentScene->update();
+	//		if (currentScene)
+	//		{
+	//			currentScene->update();
 
-				if (m_render)
-				{
-					std::lock_guard<std::mutex> renderLock(m_renderMutex);
-					m_renderScene = currentScene->clone();
-					m_renderCV.notify_all();
-				}
-			}
-		}
-	});
+	//			if (m_render)
+	//			{
+	//				std::lock_guard<std::mutex> renderLock(m_renderMutex);
+	//				m_renderScene = currentScene->clone();
+	//				m_renderCV.notify_all();
+	//			}
+	//		}
+	//	}
+	//});
 
 	start_rendering();
 
 	m_running = true;
 
-	m_timer.get_elapsed_seconds();
+	//m_timer.get_elapsed_seconds();
+	m_gameLoopThread = std::thread(std::bind(&game::game_loop, this));
 	m_mainLoop->run();
 
 	m_running = false;
@@ -165,7 +166,7 @@ bool game::is_rendering(void) const
 
 void game::rendering_loop(void)
 {
-	do
+	while (m_rendering)
 	{
 		std::unique_lock<std::mutex> renderLock(m_renderMutex);
 
@@ -180,7 +181,56 @@ void game::rendering_loop(void)
 			delete m_renderScene;
 			m_renderScene = nullptr;
 		}
-	} while (m_rendering);
+	}
+}
+
+void game::game_loop(void)
+{
+	const high_resolution_timestamp GameStart = timestamp();
+
+	const uint32_t TicksPerSecond = 25;
+	const uint32_t MaxFrameSkip   = 10;
+
+	const uint32_t SkipTicks      = 1000 / TicksPerSecond;
+	const float    TickSeconds    = 1.f / TicksPerSecond;
+
+	uint32_t nextTick = SkipTicks;
+
+	scene * currentScene = nullptr;
+
+	while (m_running)
+	{
+		for (uint32_t loops = 0;
+			to_milliseconds<uint32_t>(timestamp() - GameStart) > nextTick && loops < MaxFrameSkip;
+			++loops)
+		{
+			if (m_runtime)
+			{
+				m_runtime->update(TickSeconds);
+			}
+
+			if (m_scene)
+			{
+				currentScene = m_scene->get_active_scene();
+
+				if (currentScene)
+				{
+					currentScene->update();
+				}
+			}
+
+			XNG_LOG("Time:", XNG_LOG_STREAM() << "Elapsed " << to_milliseconds<uint32_t>(timestamp() - GameStart) << "ms, game time is " << nextTick << "ms, updating for " << TickSeconds << "s.");
+
+			nextTick += SkipTicks;
+		}
+
+		if (currentScene && m_render)
+		{
+			std::lock_guard<std::mutex> renderLock(m_renderMutex);
+			m_renderScene = currentScene->clone();
+			m_renderCV.notify_all();
+		}
+	}
 }
 
 void game::set_quit_on_close(bool quitOnClose)
@@ -200,6 +250,7 @@ bool game::get_quit_on_close(void) const
 void game::quit(void)
 {
 	m_mainLoop->quit();
+	m_running = false;
 }
 
 scene_module * game::get_scene_module(void) const
