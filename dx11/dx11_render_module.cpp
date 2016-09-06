@@ -30,7 +30,7 @@ bool dx11_render_module::init(native_window * window)
 		auto clientSize = window->get_client_size();
 		m_context->on_resize(clientSize.x, clientSize.y);
 
-		resource_factory::get_singleton()->register_manager(new gpu_mesh_manager(m_context->get_device()));
+		resource_factory::get_singleton()->register_manager(XNG_NEW gpu_mesh_manager(m_context->get_device()));
 
 		return true;
 	}
@@ -47,7 +47,7 @@ void dx11_render_module::shutdown(void)
 	m_window->remove_observer(&m_windowObserver);
 	m_window = nullptr;
 
-	delete resource_factory::get_singleton()->unregister_manager("dx11mesh");
+	XNG_DELETE resource_factory::get_singleton()->unregister_manager("dx11mesh");
 
 	m_renderer->shutdown();
 

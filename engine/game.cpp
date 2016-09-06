@@ -178,8 +178,9 @@ void game::rendering_loop(void)
 		if (m_renderScene)
 		{
 			m_render->render(m_renderScene);
-			delete m_renderScene;
+			XNG_DELETE m_renderScene;
 			m_renderScene = nullptr;
+			m_renderCV.notify_all();
 		}
 	}
 }
@@ -204,6 +205,9 @@ void game::game_loop(void)
 			to_milliseconds<uint32_t>(timestamp() - GameStart) > nextTick && loops < MaxFrameSkip;
 			++loops)
 		{
+
+			// Update the game with a TickSeconds period
+
 			if (m_runtime)
 			{
 				m_runtime->update(TickSeconds);
@@ -219,16 +223,25 @@ void game::game_loop(void)
 				}
 			}
 
-			XNG_LOG("Time:", XNG_LOG_STREAM() << "Elapsed " << to_milliseconds<uint32_t>(timestamp() - GameStart) << "ms, game time is " << nextTick << "ms, updating for " << TickSeconds << "s.");
-
 			nextTick += SkipTicks;
 		}
 
-		if (currentScene && m_render)
+		// Feed the rendering thread a new scene (need to implement interpolation)
+
+		if (currentScene && m_rendering)
 		{
-			std::lock_guard<std::mutex> renderLock(m_renderMutex);
-			m_renderScene = currentScene->clone();
-			m_renderCV.notify_all();
+			std::unique_lock<std::mutex> renderLock(m_renderMutex);
+
+			while (m_renderScene && m_rendering)
+			{
+				m_renderCV.wait(renderLock);
+			}
+
+			if (!m_renderScene)
+			{
+				m_renderScene = currentScene->clone();
+				m_renderCV.notify_all();
+			}
 		}
 	}
 }

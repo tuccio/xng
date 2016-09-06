@@ -7,7 +7,7 @@ scene_graph_camera::scene_graph_camera(scene_graph_node * parent) :
 
 scene_graph_camera * scene_graph_camera::clone(scene_graph_node * newParent, scene_graph * newSceneGraph)
 {
-	scene_graph_camera * newNode = new scene_graph_camera(*this);
+	scene_graph_camera * newNode = XNG_NEW scene_graph_camera(*this);
 
 	set_parent_internal(newParent);
 	set_scene_graph(newSceneGraph);

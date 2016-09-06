@@ -72,7 +72,7 @@ const shader_program * uber_shader::compile(const char * name, std::initializer_
 		return shaderIt->second.get();
 	}
 
-	auto it = m_shaders.emplace(name, std::unique_ptr<shader_program>(new shader_program()));
+	auto it = m_shaders.emplace(name, std::unique_ptr<shader_program>(XNG_NEW shader_program()));
 	auto & program = it.first->second;
 
 	std::vector<shader> shaders;

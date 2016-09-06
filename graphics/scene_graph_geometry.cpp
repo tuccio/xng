@@ -33,7 +33,7 @@ void scene_graph_geometry::update_impl(void)
 
 scene_graph_geometry * scene_graph_geometry::clone(scene_graph_node * newParent, scene_graph * newSceneGraph)
 {
-	scene_graph_geometry * newNode = new scene_graph_geometry(*this);
+	scene_graph_geometry * newNode = XNG_NEW scene_graph_geometry(*this);
 
 	set_parent_internal(newParent);
 	set_scene_graph(newSceneGraph);

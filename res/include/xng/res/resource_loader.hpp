@@ -26,7 +26,7 @@ namespace xng
 		template <typename Loader, typename ... Args>
 		resource_loader_ptr make_resource_loader(Args && ... args)
 		{
-			return resource_loader_ptr(new Loader(std::forward<Args>(args) ...));
+			return resource_loader_ptr(XNG_NEW Loader(std::forward<Args>(args) ...));
 		}
 
 		class dynamic_resource_loader :

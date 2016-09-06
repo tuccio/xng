@@ -36,12 +36,12 @@ namespace xng
 		{
 			module * create(void) const override
 			{
-				return new Module;
+				return XNG_NEW Module;
 			}
 
 			void destroy(module * module) const override
 			{
-				delete module;
+				XNG_DELETE module;
 			}
 
 			const char * name(void) const override
@@ -74,7 +74,7 @@ namespace xng
 
 #define XNG_MODULE_FACTORY_ARRAY_FSYM s_xngExportedModules
 
-#define XNG_MODULE_FACTORY_ARRAY_INSTANTIATE(r, data, Module) new xng::engine::basic_module_factory<Module>() BOOST_PP_COMMA()
+#define XNG_MODULE_FACTORY_ARRAY_INSTANTIATE(r, data, Module) XNG_NEW xng::engine::basic_module_factory<Module>() BOOST_PP_COMMA()
 #define XNG_MODULE_FACTORY_ARRAY_FILL(...) BOOST_PP_SEQ_FOR_EACH(XNG_MODULE_FACTORY_ARRAY_INSTANTIATE, 0, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) nullptr
 
 #define XNG_MODULE_FACTORY_ARRAY(...) static xng::engine::module_factory * XNG_MODULE_FACTORY_ARRAY_FSYM [] = { XNG_MODULE_FACTORY_ARRAY_FILL(__VA_ARGS__) };

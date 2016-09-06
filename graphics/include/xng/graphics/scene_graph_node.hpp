@@ -54,7 +54,7 @@ namespace xng
 			template <typename NodeType, typename ... Args>
 			XNG_INLINE  NodeType * add_child(Args && ... args)
 			{
-				NodeType * child = new NodeType(this, std::forward<Args>(args) ...);
+				NodeType * child = XNG_NEW NodeType(this, std::forward<Args>(args) ...);
 				m_children.push_back(child);
 				return child;
 			}

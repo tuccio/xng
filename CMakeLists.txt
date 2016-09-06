@@ -14,6 +14,12 @@ include(xng)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DXNG_DEBUG")
 
+option(XNG_DEBUG_NEW "Use memory allocation logging to debug memory leaks" OFF)
+
+if (XNG_DEBUG_NEW)
+		add_definitions(-DXNG_DEBUG_NEW)
+endif()
+
 add_definitions(-DXNG_INLINE=inline)
 
 if (WIN32)

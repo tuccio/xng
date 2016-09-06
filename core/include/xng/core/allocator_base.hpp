@@ -23,7 +23,7 @@ namespace xng
 			template <typename ... Args>
 			void construct(T * p, Args && ... args)
 			{
-				new (p) T(args ...);
+				XNG_NEW (p) T(args ...);
 			}
 
 			void destroy(T * p)

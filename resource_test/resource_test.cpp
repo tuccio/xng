@@ -27,13 +27,13 @@ protected:
 	bool load_impl(void) override
 	{
 		std::string name = get_name();
-		m_resource = new std::string(name.rbegin(), name.rend());
+		m_resource = XNG_NEW std::string(name.rbegin(), name.rend());
 		return true;
 	}
 
 	void unload_impl(void) override
 	{
-		delete m_resource;
+		XNG_DELETE m_resource;
 	}
 
 	size_t calculate_size_impl(void) override
@@ -62,12 +62,12 @@ protected:
 
 	xng::res::resource * create_impl(const char * name, std::shared_ptr<xng::res::resource_loader> loader)
 	{
-		return new reverse_name(name);
+		return XNG_NEW reverse_name(name);
 	}
 
 	void free_impl(xng::res::resource * resource)
 	{
-		delete resource;
+		XNG_DELETE resource;
 	}
 
 };
