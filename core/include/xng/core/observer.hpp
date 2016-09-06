@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <type_traits>
 
 namespace xng
 {
@@ -13,8 +14,11 @@ namespace xng
 
 		public:
 
+			// Notify all
+
 			template <typename Callback, typename ... Args>
-			inline void notify(Callback callback, Args && ... args)
+			XNG_INLINE std::enable_if_t<std::is_same<void, std::result_of_t<Callback(T, Args...)>>::value>
+				notify(Callback callback, Args && ... args)
 			{
 				for (T * observer : m_observers)
 				{
@@ -22,12 +26,29 @@ namespace xng
 				}
 			}
 
-			void add_observer(T * observer)
+			// Notify all with propagation (stops propagating if the return value is 0, or false depending on the return type)
+
+			template <typename Callback, typename ... Args>
+			XNG_INLINE std::enable_if_t<!std::is_same<void, std::result_of_t<Callback(T, Args...)>>::value>
+				notify(Callback callback, Args && ... args)
+			{
+				for (T * observer : m_observers)
+				{
+					if (!(observer->*callback)(std::forward<Args>(args) ...))
+					{
+						return;
+					}
+				}
+			}
+
+			// Manage observers
+
+			void add_observer(T * observer) const
 			{
 				m_observers.push_back(observer);
 			}
 
-			void remove_observer(T * observer)
+			void remove_observer(T * observer) const
 			{
 				auto it = std::find(m_observers.begin(), m_observers.end(), observer);
 				m_observers.erase(it);
@@ -35,15 +56,17 @@ namespace xng
 
 		protected:
 
-			void clear_observers(void)
+			void clear_observers(void) const
 			{
 				m_observers.clear();
 			}
 
 		private:
 
-			std::vector<T*> m_observers;
+			mutable std::vector<T*> m_observers;
 
 		};
+
+
 	}
 }

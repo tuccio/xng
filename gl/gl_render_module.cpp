@@ -18,7 +18,7 @@ bool gl_render_module::init(native_window * window)
 #ifdef XNG_DX11_DEBUG
 	debug = true;
 #endif
-	m_context  = std::unique_ptr<gl_api_context>(XNG_NEW wgl_api_context);
+	m_context  = std::unique_ptr<gl_api_context>(xng_new wgl_api_context);
 	m_renderer = std::make_unique<forward_renderer>();
 
 	if (m_context->init(window->get_native_handle(), XNG_API_GL_4_5, debug) && m_renderer->init(m_context.get()))
@@ -29,7 +29,7 @@ bool gl_render_module::init(native_window * window)
 
 		m_windowObserver.on_resize(m_window, m_window->get_window_size(), m_window->get_client_size());
 
-		resource_factory::get_singleton()->register_manager(XNG_NEW gpu_mesh_manager(m_context.get()));
+		resource_factory::get_singleton()->register_manager(xng_new gpu_mesh_manager(m_context.get()));
 
 		m_context->dispose();
 		return true;
@@ -49,7 +49,7 @@ void gl_render_module::shutdown(void)
 
 	m_context->use();
 
-	XNG_DELETE resource_factory::get_singleton()->unregister_manager("glmesh");
+	xng_delete resource_factory::get_singleton()->unregister_manager("glmesh");
 	m_renderer->shutdown();
 
 	m_context->dispose();
@@ -68,6 +68,7 @@ void gl_render_module::render(scene * scene)
 	render_variables rvars;
 	render_variables_updates updates;
 
+	m_windowObserver.update();
 	configuration().get_render_variables(&rvars, &updates);
 
 	m_context->use();

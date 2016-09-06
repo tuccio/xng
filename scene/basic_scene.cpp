@@ -68,7 +68,7 @@ void basic_scene::update(void)
 
 scene * basic_scene::clone(void)
 {
-	return XNG_NEW basic_scene(*this);
+	return xng_new basic_scene(*this);
 }
 
 scene::geometry_vector basic_scene::get_geometry_nodes(void)

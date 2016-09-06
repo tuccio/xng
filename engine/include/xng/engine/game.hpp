@@ -4,6 +4,8 @@
 #include <xng/engine/render_module.hpp>
 #include <xng/engine/runtime_module.hpp>
 
+#include <xng/input.hpp>
+
 #include <xng/os.hpp>
 
 #include <atomic>
@@ -47,26 +49,41 @@ namespace xng
 			void stop_rendering(void);
 			bool is_rendering(void) const;
 
+			void set_ticks_per_second(uint32_t ticks);
+			uint32_t get_ticks_per_second(void) const;
+
 		private:
 
 			std::unique_ptr<os::native_window> m_window;
-			std::unique_ptr<os::main_loop>     m_mainLoop;
-			os::high_resolution_stopwatch<float>   m_timer;
 
-			std::unique_ptr<os::native_window_observer> m_quitOnClose;
+			// Modules
 
 			scene_module   * m_scene;
 			render_module  * m_render;
 			runtime_module * m_runtime;
 
+			// Loop members
+
+			uint32_t m_ticksPerSecond;
+
 			std::atomic<bool> m_running;
 			std::atomic<bool> m_rendering;
 
-			graphics::scene         * m_renderScene;
-			std::mutex                m_renderMutex;
-			std::condition_variable   m_renderCV;
-			std::thread               m_renderingThread;
-			std::thread               m_gameLoopThread;
+			std::unique_ptr<os::main_loop>   m_mainLoop;
+			graphics::scene                * m_renderScene;
+
+			std::unique_ptr<os::native_window_observer> m_quitOnClose;
+
+			std::mutex              m_renderMutex;
+			std::condition_variable m_renderCV;
+			std::thread             m_renderingThread;
+			std::thread             m_gameLoopThread;
+
+			// Input
+
+			input::input_handler m_inputHandler;
+
+			// Internal functions
 
 			void rendering_loop(void);
 			void game_loop(void);

@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#define XNG_NEW                new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define XNG_DELETE             delete
+#define xng_new                new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define xng_delete             delete
 #define XNG_DEBUG_NEW_REPORT() _CrtDumpMemoryLeaks()
 
 #endif

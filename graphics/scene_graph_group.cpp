@@ -4,7 +4,7 @@ using namespace xng::graphics;
 
 scene_graph_group * scene_graph_group::clone(scene_graph_node * newParent, scene_graph * newSceneGraph)
 {
-	scene_graph_group * newNode = XNG_NEW scene_graph_group(*this);
+	scene_graph_group * newNode = xng_new scene_graph_group(*this);
 
 	set_parent_internal(newParent);
 	set_scene_graph(newSceneGraph);

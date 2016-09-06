@@ -157,7 +157,7 @@ void scene_graph_node::update(void)
 void scene_graph_node::on_parent_destruction(void)
 {
 	m_parent = nullptr;
-	XNG_DELETE this;
+	xng_delete this;
 }
 
 void scene_graph_node::on_child_destruction(scene_graph_node * child)
@@ -171,7 +171,7 @@ void scene_graph_node::clear_children(void)
 {
 	for (auto child : m_children)
 	{
-		XNG_DELETE child;
+		xng_delete child;
 	}
 
 	m_children.clear();
@@ -195,7 +195,7 @@ xng_scene_graph_node_type scene_graph_node::get_type(void) const
 void scene_graph_node::on_parent_destruction_internal(void)
 {
 	m_parent = nullptr;
-	XNG_DELETE this;
+	xng_delete this;
 }
 
 void scene_graph_node::on_child_destruction_internal(scene_graph_node * child)

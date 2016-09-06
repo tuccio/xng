@@ -7,6 +7,74 @@
 using namespace xng::engine;
 using namespace xng::graphics;
 using namespace xng::os;
+using namespace xng::input;
+
+/* Observers used */
+
+struct game_window_observer :
+	public native_window_observer
+{
+	game_window_observer(main_loop * loop) :
+		m_loop(loop) {}
+
+	void on_destroy(native_window * window)
+	{
+		m_loop->quit();
+	}
+
+private:
+
+	main_loop * m_loop;
+};
+
+struct game_input_observer :
+	public native_window_observer
+{
+	game_input_observer(input_handler * inputHandler) :
+		m_inputHandler(inputHandler) {}
+
+	void on_keyboard_key_down(native_window * window, xng_keyboard_key key)
+	{
+		m_inputHandler->on_keyboard_key_down(key, timestamp());
+	}
+
+	void on_keyboard_key_up(native_window * window, xng_keyboard_key key)
+	{
+		m_inputHandler->on_keyboard_key_up(key, timestamp());
+	}
+
+	void on_focus(native_window * window)
+	{
+		m_inputHandler->on_focus_change(timestamp());
+	}
+
+	void on_unfocus(native_window * window)
+	{
+		m_inputHandler->on_focus_change(timestamp());
+	}
+
+private:
+
+	input_handler * m_inputHandler;
+};
+
+struct game_keyboard_observer :
+	public keyboard_observer
+{
+	bool on_keyboard_key_down(xng_keyboard_key key)
+	{
+		XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
+		return true;
+	}
+
+	bool on_keyboard_key_up(xng_keyboard_key key, uint32_t millis)
+	{
+		XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
+		return true;
+	}
+};
+
+/* Game class implementation */
 
 game::game(void) :
 	m_scene(nullptr),
@@ -14,7 +82,8 @@ game::game(void) :
 	m_runtime(nullptr),
 	m_running(false),
 	m_rendering(false),
-	m_renderScene(nullptr)
+	m_renderScene(nullptr),
+	m_ticksPerSecond(30)
 {
 }
 
@@ -41,26 +110,11 @@ bool game::init(void)
 	return false;
 }
 
-struct game_window_observer :
-	public native_window_observer
-{
-	game_window_observer(main_loop * loop) : m_loop(loop) {}
-
-	void on_destroy(native_window * window)
-	{
-		m_loop->quit();
-	}
-
-private:
-
-	main_loop * m_loop;
-};
-
 void game::shutdown(void)
 {
 	assert(!m_running && !m_rendering && "Shutdown called while the game is still running.");
 
-#define XNG_GAME_SHUTDOWN_MODULE(Module, ...) if (Module && Module->is_initialized()) { Module->shutdown(); }
+#define XNG_GAME_SHUTDOWN_MODULE(Module, ...) if (Module && Module->is_initialized()) { Module->shutdown(); xng_delete Module; Module = nullptr; }
 
 	XNG_GAME_SHUTDOWN_MODULE(m_runtime);
 	XNG_GAME_SHUTDOWN_MODULE(m_scene);
@@ -75,41 +129,10 @@ void game::shutdown(void)
 
 void game::run(void)
 {
-	//m_mainLoop->set_idle_callback(
-	//	[this]()
-	//{
-	//	// Actual game loop
-
-	//	float dt = m_timer.get_elapsed_seconds();
-
-	//	if (m_runtime)
-	//	{
-	//		m_runtime->update(dt);
-	//	}
-
-	//	if (m_scene)
-	//	{
-	//		scene * currentScene = m_scene->get_active_scene();
-
-	//		if (currentScene)
-	//		{
-	//			currentScene->update();
-
-	//			if (m_render)
-	//			{
-	//				std::lock_guard<std::mutex> renderLock(m_renderMutex);
-	//				m_renderScene = currentScene->clone();
-	//				m_renderCV.notify_all();
-	//			}
-	//		}
-	//	}
-	//});
-
 	start_rendering();
 
 	m_running = true;
 
-	//m_timer.get_elapsed_seconds();
 	m_gameLoopThread = std::thread(std::bind(&game::game_loop, this));
 	m_mainLoop->run();
 
@@ -178,7 +201,7 @@ void game::rendering_loop(void)
 		if (m_renderScene)
 		{
 			m_render->render(m_renderScene);
-			XNG_DELETE m_renderScene;
+			xng_delete m_renderScene;
 			m_renderScene = nullptr;
 			m_renderCV.notify_all();
 		}
@@ -189,7 +212,7 @@ void game::game_loop(void)
 {
 	const high_resolution_timestamp GameStart = timestamp();
 
-	const uint32_t TicksPerSecond = 25;
+	const uint32_t TicksPerSecond = m_ticksPerSecond;
 	const uint32_t MaxFrameSkip   = 10;
 
 	const uint32_t SkipTicks      = 1000 / TicksPerSecond;
@@ -199,14 +222,20 @@ void game::game_loop(void)
 
 	scene * currentScene = nullptr;
 
+	game_keyboard_observer keyboardObserver;
+
+	m_inputHandler.keyboard().add_observer(&keyboardObserver);
+
+	game_input_observer inputObserver(&m_inputHandler);
+	m_window->add_observer(&inputObserver);
+
 	while (m_running)
 	{
 		for (uint32_t loops = 0;
 			to_milliseconds<uint32_t>(timestamp() - GameStart) > nextTick && loops < MaxFrameSkip;
 			++loops)
 		{
-
-			// Update the game with a TickSeconds period
+			m_inputHandler.dispatch(GameStart + nextTick);
 
 			if (m_runtime)
 			{
@@ -226,7 +255,7 @@ void game::game_loop(void)
 			nextTick += SkipTicks;
 		}
 
-		// Feed the rendering thread a new scene (need to implement interpolation)
+		// Feed the rendering thread a new scene (TODO: interpolation)
 
 		if (currentScene && m_rendering)
 		{
@@ -244,6 +273,9 @@ void game::game_loop(void)
 			}
 		}
 	}
+
+	m_window->remove_observer(&inputObserver);
+	m_inputHandler.clear();
 }
 
 void game::set_quit_on_close(bool quitOnClose)
@@ -299,4 +331,14 @@ void game::set_runtime_module(runtime_module * runtime)
 native_window * game::get_window(void) const
 {
 	return m_window.get();
+}
+
+void game::set_ticks_per_second(uint32_t ticks)
+{
+	m_ticksPerSecond = ticks;
+}
+
+uint32_t game::get_ticks_per_second(void) const
+{
+	return m_ticksPerSecond;
 }

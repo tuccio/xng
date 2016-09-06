@@ -20,12 +20,12 @@ namespace xng
 
 			res::resource * create_impl(const char * name, const res::resource_parameters & params, res::resource_loader_ptr loader) override
 			{
-				return XNG_NEW mesh(name, params, loader, this);
+				return xng_new mesh(name, params, loader, this);
 			}
 
 			void free_impl(res::resource * resource) override
 			{
-				XNG_DELETE resource;
+				xng_delete resource;
 			}
 
 		};

@@ -71,7 +71,7 @@ bool module_manager::register_shared_library(const path & path)
 			std::lock_guard<std::mutex> lock(m_mutex);
 
 			XNG_LOG("Loading dynamic module", path.c_str());
-			std::shared_ptr<shared_library> persistentLibrary(XNG_NEW shared_library(std::move(library)));
+			std::shared_ptr<shared_library> persistentLibrary(xng_new shared_library(std::move(library)));
 
 			for (module_factory ** factory = factories; *factory != nullptr; ++factory)
 			{

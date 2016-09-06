@@ -185,7 +185,7 @@ namespace xng
 				morton_code parentLocation = octantLocation >> 3;
 				node_hashmap_iterator parent = create_octant(parentLocation);
 
-				// Add the XNG_NEW node to the parent
+				// Add the xng_new node to the parent
 				parent->second.childrenMask |= XNG_LOOSEOCTREE_MAKE_CHILD_MASK(childCode);
 
 			}

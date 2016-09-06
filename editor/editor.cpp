@@ -19,7 +19,7 @@ void create_menu(wxFrame * editor);
 
 editor::editor(native_window * window)
 {
-	wxApp::SetInstance(XNG_NEW wx_app);
+	wxApp::SetInstance(xng_new wx_app);
 
 	static int argc = 1;
 	static char * argv[] = { "xngeditor", nullptr };
@@ -28,8 +28,8 @@ editor::editor(native_window * window)
 	{
 		math::uint2 size = window->get_window_size();
 
-		m_editor = XNG_NEW wxFrame(nullptr, wxID_ANY, "XNG Editor");
-		render_panel * renderPanel = XNG_NEW render_panel(window, m_editor, wxID_ANY);
+		m_editor = xng_new wxFrame(nullptr, wxID_ANY, "XNG Editor");
+		render_panel * renderPanel = xng_new render_panel(window, m_editor, wxID_ANY);
 
 		m_editor->Show();
 		renderPanel->Show();
@@ -63,7 +63,7 @@ editor::editor(native_window * window)
 
 editor::~editor(void)
 {
-	XNG_DELETE wxTheApp;
+	xng_delete wxTheApp;
 	wxApp::SetInstance(nullptr);
 	
 	wxEntryCleanup();
@@ -87,15 +87,15 @@ struct render_module_dialog :
 		wxDialog(nullptr, wxID_ANY, "Render Module"),
 		factory(nullptr)
 	{
-		wxSizer * vSizer = XNG_NEW wxBoxSizer(wxVERTICAL);
-		wxSizer * hSizer = XNG_NEW wxBoxSizer(wxHORIZONTAL);
+		wxSizer * vSizer = xng_new wxBoxSizer(wxVERTICAL);
+		wxSizer * hSizer = xng_new wxBoxSizer(wxHORIZONTAL);
 
-		wxStaticBoxSizer  * box = XNG_NEW wxStaticBoxSizer(wxVERTICAL, this,
+		wxStaticBoxSizer  * box = xng_new wxStaticBoxSizer(wxVERTICAL, this,
 			"Pick the rendering module to switch to from this list:");
 
-		wxListCtrl * list   = XNG_NEW wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-		wxButton   * ok     = XNG_NEW wxButton(this, wxID_OK, "Ok");
-		wxButton   * cancel = XNG_NEW wxButton(this, wxID_CANCEL, "Cancel");
+		wxListCtrl * list   = xng_new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
+		wxButton   * ok     = xng_new wxButton(this, wxID_OK, "Ok");
+		wxButton   * cancel = xng_new wxButton(this, wxID_CANCEL, "Cancel");
 
 		hSizer->Add(ok, 0, wxLEFT | wxRIGHT, 1);
 		hSizer->Add(cancel, 0, wxLEFT | wxRIGHT, 1);
@@ -159,10 +159,10 @@ void create_menu(wxFrame * editor)
 		IDM_RENDER_MODULE
 	};
 
-	wxMenuBar * menuBar = XNG_NEW wxMenuBar;
+	wxMenuBar * menuBar = xng_new wxMenuBar;
 
-	wxMenu * fileMenu   = XNG_NEW wxMenu();
-	wxMenu * renderMenu = XNG_NEW wxMenu();
+	wxMenu * fileMenu   = xng_new wxMenu();
+	wxMenu * renderMenu = xng_new wxMenu();
 
 	menuBar->Append(fileMenu, "File");
 	menuBar->Append(renderMenu, "Render");
@@ -183,7 +183,7 @@ void create_menu(wxFrame * editor)
 
 		case IDM_RENDER_MODULE:
 
-			auto moduleDlg = XNG_NEW render_module_dialog();
+			auto moduleDlg = xng_new render_module_dialog();
 
 			if (moduleDlg->factory)
 			{
@@ -197,7 +197,7 @@ void create_menu(wxFrame * editor)
 				if (oldModule)
 				{
 					oldModule->shutdown();
-					XNG_DELETE oldModule;
+					xng_delete oldModule;
 				}
 
 				if (newModule && newModule->init(instance->get_window()))
