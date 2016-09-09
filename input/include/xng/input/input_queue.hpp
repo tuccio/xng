@@ -3,6 +3,8 @@
 #include <xng/input/vkeys.hpp>
 #include <xng/os/high_resolution_timer.hpp>
 
+#include <xng/math.hpp>
+
 #include <algorithm>
 #include <mutex>
 #include <vector>
@@ -19,6 +21,14 @@ enum xng_keyboard_event_type
 	XNG_KEYBOARD_EVENT_TYPE_KEYUP
 };
 
+enum xng_mouse_event_type
+{
+	XNG_MOUSE_EVENT_TYPE_KEYDOWN,
+	XNG_MOUSE_EVENT_TYPE_KEYUP,
+	XNG_MOUSE_EVENT_TYPE_MOVE,
+	XNG_MOUSE_EVENT_TYPE_WHEEL
+};
+
 namespace xng
 {
 	namespace input
@@ -28,7 +38,18 @@ namespace xng
 		{
 			xng_keyboard_key        key;
 			xng_keyboard_event_type type;
+		};
 
+		struct mouse_event
+		{
+			union
+			{
+				xng_mouse_key key;
+				int32_t       wheel;
+				math::uint2   position;
+			};
+
+			xng_mouse_event_type type;
 		};
 
 		struct input_event
@@ -39,6 +60,7 @@ namespace xng
 			union
 			{
 				keyboard_event keyboardEvent;
+				mouse_event    mouseEvent;
 			};
 		};
 
@@ -62,12 +84,9 @@ namespace xng
 					return a.time < b.time;
 				});
 
-				if (it != m_events.end())
-				{
-					auto end = std::next(it);
-					std::copy(m_events.begin(), end, outIt);
-					m_events.erase(m_events.begin(), end);
-				}
+				auto end = it != m_events.end() ? std::next(it) : it;
+				std::copy(m_events.begin(), end, outIt);
+				m_events.erase(m_events.begin(), end);
 			}
 
 			void clear(void);

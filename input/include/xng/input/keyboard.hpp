@@ -5,15 +5,18 @@
 
 #include <xng/input/vkeys.hpp>
 
+#include <unordered_map>
+
 namespace xng
 {
 	namespace input
 	{
+		class keyboard;
 
 		struct keyboard_observer
 		{
-			virtual bool on_keyboard_key_down(xng_keyboard_key key) { return true; }
-			virtual bool on_keyboard_key_up(xng_keyboard_key key, uint32_t millis) { return true;  }
+			virtual bool on_keyboard_key_down(const keyboard * keyboard, xng_keyboard_key key) { return true; }
+			virtual bool on_keyboard_key_up(const keyboard * keyboard, xng_keyboard_key key, uint32_t millis) { return true;  }
 		};
 
 		class keyboard :
@@ -29,7 +32,9 @@ namespace xng
 
 		private:
 
-			os::high_resolution_timestamp m_key[XNG_KEYBOARD_MAX];
+			typedef std::unordered_map<xng_keyboard_key, os::high_resolution_timestamp> keyboard_map;
+
+			keyboard_map m_keys;
 
 			void press(xng_keyboard_key key, os::high_resolution_timestamp t);
 			void release(xng_keyboard_key key, os::high_resolution_timestamp t);

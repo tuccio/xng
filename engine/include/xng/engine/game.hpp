@@ -4,6 +4,8 @@
 #include <xng/engine/render_module.hpp>
 #include <xng/engine/runtime_module.hpp>
 
+#include <xng/gui.hpp>
+
 #include <xng/input.hpp>
 
 #include <xng/os.hpp>
@@ -42,6 +44,9 @@ namespace xng
 
 			os::native_window * get_window(void) const;
 
+			gui::gui_manager * get_gui_manager(void) const;
+			const input::input_handler * get_input_handler(void) const;
+
 			void set_quit_on_close(bool quitOnClose);
 			bool get_quit_on_close(void) const;
 
@@ -55,12 +60,14 @@ namespace xng
 		private:
 
 			std::unique_ptr<os::native_window> m_window;
+			std::unique_ptr<gui::gui_manager>  m_guiManager;
 
 			// Modules
 
 			scene_module   * m_scene;
 			render_module  * m_render;
 			runtime_module * m_runtime;
+
 
 			// Loop members
 
@@ -70,7 +77,9 @@ namespace xng
 			std::atomic<bool> m_rendering;
 
 			std::unique_ptr<os::main_loop>   m_mainLoop;
+			bool                             m_renderReady;
 			graphics::scene                * m_renderScene;
+			gui::gui_manager               * m_renderGUI;
 
 			std::unique_ptr<os::native_window_observer> m_quitOnClose;
 

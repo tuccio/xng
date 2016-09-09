@@ -4,10 +4,14 @@
 #include <wx/listctrl.h>
 
 #include <xng/engine.hpp>
+#include <xng/gui.hpp>
 
 using namespace xng::editor;
 using namespace xng::os;
 using namespace xng::engine;
+using namespace xng::gui;
+using namespace xng::math;
+using namespace xng::input;
 
 struct wx_app :
 	public wxApp
@@ -16,8 +20,9 @@ struct wx_app :
 };
 
 void create_menu(wxFrame * editor);
+void create_gui(void);
 
-editor::editor(native_window * window)
+editor::editor(native_window * window_body)
 {
 	wxApp::SetInstance(xng_new wx_app);
 
@@ -26,14 +31,14 @@ editor::editor(native_window * window)
 
 	if (wxEntryStart(argc, argv))
 	{
-		math::uint2 size = window->get_window_size();
+		math::uint2 size = window_body->get_window_size();
 
 		m_editor = xng_new wxFrame(nullptr, wxID_ANY, "XNG Editor");
-		render_panel * renderPanel = xng_new render_panel(window, m_editor, wxID_ANY);
+		render_panel * renderPanel = xng_new render_panel(window_body, m_editor, wxID_ANY);
 
 		m_editor->Show();
 		renderPanel->Show();
-		window->show();
+		window_body->show();
 
 		m_auiManager = std::make_unique<wxAuiManager>();
 
@@ -45,6 +50,7 @@ editor::editor(native_window * window)
 		m_auiManager->Update();
 
 		create_menu(m_editor);
+		create_gui();
 
 		m_editor->SetSize(wxSize(size.x, size.y));
 
@@ -215,4 +221,45 @@ void create_menu(wxFrame * editor)
 	});
 
 	editor->SetMenuBar(menuBar);
+}
+
+void create_gui(void)
+{
+	static struct test :
+		keyboard_observer
+	{
+		window * test1;
+		window * test2;
+		window * test3;
+
+		test(void)
+		{
+			game * instance = game::get_singleton();
+			gui_manager * gui = instance->get_gui_manager();
+
+			test1 = xng_new window(gui, nullptr, int2(16), int2(250));
+			test2 = xng_new window(gui, test1, int2(256, 64), int2(250, 150));
+			test3 = xng_new window(gui, test1, int2(128, 128), int2(250, 450));
+
+			instance->get_input_handler()->keyboard().add_observer(this);
+		}
+
+		bool on_keyboard_key_down(const keyboard * keyboard, xng_keyboard_key key) override
+		{
+			if (key == XNG_KEYBOARD_1)
+			{
+				test1->focus();
+			}
+			else if (key == XNG_KEYBOARD_2)
+			{
+				test2->focus();
+			}
+			else if (key == XNG_KEYBOARD_3)
+			{
+				test3->focus();
+			}
+
+			return true;
+		}
+	} t;
 }

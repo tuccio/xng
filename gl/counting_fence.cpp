@@ -36,7 +36,6 @@ bool counting_fence::wait(uint64_t value)
 		m_fences.erase(m_fences.begin(), m_fences.begin() + delta);
 		m_lastCompleted = value;
 
-		uint32_t size2 = m_fences.size();
 		return true;
 	}
 

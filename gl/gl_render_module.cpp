@@ -7,12 +7,13 @@ using namespace xng::gl;
 using namespace xng::graphics;
 using namespace xng::os;
 using namespace xng::res;
+using namespace xng::gui;
 
 const char *          gl_render_module::module_name        = "xnggl45";
 const char *          gl_render_module::module_description = "XNG OpenGL 4.5 Render Module";
 const xng_module_type gl_render_module::module_type        = XNG_MODULE_TYPE_RENDER;
 
-bool gl_render_module::init(native_window * window)
+bool gl_render_module::init(native_window * window_body)
 {
 	bool debug = false;
 #ifdef XNG_DX11_DEBUG
@@ -21,11 +22,11 @@ bool gl_render_module::init(native_window * window)
 	m_context  = std::unique_ptr<gl_api_context>(xng_new wgl_api_context);
 	m_renderer = std::make_unique<forward_renderer>();
 
-	if (m_context->init(window->get_native_handle(), XNG_API_GL_4_5, debug) && m_renderer->init(m_context.get()))
+	if (m_context->init(window_body->get_native_handle(), XNG_API_GL_4_5, debug) && m_renderer->init(m_context.get()))
 	{
-		m_window = window;
+		m_window = window_body;
 		m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
-		window->add_observer(&m_windowObserver);
+		window_body->add_observer(&m_windowObserver);
 
 		m_windowObserver.on_resize(m_window, m_window->get_window_size(), m_window->get_client_size());
 
@@ -63,13 +64,12 @@ bool gl_render_module::is_initialized(void) const
 	return m_context && m_renderer;
 }
 
-void gl_render_module::render(scene * scene)
+void gl_render_module::render(scene * scene, gui_manager * guiManager)
 {
 	render_variables rvars;
 	render_variables_updates updates;
 
-	m_windowObserver.update();
-	configuration().get_render_variables(&rvars, &updates);
+	m_windowObserver.update(&rvars, &updates);
 
 	m_context->use();
 

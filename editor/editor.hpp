@@ -14,7 +14,7 @@ namespace xng
 
 		public:
 
-			editor(os::native_window * window);
+			editor(os::native_window * window_body);
 			~editor(void);
 
 			void update(void);

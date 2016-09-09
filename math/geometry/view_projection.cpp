@@ -33,5 +33,43 @@ namespace xng
 				0.f, 0.f, 0.f, 1.f
 			);
 		}
+
+		float4x4 ortho_lh_directx(float l, float r, float b, float t, float n, float f)
+		{
+			float invRmL = 1.f / (r - l);
+			float invTmB = 1.f / (t - b);
+			float invFmN = 1.f / (f - n);
+
+			return float4x4(
+				2.f / invRmL, 0, 0, -(l + r) * invRmL,
+				0, 2.f / invTmB, 0, -(t + b) * invTmB,
+				0, 0, 1.f * invFmN, -n * invFmN,
+				0, 0, 0, 1
+			);
+		}
+
+		float4x4 ortho_rh_directx(float l, float r, float b, float t, float n, float f)
+		{
+			float invRmL = 1.f / (r - l);
+			float invTmB = 1.f / (t - b);
+			float invNmF = 1.f / (f - n);
+
+			return float4x4(
+				2.f * invRmL, 0, 0, -(l + r) * invRmL,
+				0, 2.f * invTmB, 0, -(t + b) * invTmB,
+				0, 0, 1.f * invNmF, n * invNmF,
+				0, 0, 0, 1
+			);
+		}
+
+		/*float4x4 ortho_lh_gl(float l, float r, float b, float t, float n, float f)
+		{
+
+		}
+
+		float4x4 ortho_rh_gl(float l, float r, float b, float t, float n, float f)
+		{
+
+		}*/
 	}
 }

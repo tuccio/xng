@@ -1,6 +1,7 @@
 #include <xng/engine.hpp>
 #include <xng/dx11/dx11_api_context.hpp>
 #include <xng/dx11/forward_renderer.hpp>
+#include <xng/dx11/dx11_gui_renderer.hpp>
 
 #include <memory>
 
@@ -18,17 +19,18 @@ namespace xng
 			static const char *          module_description;
 			static const xng_module_type module_type;
 
-			bool init(os::native_window * window) override;
+			bool init(os::native_window * window_body) override;
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
 
-			void render(graphics::scene * scene) override;
+			void render(graphics::scene * scene, gui::gui_manager * gui) override;
 			graphics::api_context * get_api_context(void) override;
 
 		private:
 
-			std::unique_ptr<dx11_api_context> m_context;
-			std::unique_ptr<forward_renderer> m_renderer;
+			std::unique_ptr<dx11_api_context>  m_context;
+			std::unique_ptr<forward_renderer>  m_renderer;
+			std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
 
 			native_window * m_window;
 

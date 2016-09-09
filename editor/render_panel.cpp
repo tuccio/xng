@@ -7,9 +7,9 @@ wxBEGIN_EVENT_TABLE(render_panel, wxPanel)
 	EVT_SIZE(render_panel::on_resize)
 wxEND_EVENT_TABLE()
 
-render_panel::render_panel(native_window * window, wxWindow * parent, wxWindowID id) :
+render_panel::render_panel(native_window * window_body, wxWindow * parent, wxWindowID id) :
 	wxWindow(parent, id),
-	m_window(window)
+	m_window(window_body)
 {
 	m_window->set_borderless(true);
 	::SetParent(m_window->get_native_handle(), GetHwnd());

@@ -16,8 +16,8 @@ int CALLBACK WinMain(
 
 	xng::engine::module_manager * modules = xng_new xng::engine::module_manager;
 
-	modules->register_shared_library("xnggl");
 	modules->register_shared_library("xngdx11");
+	modules->register_shared_library("xnggl");
 	modules->register_shared_library("xngeditor");
 	modules->register_shared_library("xngscene");
 

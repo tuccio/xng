@@ -39,6 +39,12 @@ namespace xng
 
 			};
 
+			template <typename S>
+			XNG_INLINE explicit operator matrix<S, 4, 1>() const
+			{
+				return matrix<S, 4, 1>((S)x, (S)y, (S)z, (S)w);
+			}
+
 		};
 	}
 }

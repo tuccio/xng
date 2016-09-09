@@ -10,7 +10,7 @@ namespace xng
 			public wxWindow
 		{
 
-			render_panel(os::native_window * window, wxWindow * parent, wxWindowID id);
+			render_panel(os::native_window * window_body, wxWindow * parent, wxWindowID id);
 			~render_panel(void);
 
 			void on_resize(wxSizeEvent & event);

@@ -8,6 +8,7 @@ using namespace xng::engine;
 using namespace xng::graphics;
 using namespace xng::os;
 using namespace xng::input;
+using namespace xng::gui;
 
 /* Observers used */
 
@@ -17,7 +18,7 @@ struct game_window_observer :
 	game_window_observer(main_loop * loop) :
 		m_loop(loop) {}
 
-	void on_destroy(native_window * window)
+	void on_destroy(native_window * window_body)
 	{
 		m_loop->quit();
 	}
@@ -27,28 +28,48 @@ private:
 	main_loop * m_loop;
 };
 
-struct game_input_observer :
+struct game_window_input_observer :
 	public native_window_observer
 {
-	game_input_observer(input_handler * inputHandler) :
+	game_window_input_observer(input_handler * inputHandler) :
 		m_inputHandler(inputHandler) {}
 
-	void on_keyboard_key_down(native_window * window, xng_keyboard_key key)
+	void on_keyboard_key_down(native_window * window_body, xng_keyboard_key key) override
 	{
 		m_inputHandler->on_keyboard_key_down(key, timestamp());
 	}
 
-	void on_keyboard_key_up(native_window * window, xng_keyboard_key key)
+	void on_keyboard_key_up(native_window * window_body, xng_keyboard_key key) override
 	{
 		m_inputHandler->on_keyboard_key_up(key, timestamp());
 	}
 
-	void on_focus(native_window * window)
+	void on_mouse_key_down(native_window * window_body, xng_mouse_key key) override
+	{
+		m_inputHandler->on_mouse_key_down(key, timestamp());
+	}
+
+	void on_mouse_key_up(native_window * window_body, xng_mouse_key key) override
+	{
+		m_inputHandler->on_mouse_key_up(key, timestamp());
+	}
+
+	void on_mouse_move(native_window * window_body, const xng::math::uint2 & position) override
+	{
+		m_inputHandler->on_mouse_move(position, timestamp());
+	}
+
+	void on_mouse_wheel(native_window * window_body, int32_t wheel) override
+	{
+		m_inputHandler->on_mouse_wheel(wheel, timestamp());
+	}
+
+	void on_focus(native_window * window_body) override
 	{
 		m_inputHandler->on_focus_change(timestamp());
 	}
 
-	void on_unfocus(native_window * window)
+	void on_unfocus(native_window * window_body) override
 	{
 		m_inputHandler->on_focus_change(timestamp());
 	}
@@ -58,18 +79,38 @@ private:
 	input_handler * m_inputHandler;
 };
 
-struct game_keyboard_observer :
-	public keyboard_observer
+struct game_handled_input_observer :
+	public keyboard_observer,
+	public mouse_observer
 {
-	bool on_keyboard_key_down(xng_keyboard_key key)
+	bool on_keyboard_key_down(const keyboard * keyboard, xng_keyboard_key key) override
 	{
-		XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
+		//XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
 		return true;
 	}
 
-	bool on_keyboard_key_up(xng_keyboard_key key, uint32_t millis)
+	bool on_keyboard_key_up(const keyboard * keyboard, xng_keyboard_key key, uint32_t millis) override
 	{
-		XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
+		//XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
+		return true;
+	}
+
+	bool on_mouse_key_down(const mouse * mouse, xng_mouse_key key) override
+	{
+		//XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
+		//XNG_LOG("Mouse position", XNG_LOG_STREAM() << mouse->get_position());
+		return true;
+	}
+
+	bool on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis) override
+	{
+		//XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
+		return true;
+	}
+
+	bool on_mouse_wheel(const mouse * mouse, int32_t wheel) override
+	{
+		//XNG_LOG("Mouse wheel", XNG_LOG_STREAM() << wheel);
 		return true;
 	}
 };
@@ -82,7 +123,9 @@ game::game(void) :
 	m_runtime(nullptr),
 	m_running(false),
 	m_rendering(false),
+	m_renderReady(false),
 	m_renderScene(nullptr),
+	m_renderGUI(nullptr),
 	m_ticksPerSecond(30)
 {
 }
@@ -91,8 +134,9 @@ bool game::init(void)
 {
 	assert(!m_running && !m_rendering && "Init called while the game is still running.");
 
-	m_window   = std::make_unique<native_window>();
-	m_mainLoop = std::make_unique<main_loop>();
+	m_window     = std::make_unique<native_window>();
+	m_mainLoop   = std::make_unique<main_loop>();
+	m_guiManager = std::make_unique<gui_manager>();
 
 	if (m_window->create())
 	{
@@ -122,6 +166,7 @@ void game::shutdown(void)
 
 #undef XNG_GAME_SHUTDOWN_MODULE
 
+	m_guiManager.reset();
 	m_quitOnClose.reset();
 	m_window.reset();
 	m_mainLoop.reset();
@@ -159,7 +204,8 @@ void game::start_rendering(void)
 
 		// Start the rendering thread
 
-		m_rendering = true;
+		m_renderReady = false;
+		m_rendering   = true;
 		m_renderingThread = std::thread(std::bind(&game::rendering_loop, this));
 	}
 }
@@ -193,16 +239,15 @@ void game::rendering_loop(void)
 	{
 		std::unique_lock<std::mutex> renderLock(m_renderMutex);
 
-		while (!m_renderScene && m_rendering)
+		while (!m_renderReady && m_rendering)
 		{
 			m_renderCV.wait(renderLock);
 		}
 
-		if (m_renderScene)
+		if (m_renderReady)
 		{
-			m_render->render(m_renderScene);
-			xng_delete m_renderScene;
-			m_renderScene = nullptr;
+			m_render->render(m_renderScene, m_renderGUI);
+			m_renderReady = false;
 			m_renderCV.notify_all();
 		}
 	}
@@ -210,32 +255,47 @@ void game::rendering_loop(void)
 
 void game::game_loop(void)
 {
-	const high_resolution_timestamp GameStart = timestamp();
 
 	const uint32_t TicksPerSecond = m_ticksPerSecond;
 	const uint32_t MaxFrameSkip   = 10;
 
-	const uint32_t SkipTicks      = 1000 / TicksPerSecond;
+	const uint64_t SkipTicks      = 1000000ULL / TicksPerSecond;
 	const float    TickSeconds    = 1.f / TicksPerSecond;
 
-	uint32_t nextTick = SkipTicks;
+	const high_resolution_timestamp GameStart = timestamp();
+	uint64_t nextTick = GameStart;
 
 	scene * currentScene = nullptr;
 
-	game_keyboard_observer keyboardObserver;
+	game_handled_input_observer inputObserver;
 
-	m_inputHandler.keyboard().add_observer(&keyboardObserver);
+	m_inputHandler.keyboard().add_observer(&inputObserver);
+	m_inputHandler.mouse().add_observer(&inputObserver);
 
-	game_input_observer inputObserver(&m_inputHandler);
-	m_window->add_observer(&inputObserver);
+	game_window_input_observer inputWindowObserver(&m_inputHandler);
+	m_window->add_observer(&inputWindowObserver);
+
+	uint32_t updates = 0;
 
 	while (m_running)
 	{
+		bool gameLogicUpdated = false;
+
 		for (uint32_t loops = 0;
-			to_milliseconds<uint32_t>(timestamp() - GameStart) > nextTick && loops < MaxFrameSkip;
+			timestamp() > nextTick && loops < MaxFrameSkip;
 			++loops)
 		{
-			m_inputHandler.dispatch(GameStart + nextTick);
+			gameLogicUpdated = true;
+			
+			++updates;
+			if (updates % 100 == 0)
+			{
+				uint64_t dt = timestamp() - GameStart;
+				float s = to_seconds<float>(dt);
+				XNG_LOG("Updates per second", XNG_LOG_STREAM() << (updates / s) << " after " << s << " seconds.");
+			}
+
+			m_inputHandler.dispatch(nextTick);
 
 			if (m_runtime)
 			{
@@ -252,29 +312,53 @@ void game::game_loop(void)
 				}
 			}
 
+			// TODO: Use events to set_size
+			m_guiManager->set_size(m_window->get_client_size());
+
+			//XNG_LOG("Update", XNG_LOG_STREAM() << "Game time " << nextTick << ", current time " << timestamp() << ", difference " << to_seconds<float>(timestamp() - nextTick));
+
 			nextTick += SkipTicks;
 		}
 
 		// Feed the rendering thread a new scene (TODO: interpolation)
 
-		if (currentScene && m_rendering)
+		if (m_rendering)
 		{
 			std::unique_lock<std::mutex> renderLock(m_renderMutex);
 
-			while (m_renderScene && m_rendering)
+			while (m_renderReady && m_rendering)
 			{
 				m_renderCV.wait(renderLock);
 			}
 
-			if (!m_renderScene)
+			if (!m_renderReady)
 			{
-				m_renderScene = currentScene->clone();
+				// If an update happened, clone the scene to be rendered and feed
+				// it to the rendering thread
+
+				if (gameLogicUpdated)
+				{
+					if (m_renderScene)
+					{
+						xng_delete m_renderScene;
+					}
+
+					if (m_renderGUI)
+					{
+						xng_delete m_renderGUI;
+					}
+
+					m_renderScene = currentScene ? currentScene->clone() : nullptr;
+					m_renderGUI   = m_guiManager->clone();
+				}
+				
+				m_renderReady = true;
 				m_renderCV.notify_all();
 			}
 		}
 	}
 
-	m_window->remove_observer(&inputObserver);
+	m_window->remove_observer(&inputWindowObserver);
 	m_inputHandler.clear();
 }
 
@@ -333,6 +417,11 @@ native_window * game::get_window(void) const
 	return m_window.get();
 }
 
+gui_manager * game::get_gui_manager(void) const
+{
+	return m_guiManager.get();
+}
+
 void game::set_ticks_per_second(uint32_t ticks)
 {
 	m_ticksPerSecond = ticks;
@@ -341,4 +430,9 @@ void game::set_ticks_per_second(uint32_t ticks)
 uint32_t game::get_ticks_per_second(void) const
 {
 	return m_ticksPerSecond;
+}
+
+const input_handler * game::get_input_handler(void) const
+{
+	return &m_inputHandler;
 }

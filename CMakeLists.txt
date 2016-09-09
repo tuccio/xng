@@ -45,7 +45,7 @@ list(APPEND CMAKE_LIBRARY_PATH thirdparty/glew/lib)
 
 # Gather XNG components to compile
 
-xng_add_components(core res math graphics input engine)
+xng_add_components(core res math graphics input engine gui)
 
 if (WIN32)
 	add_definitions(-DXNG_WIN32)

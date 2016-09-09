@@ -18,11 +18,11 @@ namespace xng
 			static const char *          module_description;
 			static const xng_module_type module_type;
 
-			bool init(os::native_window * window) override;
+			bool init(os::native_window * window_body) override;
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
 
-			void render(graphics::scene * scene) override;
+			void render(graphics::scene * scene, gui::gui_manager * gui) override;
 			graphics::api_context * get_api_context(void) override;
 
 		private:

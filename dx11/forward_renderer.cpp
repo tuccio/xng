@@ -40,17 +40,16 @@ void forward_renderer::shutdown(void)
 	m_vbFactory.clear();
 }
 
-void forward_renderer::render(scene * scene, camera * camera)
+void forward_renderer::render(ID3D11DeviceContext * deviceContext, scene * scene, camera * camera)
 {
 	ID3D11Device        * device  = m_apiContext->get_device();
-	ID3D11DeviceContext * context = m_apiContext->get_immediate_context();
 
 	float clearColor[4] = { 0 };
 
 	ID3D11RenderTargetView * backBuffer = m_apiContext->get_back_buffer_rtv();
 
-	context->ClearRenderTargetView(backBuffer, clearColor);
-	context->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
+	deviceContext->ClearRenderTargetView(backBuffer, clearColor);
+	deviceContext->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
 
 	float4 colors[] = {
 		{ 1, 0, 0, 1 },
@@ -58,23 +57,23 @@ void forward_renderer::render(scene * scene, camera * camera)
 		{ 0, 0, 1, 1 }
 	};
 
-	context->RSSetState(m_rasterizerState.get());
-	context->OMSetRenderTargets(1, &backBuffer, nullptr);
-
-	const float4x4 & viewMatrix       = camera->get_directx_view_matrix();
-	const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
-
-	float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+	deviceContext->RSSetState(m_rasterizerState.get());
+	deviceContext->OMSetRenderTargets(1, &backBuffer, nullptr);
 
 	if (scene && camera)
 	{
+		const float4x4 & viewMatrix = camera->get_directx_view_matrix();
+		const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
+
+		float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+
 		auto geometry = scene->get_geometry_nodes();
 
 		shader_program program = m_program.compile(m_apiContext->get_device());
-		program.use(context);
+		program.use(deviceContext);
 
-		context->VSSetConstantBuffers(0, 1, &m_cbPerObject);
-		context->PSSetConstantBuffers(0, 1, &m_cbPerObject);
+		deviceContext->VSSetConstantBuffers(0, 1, &m_cbPerObject);
+		deviceContext->PSSetConstantBuffers(0, 1, &m_cbPerObject);
 
 		int ColorIndex = 0;
 
@@ -92,22 +91,22 @@ void forward_renderer::render(scene * scene, camera * camera)
 					colors[ColorIndex++ % 3]
 				};
 
-				m_cbPerObject.write(context, &bufferPerObjectData);
+				m_cbPerObject.write(deviceContext, &bufferPerObjectData);
 
 				UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
 				UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
 
 				ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
 
-				context->IASetVertexBuffers(0, 1, buffers, strides, offsets);
-				context->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
-				context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				deviceContext->IASetVertexBuffers(0, 1, buffers, strides, offsets);
+				deviceContext->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
+				deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				context->DrawIndexed(m->get_num_indices(), 0, 0);
+				deviceContext->DrawIndexed(m->get_num_indices(), 0, 0);
 			}
 		}
 
-		program.dispose(context);
+		program.dispose(deviceContext);
 	}
 }
 

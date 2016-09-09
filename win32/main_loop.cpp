@@ -14,21 +14,36 @@ void main_loop::set_idle_callback(std::function<void()> idle)
 
 void main_loop::run(void)
 {
-	MSG msg;
-
-	m_running = true;
-
-	while (m_running)
+	if (m_idleCB)
 	{
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		MSG msg;
 
-		if (m_idleCB)
+		m_running = true;
+
+		while (m_running)
 		{
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+
 			m_idleCB();
+		}
+	}
+	else
+	{
+		MSG msg;
+
+		m_running = true;
+
+		while (m_running)
+		{
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	}
 }

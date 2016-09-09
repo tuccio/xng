@@ -27,7 +27,7 @@ namespace xng
 
 			void on_resize(os::native_window * wnd, const math::uint2 & windowSize, const math::uint2 & clientSize) override;
 
-			void update(void);
+			void update(render_variables * vars, std::set<xng_render_variable> * updates);
 
 		private:
 

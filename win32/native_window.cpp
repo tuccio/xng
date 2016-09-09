@@ -1,5 +1,4 @@
 #include <xng/os/native_window.hpp>
-#include <xng/os/raw_input.hpp>
 
 #include <cassert>
 
@@ -8,6 +7,7 @@
 
 using namespace xng;
 using namespace xng::os;
+using namespace xng::math;
 
 static LRESULT CALLBACK win32_wndproc(HWND, UINT, WPARAM, LPARAM);
 
@@ -54,18 +54,16 @@ bool native_window::create(void)
 
 	if (m_hWnd)
 	{
-		RAWINPUTDEVICE device;
+		RAWINPUTDEVICE devices[] = {
+			{ 0x01, 0x06, 0x0, m_hWnd },
+			{ 0x01, 0x02, 0x0, m_hWnd }
+		};
 
-		device.usUsagePage = 0x01;
-		device.usUsage     = 0x06;
-		device.dwFlags     = RIDEV_NOLEGACY;
-		device.hwndTarget  = m_hWnd;
-
-		RegisterRawInputDevices(&device, 1, sizeof(device));
-
+		RegisterRawInputDevices(devices, sizeof(devices) / sizeof(devices[0]), sizeof(RAWINPUTDEVICE));
 		SetWindowLongPtr(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);
+
 		notify(&os::native_window_observer::on_create, this);
-	}	
+	}
 
 	return m_hWnd != NULL;
 }
@@ -232,79 +230,6 @@ bool native_window::register_class(void)
 void native_window::unregister_class(void)
 {
 	UnregisterClass(XNG_WIN32_WINDOW_CLASS, NULL);
-}
-
-/* Messages */
-
-LRESULT CALLBACK native_window::wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-
-	case WM_DESTROY:
-	{
-		native_window * wnd = get_window_object(hWnd);
-		wnd->notify(&os::native_window_observer::on_destroy, wnd);
-		break;
-	}
-
-	case WM_SIZE:
-	{
-		native_window * wnd = get_window_object(hWnd);
-		wnd->notify(&os::native_window_observer::on_resize, wnd, wnd->get_window_size(), wnd->get_client_size());
-		break;
-	}
-
-	case WM_SETFOCUS:
-	{
-		native_window * wnd = get_window_object(hWnd);
-		wnd->notify(&os::native_window_observer::on_focus, wnd);
-		break;
-	}
-
-	case WM_KILLFOCUS:
-	{
-		native_window * wnd = get_window_object(hWnd);
-		wnd->notify(&os::native_window_observer::on_unfocus, wnd);
-		break;
-	}
-
-	case WM_INPUT:
-	{
-		RAWINPUT rawInput;
-		UINT size = sizeof(RAWINPUT);
-		GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &rawInput, &size, sizeof(RAWINPUTHEADER));
-
-		switch (rawInput.header.dwType)
-		{
-
-		case RIM_TYPEKEYBOARD:
-		{
-			xng_keyboard_key key;
-			bool keyUp;
-			translate_keyboard_key(rawInput.data.keyboard, key, keyUp);
-
-			if (key != XNG_KEYBOARD_UNKNOWN)
-			{
-				native_window * wnd = get_window_object(hWnd);
-
-				if (keyUp)
-				{
-					wnd->notify(&os::native_window_observer::on_keyboard_key_up, wnd, key);
-				}
-				else
-				{
-					wnd->notify(&os::native_window_observer::on_keyboard_key_down, wnd, key);
-				}
-			}
-			break;
-		}
-			
-		}
-	}
-	};
-
-	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
 native_window * native_window::get_window_object(HWND hWnd)
