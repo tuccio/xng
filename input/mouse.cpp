@@ -42,6 +42,17 @@ void mouse::release_all(high_resolution_timestamp t)
 	}
 }
 
+void mouse::notify_held_keys(high_resolution_timestamp t)
+{
+	for (auto & p : m_keys)
+	{
+		if (t > p.second)
+		{
+			notify(&mouse_observer::on_mouse_key_hold, this, p.first, to_milliseconds<float>(t - p.second));
+		}
+	}
+}
+
 void mouse::move(const xng::math::uint2 & position)
 {
 	m_position = position;

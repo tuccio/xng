@@ -4,20 +4,16 @@
 
 using namespace xng::gui;
 using namespace xng::math;
+using namespace xng::input;
+
+#define XNG_GUI_WINDOW_BORDER_SIZE 3
 
 window::window(gui_manager * manager, widget * parent, const int2 & position, const int2 & size) :
-	widget(manager, parent, XNG_GUI_WINDOW, position, size)
+	widget(manager, parent, XNG_GUI_WINDOW, position, size),
+	m_dragging(false),
+	m_mouseDelta(0)
 {
-	m_caption = xng_new caption(manager, this, position, size);
-	m_body    = xng_new window_body(manager, this, position, size);
-
-	vertical_layout * layout = xng_new vertical_layout();
-
-	layout->add(m_caption, XNG_LAYOUT_EXPAND, 0);
-	layout->add(m_body, XNG_LAYOUT_EXPAND, 1);
-
-	set_layout(layout);
-	fit();
+	update_rectangles();
 
 	if (manager)
 	{
@@ -33,6 +29,15 @@ window::~window(void)
 	}
 }
 
+void window::render(gui_renderer * renderer, const style & style) const
+{
+	rectangle windowBodyRectangle = get_rectangle();
+	windowBodyRectangle.top = m_captionRectangle.bottom;
+
+	renderer->render_filled_rectangle(m_captionRectangle, style.caption_background_color);
+	renderer->render_filled_rectangle(windowBodyRectangle, style.window_background_color);
+}
+
 window * window::clone(gui_manager * manager, widget * parent) const
 {
 	window * newWindow = xng_new window(*this);
@@ -40,20 +45,103 @@ window * window::clone(gui_manager * manager, widget * parent) const
 	newWindow->set_parent(parent);
 	newWindow->set_gui_manager(manager);
 
-	for (widget * child : *this)
-	{
-		widget * newChild = child->clone(manager, newWindow);
-
-		if (child == m_body)
-		{
-			newWindow->m_body = static_cast<window_body*>(child);
-		}
-	}
+	clone_children(manager, newWindow);
 
 	return newWindow;
 }
 
-bool window::is_window(void) const
+bool window::on_mouse_key_down(const mouse * mouse, xng_mouse_key key)
 {
-	return true;
+	if (propagate_key_down(mouse, key))
+	{
+		if (key == XNG_MOUSE_BUTTON_1)
+		{
+			int2 x = (int2)mouse->get_position();
+			rectangle rect = get_rectangle();
+
+			if (rectangle_contains(rect, x))
+			{
+				focus();
+
+				if (rectangle_contains(m_captionRectangle, x))
+				{
+					m_mouseDelta = x - get_position();
+					m_dragging   = true;
+				}
+
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool window::on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis)
+{
+	if (key == XNG_MOUSE_BUTTON_1)
+	{
+		if (m_dragging)
+		{
+			m_dragging = false;
+			return false;
+		}
+	}
+	
+	return propagate_key_up(mouse, key, millis);
+}
+
+bool window::on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis)
+{
+	if (key == XNG_MOUSE_BUTTON_1)
+	{
+		if (m_dragging)
+		{
+			set_position((int2)mouse->get_position() - m_mouseDelta);
+			return false;
+		}
+	}	
+	
+	return propagate_key_hold(mouse, key, millis);
+}
+
+void window::on_reposition(const int2 & oldPosition, const int2 & newPosition)
+{
+	update_rectangles();
+}
+
+void window::on_resize(const int2 & oldSize, const int2 & newSize)
+{
+	update_rectangles();
+}
+
+void window::update_rectangles(void)
+{
+	int32_t h = get_gui_manager()->get_style().caption_height;
+
+	rectangle rect = get_rectangle();
+
+	m_captionRectangle = rect;
+	m_captionRectangle.bottom = m_captionRectangle.top + h;
+
+	rectangle clientRect = rect;
+
+	clientRect.top    += h;
+	clientRect.bottom -= XNG_GUI_WINDOW_BORDER_SIZE;
+	clientRect.right  -= XNG_GUI_WINDOW_BORDER_SIZE;;
+	clientRect.left   += XNG_GUI_WINDOW_BORDER_SIZE;
+
+	set_client_rectangle(clientRect);
+}
+
+const char * window::get_caption(void) const
+{
+	return m_caption.c_str();
+}
+
+void window::set_caption(const char * caption)
+{
+	m_caption = caption;
 }

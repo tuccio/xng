@@ -97,14 +97,20 @@ struct game_handled_input_observer :
 
 	bool on_mouse_key_down(const mouse * mouse, xng_mouse_key key) override
 	{
-		//XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
+		XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
 		//XNG_LOG("Mouse position", XNG_LOG_STREAM() << mouse->get_position());
+		return true;
+	}
+
+	bool on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis) override
+	{
+		//XNG_LOG("Held key", XNG_LOG_STREAM() << key);
 		return true;
 	}
 
 	bool on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis) override
 	{
-		//XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
+		XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
 		return true;
 	}
 
@@ -255,17 +261,18 @@ void game::rendering_loop(void)
 
 void game::game_loop(void)
 {
-
 	const uint32_t TicksPerSecond = m_ticksPerSecond;
 	const uint32_t MaxFrameSkip   = 10;
 
-	const uint64_t SkipTicks      = 1000000ULL / TicksPerSecond;
+	const uint64_t SkipTicks      = from_seconds(1.0 / TicksPerSecond);
 	const float    TickSeconds    = 1.f / TicksPerSecond;
 
 	const high_resolution_timestamp GameStart = timestamp();
 	uint64_t nextTick = GameStart;
 
 	scene * currentScene = nullptr;
+	
+	m_inputHandler.mouse().add_observer(m_guiManager.get());
 
 	game_handled_input_observer inputObserver;
 
@@ -274,8 +281,6 @@ void game::game_loop(void)
 
 	game_window_input_observer inputWindowObserver(&m_inputHandler);
 	m_window->add_observer(&inputWindowObserver);
-
-	uint32_t updates = 0;
 
 	while (m_running)
 	{
@@ -286,14 +291,6 @@ void game::game_loop(void)
 			++loops)
 		{
 			gameLogicUpdated = true;
-			
-			++updates;
-			if (updates % 100 == 0)
-			{
-				uint64_t dt = timestamp() - GameStart;
-				float s = to_seconds<float>(dt);
-				XNG_LOG("Updates per second", XNG_LOG_STREAM() << (updates / s) << " after " << s << " seconds.");
-			}
 
 			m_inputHandler.dispatch(nextTick);
 
@@ -312,7 +309,7 @@ void game::game_loop(void)
 				}
 			}
 
-			// TODO: Use events to set_size
+			// TODO: Use events to set GUI size
 			m_guiManager->set_size(m_window->get_client_size());
 
 			//XNG_LOG("Update", XNG_LOG_STREAM() << "Game time " << nextTick << ", current time " << timestamp() << ", difference " << to_seconds<float>(timestamp() - nextTick));
@@ -334,7 +331,7 @@ void game::game_loop(void)
 			if (!m_renderReady)
 			{
 				// If an update happened, clone the scene to be rendered and feed
-				// it to the rendering thread
+				// it to the rendering thread, otherwise render the previous scene
 
 				if (gameLogicUpdated)
 				{

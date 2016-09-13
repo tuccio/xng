@@ -17,6 +17,7 @@ namespace xng
 		{
 			virtual bool on_mouse_key_down(const mouse * mouse, xng_mouse_key key) { return true; }
 			virtual bool on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis) { return true; }
+			virtual bool on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis) { return true; }
 			virtual bool on_mouse_wheel(const mouse * mouse, int32_t delta) { return true; }
 		};
 
@@ -46,6 +47,8 @@ namespace xng
 			void press(xng_mouse_key key, os::high_resolution_timestamp t);
 			void release(xng_mouse_key key, os::high_resolution_timestamp t);
 			void release_all(os::high_resolution_timestamp t);
+
+			void notify_held_keys(os::high_resolution_timestamp t);
 
 			void move(const math::uint2 & position);
 			void wheel(int32_t delta);

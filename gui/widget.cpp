@@ -3,6 +3,7 @@
 
 using namespace xng::gui;
 using namespace xng::math;
+using namespace xng::input;
 
 widget::widget(gui_manager * manager, widget * parent, xng_gui_widget type, const int2 & position, const int2 & size)
 {
@@ -14,9 +15,12 @@ widget::widget(gui_manager * manager, widget * parent, xng_gui_widget type, cons
 	m_position = position;
 	m_layout   = nullptr;
 	m_visible  = false;
+	m_relative = true;
 
 	set_parent(parent);
 	set_gui_manager(manager);
+	
+	set_client_rectangle(get_rectangle());
 }
 
 widget::widget(const widget & widget)
@@ -98,8 +102,11 @@ bool widget::is_visible(void) const
 	return m_visible;
 }
 
-void widget::fit(void)
+void widget::apply_layout(void)
 {
+	//set_position(m_position);
+	//set_size(m_size);
+
 	if (m_layout)
 	{
 		m_layout->apply();
@@ -135,6 +142,75 @@ void widget::set_layout(layout * layout)
 	}
 }
 
+bool widget::on_mouse_key_down(const mouse * mouse, xng_mouse_key key)
+{
+	if (propagate_key_down(mouse, key))
+	{
+		if (key == XNG_MOUSE_BUTTON_1 &&
+			rectangle_contains(get_rectangle(), (int2)mouse->get_position()))
+		{
+			focus();
+			return false;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool widget::on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis)
+{
+	return propagate_key_hold(mouse, key, millis);
+}
+
+bool widget::on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis)
+{
+	return propagate_key_up(mouse, key, millis);
+}
+
+bool widget::propagate_key_down(const mouse * mouse, xng_mouse_key key)
+{
+	for (widget * child : *this)
+	{
+		// Propagate to non window children (windows are notified input in stack order)
+		if (!child->is_window() && !child->on_mouse_key_down(mouse, key))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool widget::propagate_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis)
+{
+	for (widget * child : *this)
+	{
+		// Propagate to non window children (windows are notified input in stack order)
+		if (!child->is_window() && !child->on_mouse_key_up(mouse, key, millis))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool widget::propagate_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis)
+{
+	for (widget * child : *this)
+	{
+		// Propagate to non window children (windows are notified input in stack order)
+		if (!child->is_window() && !child->on_mouse_key_hold(mouse, key, millis))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void widget::hide(void)
 {
 	m_visible = false;
@@ -152,7 +228,13 @@ const int2 & widget::get_position(void) const
 
 void widget::set_position(const int2 & position)
 {
+	int2 oldPosition = m_position;
+
 	m_position = position;
+	
+	// Call virtual update functions
+	on_reposition(oldPosition, position);
+	reposition_children();
 }
 
 const int2 & widget::get_size(void) const
@@ -162,23 +244,41 @@ const int2 & widget::get_size(void) const
 
 void widget::set_size(const int2 & size)
 {
+	int2 oldSize = m_size;
 	m_size = size;
-	fit();
+
+	// Call virtual update functions
+	on_resize(oldSize, size);
+	resize_children();
 }
 
 rectangle widget::get_rectangle(void) const
 {
-	int2 base(0);
-
-	if (auto parent = get_parent())
-	{
-		base = parent->get_position();
-	}
-
 	rectangle rect;
-	rect.topLeft     = base + m_position;;
+	rect.topLeft     = make_absolute(m_position);
 	rect.bottomRight = rect.topLeft + m_size;
 	return rect;
+}
+
+int2 widget::make_absolute(const int2 & x) const
+{
+	int2 base = m_relative && get_parent() ?
+		get_parent()->get_position() : int2(0);
+
+	return x + base;
+}
+
+int2 widget::make_relative(const int2 & x) const
+{
+	int2 base = m_relative && get_parent() ?
+		get_parent()->get_position() : int2(0);
+
+	return x - base;
+}
+
+rectangle widget::get_client_rectangle(void) const
+{
+	return m_clientRectangle;
 }
 
 xng_gui_widget widget::get_widget_type(void) const
@@ -204,10 +304,7 @@ void widget::clone_children(gui_manager * manager, widget * parent) const
 	}
 }
 
-void widget::render(gui_renderer * renderer, const style & style) const
-{
-	render_children(renderer, style);
-}
+void widget::render(gui_renderer * renderer, const style & style) const {}
 
 void widget::render_children(gui_renderer * renderer, const style & style) const
 {
@@ -222,5 +319,67 @@ void widget::render_children(gui_renderer * renderer, const style & style) const
 
 bool widget::is_window(void) const
 {
-	return false;
+	return get_widget_type() == XNG_GUI_WINDOW;
+}
+
+void widget::set_client_rectangle(const rectangle & rect)
+{
+	m_clientRectangle = rect;
+}
+
+void widget::on_reposition(const int2 & oldPosition, const int2 & newPosition)
+{
+	int2 delta       = newPosition - oldPosition;
+
+	rectangle rect   = get_rectangle();
+	rect.topLeft     = rect.topLeft + delta;
+	rect.bottomRight = rect.topLeft + delta;
+
+	set_client_rectangle(rect);
+}
+
+void widget::on_resize(const int2 & oldSize, const int2 & newSize)
+{
+	rectangle rect = get_rectangle();
+	rect.bottomRight = rect.topLeft - oldSize + newSize;
+
+	set_client_rectangle(rect);
+}
+
+void widget::reposition_children(void) const
+{
+	for (widget * child : *this)
+	{
+		child->on_parent_reposition();
+	}
+}
+
+void widget::resize_children(void) const
+{
+	for (widget * child : *this)
+	{
+		child->on_parent_resize();
+	}
+}
+
+void widget::on_parent_reposition(void)
+{
+	set_position(get_position());
+}
+
+void widget::on_parent_resize(void)
+{
+	set_size(get_size());
+}
+
+bool widget::is_relative(void) const
+{
+	return m_relative;
+}
+
+void widget::set_relative(bool relative)
+{
+	m_relative = relative;
+	int2 newPosition = relative ? make_relative(m_position) : make_absolute(m_position);
+	set_position(newPosition);
 }

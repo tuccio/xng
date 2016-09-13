@@ -3,9 +3,8 @@
 enum xng_gui_widget
 {
 	XNG_GUI_WINDOW,
-	XNG_GUI_WINDOW_BODY,
-	XNG_GUI_CAPTION,
-	XNG_GUI_GHOST_WINDOW
+	XNG_GUI_GHOST_WINDOW,
+	XNG_GUI_SLIDER
 };
 
 enum xng_gui_status

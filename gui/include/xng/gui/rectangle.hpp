@@ -35,5 +35,7 @@ namespace xng
 
 		int32_t rectangle_width(const rectangle & r);
 		int32_t rectangle_height(const rectangle & r);
+
+		math::int2 rectangle_size(const rectangle & r);
 	}
 }

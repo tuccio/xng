@@ -34,15 +34,21 @@ namespace xng
 		template <typename T>
 		XNG_INLINE std::enable_if_t<std::is_floating_point<T>::value, T> to_seconds(high_resolution_timestamp time)
 		{
-			static const T invFreq = T(1) / detail::g_performanceCounterFrequency.frequency.QuadPart;
-			return time * invFreq;
+			static const double invFreq = double(1) / detail::g_performanceCounterFrequency.frequency.QuadPart;
+			return (float)(time * invFreq);
 		}
 
 		template <typename T>
 		XNG_INLINE std::enable_if_t<std::is_floating_point<T>::value, T> to_milliseconds(high_resolution_timestamp time)
 		{
-			static const T invFreq = T(1000) / detail::g_performanceCounterFrequency.frequency.QuadPart;
-			return time * invFreq;
+			static const double invFreq = double(1000) / detail::g_performanceCounterFrequency.frequency.QuadPart;
+			return (float)(time * invFreq);
+		}
+
+		template <typename T>
+		XNG_INLINE high_resolution_timestamp from_seconds(T time)
+		{
+			return (high_resolution_timestamp)((double)time * (double)detail::g_performanceCounterFrequency.frequency.QuadPart);
 		}
 	}
 }

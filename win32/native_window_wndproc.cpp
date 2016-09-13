@@ -184,7 +184,49 @@ LRESULT CALLBACK native_window::wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		}
 		}
 	}
-	};
+
+	case WM_LBUTTONDOWN:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		wnd->notify(&os::native_window_observer::on_mouse_key_down, wnd, XNG_MOUSE_BUTTON_1);
+		break;
+	}
+
+	case WM_LBUTTONUP:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		wnd->notify(&os::native_window_observer::on_mouse_key_up, wnd, XNG_MOUSE_BUTTON_1);
+		break;
+	}
+
+	case WM_RBUTTONDOWN:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		wnd->notify(&os::native_window_observer::on_mouse_key_down, wnd, XNG_MOUSE_BUTTON_2);
+		break;
+	}
+
+	case WM_RBUTTONUP:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		wnd->notify(&os::native_window_observer::on_mouse_key_up, wnd, XNG_MOUSE_BUTTON_2);
+		break;
+	}
+
+	case WM_MBUTTONDOWN:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		wnd->notify(&os::native_window_observer::on_mouse_key_down, wnd, XNG_MOUSE_BUTTON_3);
+		break;
+	}
+
+	case WM_MBUTTONUP:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		wnd->notify(&os::native_window_observer::on_mouse_key_up, wnd, XNG_MOUSE_BUTTON_3);
+		break;
+	}
+	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }

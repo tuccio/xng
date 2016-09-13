@@ -225,41 +225,43 @@ void create_menu(wxFrame * editor)
 
 void create_gui(void)
 {
-	static struct test :
-		keyboard_observer
+	game * instance = game::get_singleton();
+	gui_manager * gui = instance->get_gui_manager();
+
+	window * test1 = xng_new window(gui, nullptr, int2(16), int2(250));
+	window * test2 = xng_new window(gui, test1, int2(256, 64), int2(250, 150));
+	window * test3 = xng_new window(gui, test1, int2(128, 128), int2(250, 450));
+
+	test1->set_caption("Test 1");
+	test2->set_caption("Test 2");
+	test3->set_caption("Test 3");
+
+	test3->set_relative(false);
+
+	vertical_layout * t3layout = xng_new vertical_layout();
+
+	slider * testSlider1 = xng_new slider(gui, test3);
+	slider * testSlider2 = xng_new slider(gui, test3);
+
+	testSlider1->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
-		window * test1;
-		window * test2;
-		window * test3;
+		style s = gui->get_style();
+		s.slider_bar_height = 5 + (int)(20 * x);
+		gui->set_style(s);
+	});
 
-		test(void)
-		{
-			game * instance = game::get_singleton();
-			gui_manager * gui = instance->get_gui_manager();
+	testSlider2->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		style s = gui->get_style();
+		s.slider_size = (uint2)(float2(5.f + 25.f * x));
+		gui->set_style(s);
+	});
 
-			test1 = xng_new window(gui, nullptr, int2(16), int2(250));
-			test2 = xng_new window(gui, test1, int2(256, 64), int2(250, 150));
-			test3 = xng_new window(gui, test1, int2(128, 128), int2(250, 450));
+	t3layout->add(testSlider1, XNG_LAYOUT_EXPAND, 0, 5);
+	t3layout->add(testSlider2, XNG_LAYOUT_EXPAND, 0, 5);
 
-			instance->get_input_handler()->keyboard().add_observer(this);
-		}
+	test3->set_layout(t3layout);
+	test3->apply_layout();
 
-		bool on_keyboard_key_down(const keyboard * keyboard, xng_keyboard_key key) override
-		{
-			if (key == XNG_KEYBOARD_1)
-			{
-				test1->focus();
-			}
-			else if (key == XNG_KEYBOARD_2)
-			{
-				test2->focus();
-			}
-			else if (key == XNG_KEYBOARD_3)
-			{
-				test3->focus();
-			}
-
-			return true;
-		}
-	} t;
+	test1->show();
 }

@@ -4,8 +4,10 @@
 #include <xng/gui/style.hpp>
 #include <xng/gui/rectangle.hpp>
 #include <xng/gui/layout.hpp>
+#include <xng/gui/gui_events.hpp>
 
 #include <xng/math.hpp>
+#include <xng/input.hpp>
 
 #include <vector>
 
@@ -15,7 +17,8 @@ namespace xng
 	{
 		class gui_manager;
 
-		class widget
+		class widget :
+			protected input::mouse_observer
 		{
 
 		public:
@@ -41,27 +44,48 @@ namespace xng
 			void set_size(const math::int2 & size);
 
 			rectangle get_rectangle(void) const;
+			rectangle get_client_rectangle(void) const;
 
 			void show(void);
 			void hide(void);
 
 			bool is_visible(void) const;
 
-			void fit(void);
+			void set_layout(layout * layout);
+			void apply_layout(void);
 
 			void focus(void);
 
-			virtual bool is_window(void) const;
+			bool is_window(void) const;
 
-			virtual widget * clone(gui_manager * manager, widget * parent) const = 0;
+			bool is_relative(void) const;
+
+			template <xng_gui_events evt, typename F>
+			void bind(F && function)
+			{
+				get_gui_manager()->get_event_handler()->bind<evt>(this, std::forward<F>(function));
+			}
 
 		protected:
 
 			widget(const widget & widget);
+
+			virtual widget * clone(gui_manager * manager, widget * parent) const = 0;
 			virtual void render(gui_renderer * renderer, const style & style) const;
+
+			void set_client_rectangle(const rectangle & rect);
+
+			virtual void on_reposition(const math::int2 & oldPosition, const math::int2 & newPosition);
+			virtual void on_resize(const math::int2 & oldSize, const math::int2 & newSize);
+
+			virtual void on_parent_reposition(void);
+			virtual void on_parent_resize(void);
 
 			void clone_children(gui_manager * manager, widget * parent) const;
 			void render_children(gui_renderer * renderer, const style & style) const;
+
+			void reposition_children(void) const;
+			void resize_children(void) const;
 
 			xng_gui_widget get_widget_type(void) const;
 			xng_gui_status get_widget_status(void) const;
@@ -71,7 +95,24 @@ namespace xng
 			void set_parent(widget * parent);
 			void set_gui_manager(gui_manager * manager);
 
-			void set_layout(layout * layout);
+			bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
+			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t millis) override;
+			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t millis) override;
+
+			bool propagate_key_down(const input::mouse * mouse, xng_mouse_key key);
+			bool propagate_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t millis);
+			bool propagate_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t millis);
+
+			void set_relative(bool relative);
+
+			math::int2 make_absolute(const math::int2 & x) const;
+			math::int2 make_relative(const math::int2 & x) const;
+
+			template <xng_gui_events evt, typename ... Args>
+			void notify(Args && ... args)
+			{
+				get_gui_manager()->get_event_handler()->notify_event<evt, Args...>(this, std::forward<Args>(args) ...);
+			}
 
 		private:
 
@@ -79,15 +120,37 @@ namespace xng
 			widget         * m_parent;
 			layout         * m_layout;
 			bool             m_visible;
+			bool             m_relative;
 			xng_gui_status   m_status;
 			xng_gui_widget   m_type;
 
 			math::int2 m_position;
 			math::int2 m_size;
 
+			rectangle m_rectangle;
+			rectangle m_clientRectangle;
+
 			children_list m_children;
 
 			friend class gui_manager;
+
+			template <typename OutputIterator>
+			void collect_visible_widgets(OutputIterator & it)
+			{
+				std::copy_if(m_children.begin(), m_children.end(), it,
+					[](widget * w)
+				{
+					return !w->is_window() && w->is_visible();
+				});
+
+				for (widget * child : m_children)
+				{
+					if (!child->is_window())
+					{
+						child->collect_visible_widgets(it);
+					}
+				}
+			}
 
 		};
 	}

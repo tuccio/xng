@@ -15,7 +15,7 @@ namespace xng
 
 			vertical_layout(void);
 
-			void add(widget * widget, uint32_t flags, uint32_t proportion);
+			void add(widget * widget, uint32_t flags, uint32_t proportion = 0, uint32_t padding = 0);
 
 		protected:
 
@@ -28,6 +28,7 @@ namespace xng
 				widget * widget;
 				uint32_t flags;
 				uint32_t proportion;
+				uint32_t padding;
 			};
 
 			typedef std::vector<layout_entry> entry_vector;

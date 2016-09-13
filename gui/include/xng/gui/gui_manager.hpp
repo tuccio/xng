@@ -2,9 +2,10 @@
 
 #include <xng/gui/widget.hpp>
 #include <xng/gui/gui_renderer.hpp>
-#include <xng/gui/ghost_window.hpp>
 #include <xng/gui/window.hpp>
 #include <xng/gui/style.hpp>
+#include <xng/gui/gui_events.hpp>
+#include <xng/core/event_handler.hpp>
 
 #include <memory>
 #include <list>
@@ -14,7 +15,8 @@ namespace xng
 	namespace gui
 	{
 		
-		class gui_manager
+		class gui_manager :
+			public input::mouse_observer
 		{
 
 		public:
@@ -36,16 +38,22 @@ namespace xng
 
 			gui_manager * clone(void) const;
 
+			bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
+			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
+			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
+
 		private:
+
+			typedef core::event_handler<const widget, xng_gui_events> gui_event_handler;
 
 			gui_renderer * m_renderer;
 			style          m_style;
 			math::uint2    m_size;
 
-			ghost_window * m_root;
 			widget       * m_focus;
 
 			std::list<window*> m_windowStack;
+			gui_event_handler * m_eventHandler;
 
 			friend class widget;
 			friend class window;
@@ -63,6 +71,7 @@ namespace xng
 
 			gui_manager(const gui_manager &) = default;
 
+			gui_event_handler * get_event_handler(void);
 
 		};
 	}

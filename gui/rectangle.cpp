@@ -19,3 +19,8 @@ int32_t xng::gui::rectangle_height(const rectangle & r)
 {
 	return r.bottom - r.top;
 }
+
+int2 xng::gui::rectangle_size(const rectangle & r)
+{
+	return r.bottomRight - r.topLeft;
+}

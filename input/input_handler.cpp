@@ -95,6 +95,8 @@ void input_handler::dispatch(high_resolution_timestamp time)
 	m_events.clear();
 	m_queue.pop(time, std::back_inserter(m_events));
 
+	// Handle input events
+
 	for (const input_event & event : m_events)
 	{
 		switch (event.source)
@@ -132,6 +134,11 @@ void input_handler::dispatch(high_resolution_timestamp time)
 
 		}
 	}
+
+	// Handle repeat events
+
+	m_mouse.notify_held_keys(time);
+
 }
 
 void input_handler::clear(void)

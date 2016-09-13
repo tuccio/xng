@@ -38,6 +38,12 @@ namespace xng
 			return detail::matrix_comparison_impl<T, N, M>::eq(a, b);
 		}
 
+		template <typename T, int N, int M>
+		bool operator!= (const matrix<T, N, M> & a, const matrix<T, N, M> & b)
+		{
+			return !detail::matrix_comparison_impl<T, N, M>::eq(a, b);
+		}
+
 		/* Scalar/Matrix operators */
 
 		template <typename T, int N, int M>

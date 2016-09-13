@@ -224,7 +224,7 @@ namespace xng
 
 			// Given an object of size wx, we want a depth d such that wx <= wd, where wd = w0 / 2^d
 			// Solving we have d <= log2 w0/wx. So d = floor(log2(w0/wx)) is the max depth an
-			// object can fit in.
+			// object can apply_layout in.
 
 			unsigned int fitDepth = (unsigned int)std::floor(std::log2(vec128_get_x(m_halfextent) / maxExtent));
 			unsigned int depth = min(fitDepth, m_maxdepth);
