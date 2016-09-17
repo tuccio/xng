@@ -14,6 +14,8 @@ namespace xng
 
 		public:
 
+			static const char * resource_type;
+
 			gpu_mesh(void) = default;
 			gpu_mesh(const char * name, const res::resource_parameters & params, res::resource_loader_ptr loader, res::resource_manager * owner);
 			~gpu_mesh(void) override;
@@ -52,7 +54,7 @@ namespace xng
 
 		protected:
 
-			bool   load_impl(void) override;
+			bool   load_impl(const void * userdata) override;
 			void   unload_impl(void) override;
 			size_t calculate_size_impl(void) override;
 

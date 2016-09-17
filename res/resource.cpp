@@ -4,10 +4,10 @@
 using namespace xng::res;
 
 resource::resource(void) :
-	m_owner(nullptr), m_loader(nullptr), m_size(0), m_status(XNG_RESOURCE_NOT_LOADED), m_references(0) {}
+	m_owner(nullptr), m_dependency(nullptr), m_loader(nullptr), m_size(0), m_status(XNG_RESOURCE_NOT_LOADED), m_references(0) {}
 
 resource::resource(const char * name, const typename resource_parameters & params, resource_loader_ptr loader, resource_manager * owner) :
-	m_name(name), m_owner(owner), m_loader(loader), m_size(0), m_status(XNG_RESOURCE_NOT_LOADED), m_references(0) {}
+	m_owner(owner), m_name(name), m_parameters(params), m_dependency(nullptr), m_loader(loader), m_size(0), m_status(XNG_RESOURCE_NOT_LOADED), m_references(0) {}
 
 resource::resource(resource && rhs) :
 	resource()
@@ -16,6 +16,7 @@ resource::resource(resource && rhs) :
 
 	std::swap(m_name,       rhs.m_name);
 	std::swap(m_owner,      rhs.m_owner);
+	std::swap(m_dependency, rhs.m_dependency);
 	std::swap(m_loader,     rhs.m_loader);
 	std::swap(m_size,       rhs.m_size);
 	std::swap(m_status,     rhs.m_status);
@@ -35,6 +36,16 @@ resource_manager * resource::get_owner(void) const
 void resource::set_owner(resource_manager * owner)
 {
 	m_owner = owner;
+}
+
+resource * resource::get_dependency(void) const
+{
+	return m_dependency;
+}
+
+void resource::set_dependency(resource * r)
+{
+	m_dependency = r;
 }
 
 const char * resource::get_name(void) const
@@ -104,14 +115,14 @@ void resource::unref(void)
 	}
 }
 
-bool resource::load(void)
+bool resource::load(const void * userdata)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 
 	if (m_status == XNG_RESOURCE_NOT_LOADED)
 	{
-		if ((m_loader && m_loader->load(this)) ||
-			(!m_loader && load_impl()))
+		if ((m_loader && m_loader->load(this, userdata)) ||
+			(!m_loader && load_impl(userdata)))
 		{
 			m_status = XNG_RESOURCE_LOADED;
 			recalculate_size_internal();

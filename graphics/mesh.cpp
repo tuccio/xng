@@ -4,6 +4,8 @@ using namespace xng::res;
 using namespace xng::math;
 using namespace xng::graphics;
 
+const char * mesh::resource_type = "mesh";
+
 mesh::mesh(const char * name, const resource_parameters & params, resource_loader_ptr loader, resource_manager * owner) :
 	resource(name, params, loader, owner) {}
 
@@ -138,7 +140,7 @@ void mesh::clear(void)
 	m_storageFlags = 0;
 }
 
-bool mesh::load_impl(void)
+bool mesh::load_impl(const void * userdata)
 {
 	// TODO: Implement own mesh file format loader
 	return false;
@@ -388,7 +390,7 @@ size_t mesh::calculate_stride(uint32_t flags)
 
 // box_mesh_loader
 
-bool box_mesh_loader::load(resource * r)
+bool box_mesh_loader::load(resource * r, const void * userdata)
 {
 	mesh * m = static_cast<mesh*>(r);
 

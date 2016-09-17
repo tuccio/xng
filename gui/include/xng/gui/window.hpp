@@ -25,8 +25,8 @@ namespace xng
 				widget::set_relative(relative);
 			}
 
-			const char * get_caption(void) const;
-			void set_caption(const char * caption);
+			const wchar_t * get_caption(void) const;
+			void set_caption(const wchar_t * caption);
 
 		protected:
 
@@ -35,15 +35,14 @@ namespace xng
 			window * clone(gui_manager * manager, widget * parent) const override;
 			void render(gui_renderer * renderer, const style & style) const override;
 
-			void on_reposition(const math::int2 & oldPosition, const math::int2 & newPosition) override;
-			void on_resize(const math::int2 & oldSize, const math::int2 & newSize) override;
+			void on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle) override;
 
 		private:
 
-			bool        m_dragging;
-			math::int2  m_mouseDelta;
-			rectangle   m_captionRectangle;
-			std::string m_caption;
+			bool         m_dragging;
+			math::int2   m_mouseDelta;
+			rectangle    m_captionRectangle;
+			std::wstring m_caption;
 
 			void update_rectangles(void);
 

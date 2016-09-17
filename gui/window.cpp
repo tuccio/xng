@@ -5,6 +5,8 @@
 using namespace xng::gui;
 using namespace xng::math;
 using namespace xng::input;
+using namespace xng::res;
+using namespace xng::graphics;
 
 #define XNG_GUI_WINDOW_BORDER_SIZE 3
 
@@ -23,6 +25,11 @@ window::window(gui_manager * manager, widget * parent, const int2 & position, co
 
 window::~window(void)
 {
+	for (widget * w : *this)
+	{
+		w->destroy();
+	}
+
 	if (auto manager = get_gui_manager())
 	{
 		manager->unregister_window(this);
@@ -36,6 +43,18 @@ void window::render(gui_renderer * renderer, const style & style) const
 
 	renderer->render_filled_rectangle(m_captionRectangle, style.caption_background_color);
 	renderer->render_filled_rectangle(windowBodyRectangle, style.window_background_color);
+
+	font_ptr fnt = resource_factory::get_singleton()->create<font>(style.caption_font);
+
+	renderer->render_text(
+		fnt,
+		m_caption.c_str(),
+		style.caption_text_color,
+		style.caption_text_border_color,
+		style.caption_text_border_size,
+		style.caption_text_smoothness,
+		(uint2)get_rectangle().topLeft + style.caption_text_origin,
+		style.caption_text_scale);
 }
 
 window * window::clone(gui_manager * manager, widget * parent) const
@@ -107,15 +126,11 @@ bool window::on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t 
 	return propagate_key_hold(mouse, key, millis);
 }
 
-void window::on_reposition(const int2 & oldPosition, const int2 & newPosition)
+void window::on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle)
 {
 	update_rectangles();
 }
 
-void window::on_resize(const int2 & oldSize, const int2 & newSize)
-{
-	update_rectangles();
-}
 
 void window::update_rectangles(void)
 {
@@ -136,12 +151,12 @@ void window::update_rectangles(void)
 	set_client_rectangle(clientRect);
 }
 
-const char * window::get_caption(void) const
+const wchar_t * window::get_caption(void) const
 {
 	return m_caption.c_str();
 }
 
-void window::set_caption(const char * caption)
+void window::set_caption(const wchar_t * caption)
 {
 	m_caption = caption;
 }

@@ -2,34 +2,70 @@ struct VSInput
 {
 	float2 position : POSITION;
 	float2 uv       : TEXCOORD0;
-	float4 color    : COLOR;
 };
 
 struct PSInput
 {
 	float4 position : SV_Position;
-	float4 color    : COLOR;
+	float2 uv       : TEXCOORD0;
 };
 
-cbuffer cbPerFrame : register(b0)
-{
-	float4x4 projectionMatrix;
-};
+#if defined(XNG_TEXT)
+
+	cbuffer cbPerFrame : register(b0)
+	{
+		float4x4 ProjectionMatrix;
+		float4   Color;
+		float4   BorderColor;
+		float    BorderSize;
+		float    Smoothness;
+	};
+
+#else
+
+	cbuffer cbPerFrame : register(b0)
+	{
+		float4x4 ProjectionMatrix;
+		float4   Color;
+	};
+
+#endif
 
 #xng section(vertex:main_vs)
-
 
 PSInput main_vs(VSInput input)
 {
 	PSInput output;
-	output.position = mul(float4(input.position, 0, 1), projectionMatrix);
-	output.color    = input.color;
+	output.position = mul(float4(input.position, 0, 1), ProjectionMatrix);
+	output.uv       = input.uv;
 	return output;
 }
 
 #xng section(pixel:main_ps)
 
-float4 main_ps(PSInput input): SV_Target0
+#xng include("samplers.xhlsl")
+#xng include("text.xhlsl")
+
+float4 RenderTexturedRectangle(in float2 uv, in Texture2D<float4> tex, in SamplerState s)
 {
-	return input.color;
+	return tex.Sample(s, uv);
+}
+	
+float4 RenderMonochromaticRectangle(in float4 color)
+{
+	return color;
+}
+
+Texture2D<float4> RectTex : register(t0);
+Texture2D<float4>  FontTex : register(t1);
+
+float4 main_ps(PSInput input) : SV_Target0
+{
+	#if defined(XNG_TEXTURED)
+		return RenderTexturedRectangle(input.uv, RectTex, LinearClamp);
+	#elif defined(XNG_TEXT)
+		return RenderText(input.uv, Color, BorderColor, BorderSize, Smoothness, FontTex, LinearClamp);
+	#else
+		return RenderMonochromaticRectangle(Color);
+	#endif
 }

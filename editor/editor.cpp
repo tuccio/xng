@@ -5,6 +5,7 @@
 
 #include <xng/engine.hpp>
 #include <xng/gui.hpp>
+#include <xng/graphics/freetype_font_loader.hpp>
 
 using namespace xng::editor;
 using namespace xng::os;
@@ -12,6 +13,8 @@ using namespace xng::engine;
 using namespace xng::gui;
 using namespace xng::math;
 using namespace xng::input;
+using namespace xng::graphics;
+using namespace xng::res;
 
 struct wx_app :
 	public wxApp
@@ -25,6 +28,7 @@ void create_gui(void);
 editor::editor(native_window * window_body)
 {
 	wxApp::SetInstance(xng_new wx_app);
+	wxTheApp->SetEvtHandlerEnabled(false);
 
 	static int argc = 1;
 	static char * argv[] = { "xngeditor", nullptr };
@@ -69,9 +73,9 @@ editor::editor(native_window * window_body)
 
 editor::~editor(void)
 {
-	xng_delete wxTheApp;
-	wxApp::SetInstance(nullptr);
-	
+	m_auiManager->UnInit();
+	m_auiManager.reset();
+
 	wxEntryCleanup();
 	wxUninitialize();
 }
@@ -96,7 +100,7 @@ struct render_module_dialog :
 		wxSizer * vSizer = xng_new wxBoxSizer(wxVERTICAL);
 		wxSizer * hSizer = xng_new wxBoxSizer(wxHORIZONTAL);
 
-		wxStaticBoxSizer  * box = xng_new wxStaticBoxSizer(wxVERTICAL, this,
+		wxStaticBoxSizer * box = xng_new wxStaticBoxSizer(wxVERTICAL, this,
 			"Pick the rendering module to switch to from this list:");
 
 		wxListCtrl * list   = xng_new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
@@ -228,20 +232,29 @@ void create_gui(void)
 	game * instance = game::get_singleton();
 	gui_manager * gui = instance->get_gui_manager();
 
-	window * test1 = xng_new window(gui, nullptr, int2(16), int2(250));
+	window * test1 = xng_new window(gui, nullptr, int2(16), int2(256));
 	window * test2 = xng_new window(gui, test1, int2(256, 64), int2(250, 150));
 	window * test3 = xng_new window(gui, test1, int2(128, 128), int2(250, 450));
 
-	test1->set_caption("Test 1");
-	test2->set_caption("Test 2");
-	test3->set_caption("Test 3");
+	test1->set_caption(L"Test 1");
+	test2->set_caption(L"Test 2");
+	test3->set_caption(L"Test 3");
 
 	test3->set_relative(false);
+
+	vertical_layout * t1layout = xng_new vertical_layout();
+
+	image_control * testImage = xng_new image_control(gui, test1);
+
+	t1layout->add(testImage, XNG_LAYOUT_EXPAND, 1, 0);
 
 	vertical_layout * t3layout = xng_new vertical_layout();
 
 	slider * testSlider1 = xng_new slider(gui, test3);
 	slider * testSlider2 = xng_new slider(gui, test3);
+	slider * testSlider3 = xng_new slider(gui, test3);
+	slider * testSlider4 = xng_new slider(gui, test3);
+	slider * testSlider5 = xng_new slider(gui, test3);
 
 	testSlider1->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
@@ -257,11 +270,48 @@ void create_gui(void)
 		gui->set_style(s);
 	});
 
-	t3layout->add(testSlider1, XNG_LAYOUT_EXPAND, 0, 5);
-	t3layout->add(testSlider2, XNG_LAYOUT_EXPAND, 0, 5);
+	testSlider3->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		style s = gui->get_style();
+		s.caption_text_border_size = 10.f * x;
+		gui->set_style(s);
+	});
+
+	testSlider4->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		style s = gui->get_style();
+		s.caption_text_smoothness = x;
+		gui->set_style(s);
+	});
+
+	testSlider5->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		style s = gui->get_style();
+		s.caption_text_scale = .01f + 10 * x;
+		gui->set_style(s);
+	});
+
+	t3layout->add(testSlider1, XNG_LAYOUT_EXPAND, 0, 8);
+	t3layout->add(testSlider2, XNG_LAYOUT_EXPAND, 0, 8);
+	t3layout->add(testSlider3, XNG_LAYOUT_EXPAND, 0, 8);
+	t3layout->add(testSlider4, XNG_LAYOUT_EXPAND, 0, 8);
+	t3layout->add(testSlider5, XNG_LAYOUT_EXPAND, 0, 8);
+
+	test1->set_layout(t1layout);
+	test1->apply_layout();
 
 	test3->set_layout(t3layout);
 	test3->apply_layout();
 
 	test1->show();
+
+	font_ptr openSans16 = resource_factory::get_singleton()->create<font>(
+		"./fonts/OpenSans-Regular.ttf",
+		make_resource_parameters(),
+		resource_loader_ptr(xng_new freetype_font_loader));
+
+	if (openSans16->load())
+	{
+		openSans16->write_file("./fonts/OpenSans-16.xml");
+	}
 }

@@ -29,6 +29,8 @@ namespace xng
 			bool init(void);
 			void shutdown(void);
 
+			void clear(void);
+
 			void run(void);
 			bool is_running(void) const;
 			void quit(void);
@@ -76,10 +78,10 @@ namespace xng
 			std::atomic<bool> m_running;
 			std::atomic<bool> m_rendering;
 
-			std::unique_ptr<os::main_loop>   m_mainLoop;
-			bool                             m_renderReady;
-			graphics::scene                * m_renderScene;
-			gui::gui_manager               * m_renderGUI;
+			std::unique_ptr<os::main_loop>    m_mainLoop;
+			bool                              m_renderReady;
+			std::unique_ptr<graphics::scene>  m_renderScene;
+			std::unique_ptr<gui::gui_manager> m_renderGUI;
 
 			std::unique_ptr<os::native_window_observer> m_quitOnClose;
 

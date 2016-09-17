@@ -28,10 +28,7 @@ namespace xng
 			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t millis) override;
 			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t millis) override;
 
-			void on_reposition(const math::int2 & oldPosition, const math::int2 & newPosition) override;
-			void on_resize(const math::int2 & oldSize, const math::int2 & newSize) override;
-			void on_parent_reposition(void) override;
-			void on_parent_resize(void) override;
+			void on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle) override;
 
 		private:
 

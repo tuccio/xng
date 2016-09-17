@@ -16,3 +16,4 @@ add_library(xngeditor SHARED ${XNG_EDITOR_SOURCE_FILES} ${XNG_EDITOR_INCLUDE_FIL
 xng_link_module(xngeditor)
 
 target_link_libraries(xngeditor ${XNG_LIBRARIES} ${wxWidgets_LIBRARIES})
+xng_link_dependencies(xngeditor)

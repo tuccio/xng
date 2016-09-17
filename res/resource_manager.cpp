@@ -6,17 +6,29 @@ using namespace xng::res;
 resource_manager::resource_manager(const char * type, size_t spaceThreshold) :
 	m_type(type), m_lastID(0), m_spaceThreshold(spaceThreshold), m_usedSpace(0) {}
 
-resource_manager::~resource_manager(void) {}
+resource_manager::~resource_manager(void)
+{
+	std::lock_guard<std::mutex> garbageLock(m_garbageMutex);
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	// Detach alive resources
+	for (auto & p : m_resources)
+	{
+		p.second->m_owner = nullptr;
+	}
+}
 
 resource_ptr<resource> resource_manager::create(
 	const char * name,
 	const resource_parameters & parameters,
-	std::shared_ptr<resource_loader> loader)
+	resource_loader_ptr loader,
+	resource_ptr<resource> dependency)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	resource_ptr<resource> r;
 
-	if (name[0] == '\0' || !(r = find_by_name_internal(name)))
+	if (!(r = find_by_name_internal(name)) &&
+		!(r = find_by_dependency_internal(dependency)))
 	{
 		std::lock_guard<std::mutex> garbageLock(m_garbageMutex);
 		garbage_collection_lazy_internal();
@@ -30,6 +42,12 @@ resource_ptr<resource> resource_manager::create(
 		if (name[0] != '\0')
 		{
 			m_namedResources[name] = r.get();
+		}
+
+		if (dependency)
+		{
+			m_dependencies[dependency.get()] = r.get();
+			r->set_dependency(dependency.get());
 		}
 
 		m_resources[id] = r.get();
@@ -87,6 +105,12 @@ resource_ptr<resource> resource_manager::find_by_id(resource_id id) const
 	return find_by_id_internal(id);
 }
 
+resource_ptr<resource> resource_manager::find_by_dependency(resource_ptr<resource> r) const
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	return find_by_dependency_internal(r);
+}
+
 resource_ptr<resource> resource_manager::find_by_name_internal(const char * name) const
 {
 	resource_ptr<resource> r;
@@ -106,6 +130,19 @@ resource_ptr<resource> resource_manager::find_by_id_internal(resource_id id) con
 	auto it = m_resources.find(id);
 
 	if (it != m_resources.end())
+	{
+		r = it->second;
+	}
+
+	return r;
+}
+
+resource_ptr<resource> resource_manager::find_by_dependency_internal(resource_ptr<resource> dependency) const
+{
+	resource_ptr<resource> r;
+	auto it = m_dependencies.find(dependency.get());
+
+	if (it != m_dependencies.end())
 	{
 		r = it->second;
 	}
@@ -142,17 +179,21 @@ size_t resource_manager::get_used_space(void) const
 void resource_manager::collect_resource(resource * r)
 {
 	std::lock_guard<std::mutex> garbageLock(m_garbageMutex);
-	m_garbage.push_front(r);
+
+	if (m_garbageSet.find(r) == m_garbageSet.end())
+	{
+		m_garbage.push_front(r);
+		m_garbageSet.insert(r);
+	}
 }
 
 void resource_manager::garbage_collection_lazy_internal(void)
 {
-	garbage_clear_duplicates_internal();
-
 	while (m_usedSpace > m_spaceThreshold && !m_garbage.empty())
 	{
 		resource * r = m_garbage.back();
 		m_garbage.pop_back();
+		m_garbageSet.erase(m_garbageSet.find(r));
 
 		if (r->unload())
 		{
@@ -168,12 +209,13 @@ void resource_manager::garbage_collection_lazy_internal(void)
 
 void resource_manager::garbage_collection_full_internal(void)
 {
-	garbage_clear_duplicates_internal();
+	//garbage_clear_duplicates_internal();
 
 	while (!m_garbage.empty())
 	{
 		resource * r = m_garbage.back();
 		m_garbage.pop_back();
+		m_garbageSet.erase(m_garbageSet.find(r));
 
 		if (r->unload())
 		{

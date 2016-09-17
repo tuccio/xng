@@ -164,7 +164,7 @@ void game::shutdown(void)
 {
 	assert(!m_running && !m_rendering && "Shutdown called while the game is still running.");
 
-#define XNG_GAME_SHUTDOWN_MODULE(Module, ...) if (Module && Module->is_initialized()) { Module->shutdown(); xng_delete Module; Module = nullptr; }
+#define XNG_GAME_SHUTDOWN_MODULE(Module, ...) if (Module && Module->is_initialized()) { Module->shutdown(); }
 
 	XNG_GAME_SHUTDOWN_MODULE(m_runtime);
 	XNG_GAME_SHUTDOWN_MODULE(m_scene);
@@ -176,6 +176,17 @@ void game::shutdown(void)
 	m_quitOnClose.reset();
 	m_window.reset();
 	m_mainLoop.reset();
+}
+
+void game::clear(void)
+{
+#define XNG_GAME_CLEAR_MODULE(Module, ...) if (Module) { xng_delete Module; Module = nullptr; }
+
+	XNG_GAME_CLEAR_MODULE(m_runtime);
+	XNG_GAME_CLEAR_MODULE(m_scene);
+	XNG_GAME_CLEAR_MODULE(m_render);
+
+#undef XNG_GAME_CLEAR_MODULE
 }
 
 void game::run(void)
@@ -190,6 +201,10 @@ void game::run(void)
 	m_running = false;
 
 	stop_rendering();
+	m_gameLoopThread.join();
+
+	m_renderScene.reset();
+	m_renderGUI.reset();
 }
 
 bool game::is_running(void) const
@@ -252,7 +267,7 @@ void game::rendering_loop(void)
 
 		if (m_renderReady)
 		{
-			m_render->render(m_renderScene, m_renderGUI);
+			m_render->render(m_renderScene.get(), m_renderGUI.get());
 			m_renderReady = false;
 			m_renderCV.notify_all();
 		}
@@ -335,18 +350,12 @@ void game::game_loop(void)
 
 				if (gameLogicUpdated)
 				{
-					if (m_renderScene)
+					if (currentScene)
 					{
-						xng_delete m_renderScene;
+						m_renderScene = std::unique_ptr<scene>(currentScene->clone());
 					}
 
-					if (m_renderGUI)
-					{
-						xng_delete m_renderGUI;
-					}
-
-					m_renderScene = currentScene ? currentScene->clone() : nullptr;
-					m_renderGUI   = m_guiManager->clone();
+					m_renderGUI  = std::unique_ptr<gui_manager>(m_guiManager->clone());
 				}
 				
 				m_renderReady = true;

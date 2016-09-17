@@ -2,6 +2,7 @@
 
 #include <xng/core/observer.hpp>
 #include <xng/core/singleton.hpp>
+#include <xng/core/refcounted_ptr.hpp>
 
 #include <xng/core/logger.hpp>
 

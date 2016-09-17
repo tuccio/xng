@@ -1,5 +1,6 @@
 #include <xng/dx11/dx11_render_module.hpp>
-#include <xng/dx11/gpu_mesh_manager.hpp>
+#include <xng/dx11/gpu_mesh.hpp>
+#include <xng/dx11/texture.hpp>
 
 using namespace xng::dx11;
 using namespace xng::graphics;
@@ -35,7 +36,16 @@ bool dx11_render_module::init(native_window * window_body)
 		auto clientSize = window_body->get_client_size();
 		m_context->on_resize(clientSize.x, clientSize.y);
 
-		resource_factory::get_singleton()->register_manager(xng_new gpu_mesh_manager(m_context->get_device()));
+		resource_factory::get_singleton()->register_manager(xng_new gpu_mesh_manager());
+		resource_factory::get_singleton()->register_manager(xng_new texture_manager());
+		
+		if (m_samplers.init(m_context->get_device()))
+		{
+			ID3D11DeviceContext * immediateContext = m_context->get_immediate_context();
+			m_samplers.bind_vertex_shader(immediateContext);
+			m_samplers.bind_pixel_shader(immediateContext);
+			m_samplers.bind_compute_shader(immediateContext);
+		}
 
 		return true;
 	}
@@ -52,11 +62,23 @@ void dx11_render_module::shutdown(void)
 	m_window->remove_observer(&m_windowObserver);
 	m_window = nullptr;
 
-	xng_delete resource_factory::get_singleton()->unregister_manager("dx11mesh");
+	m_samplers.shutdown();
 
 	m_renderer->shutdown();
+	m_guiRenderer->shutdown();
 
 	m_renderer.reset();
+	m_guiRenderer.reset();
+
+	resource_manager * gpuMeshManager = resource_factory::get_singleton()->unregister_manager(gpu_mesh::resource_type);
+	resource_manager * textureManager = resource_factory::get_singleton()->unregister_manager(texture::resource_type);
+
+	gpuMeshManager->clear();
+	textureManager->clear();
+
+	xng_delete gpuMeshManager;
+	xng_delete textureManager;
+
 	m_context.reset();
 }
 

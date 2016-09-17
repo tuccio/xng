@@ -67,8 +67,15 @@ void path::swap(path & rhs)
 
 path & path::make_preferred(void)
 {
-	static const std::wregex s_reSlashFix(L"[/]");
+	static const std::wregex s_reSlashFix(L"[/\\\\]+");
 	m_path = std::regex_replace(m_path, s_reSlashFix, L"\\");
+	return *this;
+}
+
+path & path::make_unix_like(void)
+{
+	static const std::wregex s_reSlashFix(L"[/\\\\]+");
+	m_path = std::regex_replace(m_path, s_reSlashFix, L"/");
 	return *this;
 }
 
@@ -76,6 +83,30 @@ path & path::remove_filename(void)
 {
 	return *this = parent_path();
 }
+
+path & path::replace_extension(const path & new_extension)
+{
+	if (new_extension.empty())
+	{
+		wchar_t * p = PathFindExtensionW(m_path.c_str());
+		m_path.substr(0, p - m_path.c_str());
+	}
+	else
+	{
+		wchar_t path[MAX_PATH];
+
+		std::wstring replacement = new_extension.m_path[0] == L'.' ?
+			new_extension.m_path : (L"." + new_extension.m_path);
+
+		StrCpyW(path, m_path.c_str());
+		PathRenameExtensionW(path, replacement.c_str());
+
+		m_path = path;
+	}
+	
+	return *this;
+}
+
 // Decomposition
 
 path path::extension(void) const
@@ -101,6 +132,12 @@ path path::parent_path(void) const
 bool path::empty(void) const
 {
 	return m_path.empty();
+}
+
+bool path::has_extension(void) const
+{
+	wchar_t * p = PathFindExtensionW(m_path.c_str());
+	return *p == L'.' && (*(p + 1) != L'\0');
 }
 
 std::locale path::imbue(const std::locale & loc)

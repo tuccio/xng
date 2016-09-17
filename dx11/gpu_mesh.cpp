@@ -1,7 +1,6 @@
 #pragma once
 
 #include <xng/dx11/gpu_mesh.hpp>
-#include <xng/dx11/gpu_mesh_manager.hpp>
 
 #include <xng/graphics/mesh.hpp>
 #include <xng/res.hpp>
@@ -10,6 +9,8 @@
 
 using namespace xng::dx11;
 using namespace xng::res;
+
+const char * gpu_mesh::resource_type = "dx11mesh";
 
 gpu_mesh::gpu_mesh(const char * name, const resource_parameters & params, resource_loader_ptr loader, resource_manager * owner) :
 	resource(name, params, loader, owner) {}
@@ -38,16 +39,20 @@ void gpu_mesh::clear(void)
 	m_numIndices              = 0;
 }
 
-bool gpu_mesh::load_impl(void)
+bool gpu_mesh::load_impl(const void * userdata)
 {
-	graphics::mesh_ptr m = res::resource_factory::get_singleton()->
-		find_by_id<graphics::mesh>("mesh", std::atol(get_name()));
+	graphics::mesh_ptr m(dynamic_cast<graphics::mesh*>(get_dependency()));
+
+	if (!m)
+	{
+		m = resource_factory::get_singleton()->create<graphics::mesh>(get_name());
+	}
 
 	if (m && m->load())
 	{
 		bool success;
 
-		ID3D11Device * device = static_cast<gpu_mesh_manager*>(get_owner())->get_device();
+		ID3D11Device * device = static_cast<const load_data *>(userdata)->device;
 
 		clear();
 
@@ -116,10 +121,4 @@ void gpu_mesh::unload_impl(void)
 size_t gpu_mesh::calculate_size_impl(void)
 {
 	return m_numVertices * (m_positionStride + m_nonPositionalDataStride) + m_numIndices * sizeof(uint32_t);
-}
-
-gpu_mesh_ptr xng::dx11::make_gpu_mesh(graphics::mesh_ptr mesh)
-{
-	return res::resource_factory::get_singleton()->
-		create<gpu_mesh>("dx11mesh", std::to_string(mesh->get_id()).c_str());
 }

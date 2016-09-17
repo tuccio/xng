@@ -12,7 +12,8 @@ using namespace xng::input;
 gui_manager::gui_manager(void) :
 	m_renderer(nullptr),
 	m_size(1280, 720),
-	m_focus(nullptr)
+	m_focus(nullptr),
+	m_shallow(false)
 {
 	m_style        = make_default_style();
 	m_eventHandler = xng_new gui_event_handler();
@@ -20,9 +21,19 @@ gui_manager::gui_manager(void) :
 
 gui_manager::~gui_manager(void)
 {
-	if (m_eventHandler)
+	if (!m_shallow)
 	{
-		xng_delete m_eventHandler;
+		for (window * wnd : m_windowStack)
+		{
+			wnd->destroy();
+		}
+
+		destroy_pending_objects();
+
+		if (m_eventHandler)
+		{
+			xng_delete m_eventHandler;
+		}
 	}
 }
 
@@ -100,11 +111,32 @@ void gui_manager::render(void)
 	m_renderer->render_end();
 }
 
+void gui_manager::update(float dt)
+{
+	destroy_pending_objects();
+}
+
+void gui_manager::enqueue_destruction(widget * widget)
+{
+	m_destroyQueue.insert(widget);
+}
+
+void gui_manager::destroy_pending_objects(void)
+{
+	for (widget * w : m_destroyQueue)
+	{
+		xng_delete w;
+	}
+
+	m_destroyQueue.clear();
+}
+
 gui_manager * gui_manager::clone(void) const
 {
 	gui_manager * newGUI = xng_new gui_manager(*this);
 
 	newGUI->m_eventHandler = nullptr;
+	newGUI->m_shallow      = true;
 
 	return newGUI;
 }

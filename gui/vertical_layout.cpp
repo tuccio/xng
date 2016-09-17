@@ -22,7 +22,11 @@ void vertical_layout::apply(void)
 		if (entry.proportion == 0)
 		{
 			uint32_t widgetHeight = entry.widget->get_size().y;
-			heightMinusFixed = heightMinusFixed - widgetHeight - entry.padding;
+			heightMinusFixed = heightMinusFixed - widgetHeight - 2 * entry.padding;
+		}
+		else
+		{
+			heightMinusFixed = heightMinusFixed - 2 * entry.padding;
 		}
 	}
 

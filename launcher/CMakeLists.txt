@@ -15,3 +15,4 @@ add_executable(xnglauncher ${XNG_LAUNCHER_PLATFORM} ${XNG_LAUNCHER_SOURCE_FILES}
 target_link_libraries(xnglauncher ${XNG_LIBRARIES})
 
 xng_set_modules_dependency(xnglauncher)
+xng_link_dependencies(xnglauncher)

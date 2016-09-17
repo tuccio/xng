@@ -2,6 +2,7 @@
 
 #include <xng/dx11.hpp>
 #include <xng/graphics/mesh.hpp>
+#include <xng/dx11/gpu_mesh.hpp>
 
 using namespace xng::dx11;
 using namespace xng::graphics;
@@ -42,7 +43,7 @@ void forward_renderer::shutdown(void)
 
 void forward_renderer::render(ID3D11DeviceContext * deviceContext, scene * scene, camera * camera)
 {
-	ID3D11Device        * device  = m_apiContext->get_device();
+	ID3D11Device * device  = m_apiContext->get_device();
 
 	float clearColor[4] = { 0 };
 
@@ -77,11 +78,13 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext, scene * scene
 
 		int ColorIndex = 0;
 
+		gpu_mesh::load_data meshLoadData = { m_apiContext->get_device() };
+
 		for (auto gNode : geometry)
 		{
-			gpu_mesh_ptr m = make_gpu_mesh(gNode->get_mesh());
+			gpu_mesh_ptr m = resource_factory::get_singleton()->create<gpu_mesh>("", resource_parameters(), resource_loader_ptr(), gNode->get_mesh());
 
-			if (m && m->load())
+			if (m && m->load(&meshLoadData))
 			{
 				const float4x4 & modelMatrix = gNode->get_global_matrix();
 

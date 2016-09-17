@@ -1,0 +1,20 @@
+float4 RenderText(in float2 uv, in float4 color, in float4 borderColor, in float borderSize, in float smoothness, Texture2D<float4> font, SamplerState s)
+{
+	// Sample the distance from the SDF
+	float sdfDistance = font.Sample(s, uv).a;
+	
+	// Pick the color depending on the distance sign
+	// (if d is negative we're inside the glyph)
+	//float4 baseColor = sdfDistance > .5f ? color : borderColor;
+	float4 baseColor = color;
+	
+	// Calculate our alpha based on distance
+	//float alpha = 1 - smoothstep(-(.5f + tmp), .5f + tmp, -sdfDistance);
+	//float alpha = sdfDistance > .5f ? 1 : 0;
+	
+	float  edgeDistance = smoothness;
+	float  edgeWidth    = .7f * length(float2(ddx(sdfDistance), ddy(sdfDistance)));
+	float  alpha        = smoothstep(edgeDistance - edgeWidth, edgeDistance + edgeWidth, sdfDistance);
+
+	return float4(baseColor.rgb, baseColor.a * alpha);
+}

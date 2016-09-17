@@ -35,7 +35,6 @@ resource_manager * resource_factory::unregister_manager(const char * type)
 	if (it != m_managers.end())
 	{
 		resource_manager * resourceManager = it->second;
-		resourceManager->clear();
 		m_managers.erase(it);
 		return resourceManager;
 	}
@@ -49,4 +48,12 @@ bool resource_factory::is_registered(const char * type) const
 	auto it = m_managers.find(type);
 
 	return it != m_managers.end();
+}
+
+resource_manager * resource_factory::find_manager_by_type(const char * type)
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+	auto it = m_managers.find(type);
+
+	return it != m_managers.end() ? it->second : nullptr;
 }

@@ -1,0 +1,11 @@
+#ifndef SAMPLERS_XHLSL
+#define SAMPLERS_XHLSL
+
+SamplerState PointWrap        : register(s10);
+SamplerState PointClamp       : register(s11);
+SamplerState LinearWrap       : register(s12);
+SamplerState LinearClamp      : register(s13);
+SamplerState AnisotropicWrap  : register(s14);
+SamplerState AnisotropicClamp : register(s15);
+
+#endif

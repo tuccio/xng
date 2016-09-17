@@ -53,6 +53,7 @@ namespace xng
 			void   clear(void);
 			path & make_absolute(const path & base);
 			path & make_preferred(void);
+			path & make_unix_like(void);
 			path & remove_filename(void);
 			path & replace_extension(const path & new_extension = path());
 			void   swap(path & rhs);

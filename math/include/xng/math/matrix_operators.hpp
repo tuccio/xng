@@ -67,10 +67,17 @@ namespace xng
 		}
 
 		template <typename Scalar, typename T, int N, int M>
-		std::enable_if_t<std::is_arithmetic<Scalar>::value, matrix<T, N, M>>
+		std::enable_if_t<std::is_floating_point<Scalar>::value, matrix<T, N, M>>
 			operator/ (const matrix<T, N, M> & m, Scalar s)
 		{
-			return detail::matrix_scale_impl<T, N, M>::scale(m, T(1) / s);
+			return detail::matrix_scale_impl<T, N, M>::scale(m, Scalar(1) / s);
+		}
+
+		template <typename Scalar, typename T, int N, int M>
+		std::enable_if_t<std::is_integral<Scalar>::value, matrix<T, N, M>>
+			operator/ (const matrix<T, N, M> & m, Scalar s)
+		{
+			return detail::matrix_scale_impl<T, N, M>::divide(m, s);
 		}
 
 		template <typename T, int N, int M>

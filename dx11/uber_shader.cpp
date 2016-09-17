@@ -27,12 +27,14 @@ bool uber_shader::preprocess(const char * filename)
 	{
 		void on_include_begin(std::ostream & os, const char * compiledFile, uint32_t line, const char * includeFile) override
 		{
-			os << "#line " << line << " " << compiledFile << std::endl;
+			//os << "#line " << 0 << " \"" << includeFile << "\"" << std::endl;
+			//os << "#line " << line << std::endl;
 		}
 
 		void on_include_end(std::ostream & os, const char * compiledFile, uint32_t line, const char * includeFile) override
 		{
-			os << "#line " << line << " " << compiledFile << std::endl;
+			//os << "#line " << line << " \"" << compiledFile << "\"" << std::endl;
+			//os << "#line " << line << std::endl;
 		}
 	} lineFixer;
 

@@ -1,9 +1,12 @@
 # XNG Library Setup
 
-unset(XNG_INCLUDE_DIRS CACHE)
-unset(XNG_IMPORT_LIBRARIES CACHE)
-unset(XNG_EXPORT_LIBRARIES CACHE)
-unset(XNG_COMPONENTS CACHE)
+unset(XNG_INCLUDE_DIRS        CACHE)
+unset(XNG_IMPORT_LIBRARIES    CACHE)
+unset(XNG_EXPORT_LIBRARIES    CACHE)
+unset(XNG_COMPONENTS          CACHE)
+unset(XNG_DEPENDENCIES        CACHE)
+unset(XNG_OS_IMPORT_LIBRARIES CACHE)
+unset(XNG_OS_EXPORT_LIBRARIES)
 
 function(xng_add_components)
 	foreach(component IN LISTS ARGV)
@@ -13,6 +16,24 @@ function(xng_add_components)
 		set(XNG_COMPONENTS ${XNG_COMPONENTS} ${component} CACHE INTERNAL "XNG Library components.")
 	endforeach()
 endfunction(xng_add_components)
+
+function(xng_add_os_library oslib)
+	xng_add_components(${ARGV})
+	foreach(component IN LISTS ARGV)
+		set(XNG_OS_IMPORT_LIBRARIES ${XNG_OS_IMPORT_LIBRARIES} xng${component} CACHE INTERNAL "XNG Library OS-dependent components compiled to import shared symbols.")
+		set(XNG_OS_EXPORT_LIBRARIES ${XNG_OS_IMPORT_LIBRARIES} xng${component}exp CACHE INTERNAL "XNG Library OS-dependent components compiled to export shared symbols.")
+	endforeach()
+endfunction(xng_add_os_library)
+
+function(xng_add_dependencies)
+	foreach(dependency IN LISTS ARGV)
+		set(XNG_DEPENDENCIES ${XNG_DEPENDENCIES} ${dependency} CACHE INTERNAL "XNG Library library dependencies.")
+	endforeach()
+endfunction(xng_add_dependencies)
+
+function(xng_link_dependencies target)
+	target_link_libraries(${target} ${XNG_DEPENDENCIES})
+endfunction(xng_link_dependencies)
 
 function(xng_make_components_projects)
 	foreach(component IN LISTS XNG_COMPONENTS)

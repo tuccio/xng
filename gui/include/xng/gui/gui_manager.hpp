@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <list>
+#include <unordered_set>
 
 namespace xng
 {
@@ -32,6 +33,7 @@ namespace xng
 			const style & get_style(void) const;
 
 			void render(void);
+			void update(float dt);
 
 			void set_size(const math::uint2 & size);
 			const math::uint2 & get_size(void) const;
@@ -55,6 +57,9 @@ namespace xng
 			std::list<window*> m_windowStack;
 			gui_event_handler * m_eventHandler;
 
+			std::unordered_set<widget*> m_destroyQueue;
+			bool m_shallow;
+
 			friend class widget;
 			friend class window;
 
@@ -72,6 +77,9 @@ namespace xng
 			gui_manager(const gui_manager &) = default;
 
 			gui_event_handler * get_event_handler(void);
+
+			void enqueue_destruction(widget * widget);
+			void destroy_pending_objects(void);
 
 		};
 	}

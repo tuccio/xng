@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DXNG_DEBUG")
 
 option(XNG_DEBUG_NEW "Use memory allocation logging to debug memory leaks" OFF)
+option(XNG_USE_FREETYPE "Compile with freetype font loader" ON)
 
 if (XNG_DEBUG_NEW)
 		add_definitions(-DXNG_DEBUG_NEW)
@@ -38,6 +39,32 @@ endif()
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Search freetype2 if used
+
+if (XNG_USE_FREETYPE)
+
+	find_package(freetype REQUIRED)
+	find_package(bzip2 REQUIRED)
+	
+	include_directories(${FREETYPE_INCLUDE_DIRS})
+	xng_add_dependencies(${FREETYPE_LIBRARIES} ${BZIP2_LIBRARIES})
+	add_definitions(-DXNG_FREETYPE)
+	
+endif()
+
+# Search OpenMP
+
+find_package(OpenMP)
+
+if (OPENMP_FOUND)
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+
+# Search libpng
+
+set(PNG_DEFINITIONS -DPNG_STATIC)
+find_package(PNG REQUIRED)
+
 # Add glew path for find_package
 
 list(APPEND CMAKE_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/thirdparty/glew/include)
@@ -49,7 +76,7 @@ xng_add_components(core res math graphics input engine gui)
 
 if (WIN32)
 	add_definitions(-DXNG_WIN32)
-	xng_add_components(win32)
+	xng_add_os_library(win32)
 endif()
 
 xng_make_components_projects()

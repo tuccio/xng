@@ -96,8 +96,8 @@ void create_default_scene(scene_module * sceneModule)
 
 	mesh_ptr triangleMesh = resource_factory::get_singleton()->create<mesh>(
 		"mesh", "triangle", resource_parameters(),
-		std::make_shared<dynamic_resource_loader>(
-			[](resource * r)
+		resource_loader_ptr(xng_new dynamic_resource_loader(
+			[](resource * r, const void * userdata)
 	{
 		mesh * m = static_cast<mesh*>(r);
 
@@ -125,7 +125,7 @@ void create_default_scene(scene_module * sceneModule)
 	{
 		static_cast<mesh*>(r)->clear();
 	}
-	));
+	)));
 
 	triangle1->set_mesh(triangleMesh);
 	triangle2->set_mesh(triangleMesh);

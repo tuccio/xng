@@ -32,7 +32,6 @@ void slider::render(gui_renderer * renderer, const style & style) const
 	renderer->render_filled_rectangle(empty, style.slider_bar_empty);
 
 	renderer->render_filled_rectangle(m_sliderRectangle, style.slider_color);
-	render_children(renderer, style);
 }
 
 slider * slider::clone(gui_manager * manager, widget * parent) const
@@ -47,22 +46,7 @@ slider * slider::clone(gui_manager * manager, widget * parent) const
 	return newWidget;
 }
 
-void slider::on_reposition(const int2 & oldPosition, const int2 & newPosition)
-{
-	update_rectangles();
-}
-
-void slider::on_resize(const int2 & oldSize, const int2 & newSize)
-{
-	update_rectangles();
-}
-
-void slider::on_parent_reposition(void)
-{
-	update_rectangles();
-}
-
-void slider::on_parent_resize(void)
+void slider::on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle)
 {
 	update_rectangles();
 }

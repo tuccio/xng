@@ -15,7 +15,7 @@ namespace xng
 		public:
 
 			gpu_mesh_manager(gl_api_context * context) :
-				res::resource_manager("glmesh"),
+				res::resource_manager(gpu_mesh::resource_type),
 				m_context(context) {}
 
 			XNG_INLINE gl_api_context * get_context(void)

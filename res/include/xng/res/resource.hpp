@@ -57,31 +57,35 @@ namespace xng
 			void unlock(void);
 			bool try_lock(void);
 
-			bool load(void);
+			bool load(const void * userdata = nullptr);
 
 		protected:
 
-			virtual bool load_impl(void) = 0;
+			virtual bool load_impl(const void * userdata) = 0;
 			virtual void unload_impl(void) = 0;
 			virtual size_t calculate_size_impl(void) = 0;
 
 			void recalculate_size(void);
 
+			resource * get_dependency(void) const;
+			void set_dependency(resource * r);
+
 		private:
 
-			resource_manager * m_owner;
+			resource_manager    * m_owner;
+			resource            * m_dependency;
 
-			xng_resource_status m_status;
-			resource_id         m_id;
-			size_t              m_size;
-			std::string         m_name;
+			xng_resource_status   m_status;
+			resource_id           m_id;
+			size_t                m_size;
+			std::string           m_name;
 
-			std::shared_ptr<resource_loader> m_loader;
+			resource_loader_ptr   m_loader;
 
-			mutable uint32_t   m_references;
-			mutable std::mutex m_mutex;
+			mutable uint32_t      m_references;
+			mutable std::mutex    m_mutex;
 
-			resource_parameters m_parameters;
+			resource_parameters   m_parameters;
 
 			void recalculate_size_internal(void);
 
@@ -89,8 +93,8 @@ namespace xng
 
 			friend class resource_manager;
 
-			template <typename T, typename E>
-			friend class resource_ptr;
+			template <typename Resource>
+			friend class xng::core::refcounted_ptr;
 
 			void set_id(resource_id id);
 			void set_owner(resource_manager * owner);
@@ -105,6 +109,40 @@ namespace xng
 		};
 
 		inline resource_parameters default_parameters(void) { return resource_parameters(); }
+
+		template <typename Resource>
+		using resource_ptr = xng::core::refcounted_ptr<Resource>;
+
+		namespace detail
+		{
+			template <typename ... Args>
+			struct resource_parameters_factory;
+
+			template <typename Arg1, typename Arg2, typename ... Args>
+			struct resource_parameters_factory<Arg1, Arg2, Args...>
+			{
+				XNG_INLINE static void put(resource_parameters & params, Arg1 && arg1, Arg2 && arg2, Args && ... args)
+				{
+					params.put(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
+					resource_parameters_factory<Args...>::put(params, std::forward<Args>(args) ...);
+				}
+			};
+
+			template <>
+			struct resource_parameters_factory<>
+			{
+				XNG_INLINE static void put(resource_parameters & params) {}
+			};
+		}
+
+		template <typename ... Args>
+		XNG_INLINE resource_parameters make_resource_parameters(Args && ... args)
+		{
+			static_assert(sizeof ... (Args) % 2 == 0, "make_resource_parameters requires an even number of arguments.");
+			resource_parameters params;
+			detail::resource_parameters_factory<Args ...>::put(params, std::forward<Args>(args) ...);
+			return params;
+		}
 
 	}
 }

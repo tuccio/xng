@@ -36,6 +36,8 @@ namespace xng
 
 		public:
 
+			static const char * resource_type;
+
 			mesh(void) = default;
 			mesh(const char * name, const res::resource_parameters & params, res::resource_loader_ptr loader, res::resource_manager * owner);
 			~mesh(void) override;
@@ -81,7 +83,7 @@ namespace xng
 
 		protected:
 
-			bool   load_impl(void) override;
+			bool   load_impl(const void * userdata) override;
 			void   unload_impl(void) override;
 			size_t calculate_size_impl(void) override;
 
@@ -105,7 +107,8 @@ namespace xng
 
 		};
 
-		typedef res::resource_ptr<mesh> mesh_ptr;
+		typedef res::resource_ptr<mesh>           mesh_ptr;
+		typedef res::basic_resource_manager<mesh> mesh_manager;
 
 		class box_mesh_loader :
 			res::resource_loader
@@ -113,7 +116,7 @@ namespace xng
 
 		public:
 
-			bool load(res::resource * r) override;;
+			bool load(res::resource * r, const void * userdata = nullptr) override;
 			void unload(res::resource * r) override;
 
 		};

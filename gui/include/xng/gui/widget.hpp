@@ -27,7 +27,6 @@ namespace xng
 			typedef children_list::const_iterator children_iterator;
 
 			widget(gui_manager * manager, widget * parent, xng_gui_widget type, const math::int2 & position, const math::int2 & size);
-
 			virtual ~widget(void);
 
 			gui_manager * get_gui_manager(void);
@@ -37,14 +36,19 @@ namespace xng
 			children_iterator begin(void) const;
 			children_iterator end(void) const;
 
-			const math::int2 & get_position(void) const;
+			math::int2 get_position(void) const;
+			math::int2 get_absolute_position(void) const;
 			void set_position(const math::int2 & position);
 
-			const math::int2 & get_size(void) const;
+			math::int2 get_size(void) const;
 			void set_size(const math::int2 & size);
 
 			rectangle get_rectangle(void) const;
+			void set_rectangle(const rectangle & r);
+
 			rectangle get_client_rectangle(void) const;
+
+			void destroy(void);
 
 			void show(void);
 			void hide(void);
@@ -66,6 +70,7 @@ namespace xng
 				get_gui_manager()->get_event_handler()->bind<evt>(this, std::forward<F>(function));
 			}
 
+
 		protected:
 
 			widget(const widget & widget);
@@ -75,17 +80,10 @@ namespace xng
 
 			void set_client_rectangle(const rectangle & rect);
 
-			virtual void on_reposition(const math::int2 & oldPosition, const math::int2 & newPosition);
-			virtual void on_resize(const math::int2 & oldSize, const math::int2 & newSize);
-
-			virtual void on_parent_reposition(void);
-			virtual void on_parent_resize(void);
+			virtual void on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle);
 
 			void clone_children(gui_manager * manager, widget * parent) const;
-			void render_children(gui_renderer * renderer, const style & style) const;
-
-			void reposition_children(void) const;
-			void resize_children(void) const;
+			void update_children_rectangles(const rectangle & oldRectangle, const rectangle & newRectangle) const;
 
 			xng_gui_widget get_widget_type(void) const;
 			xng_gui_status get_widget_status(void) const;
@@ -124,13 +122,10 @@ namespace xng
 			xng_gui_status   m_status;
 			xng_gui_widget   m_type;
 
-			math::int2 m_position;
-			math::int2 m_size;
+			rectangle        m_rectangle;
+			rectangle        m_clientRectangle;
 
-			rectangle m_rectangle;
-			rectangle m_clientRectangle;
-
-			children_list m_children;
+			children_list    m_children;
 
 			friend class gui_manager;
 
@@ -151,6 +146,8 @@ namespace xng
 					}
 				}
 			}
+
+			void render_children(gui_renderer * renderer, const style & style) const;
 
 		};
 	}

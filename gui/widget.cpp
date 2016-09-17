@@ -11,45 +11,57 @@ widget::widget(gui_manager * manager, widget * parent, xng_gui_widget type, cons
 	m_status   = XNG_GUI_STATUS_DEFAULT;
 	m_parent   = parent;
 	m_manager  = manager;
-	m_size     = size;
-	m_position = position;
 	m_layout   = nullptr;
 	m_visible  = false;
 	m_relative = true;
 
+	m_rectangle.topLeft     = make_absolute(position);
+	m_rectangle.bottomRight = m_rectangle.topLeft + size;
+
+	m_clientRectangle = m_rectangle;
+
 	set_parent(parent);
 	set_gui_manager(manager);
-	
-	set_client_rectangle(get_rectangle());
 }
 
 widget::widget(const widget & widget)
 {
 	// Copy constructor used in clone
 
-	m_type     = widget.m_type;
-	m_status   = widget.m_status;
-	m_parent   = nullptr;
-	m_manager  = nullptr;
-	m_size     = widget.m_size;
-	m_position = widget.m_position;
-	m_layout   = nullptr;
-	m_visible  = widget.m_visible;
+	m_type      = widget.m_type;
+	m_status    = widget.m_status;
+	m_parent    = nullptr;
+	m_manager   = nullptr;
+	m_rectangle = widget.m_rectangle;
+	m_layout    = nullptr;
+	m_visible   = widget.m_visible;
 }
 
 widget::~widget(void)
 {
+	// Remove self from parent's children
+	widget * parent = get_parent();
+
+	if (parent)
+	{
+		auto & children = get_parent()->m_children;
+		std::remove(children.begin(), children.end(), this);
+	}
+
+	// Notify children destruction
+	for (widget * child : m_children)
+	{
+		child->set_parent(nullptr);
+		child->destroy();		
+	}
+
+	// Unregister and cleanup
 	if (m_manager)
 	{
 		m_manager->unregister_widget(this);
 	}
 
 	set_layout(nullptr);
-
-	for (widget * child : m_children)
-	{
-		xng_delete child;
-	}
 }
 
 gui_manager * widget::get_gui_manager(void)
@@ -221,43 +233,52 @@ void widget::hide(void)
 	}
 }
 
-const int2 & widget::get_position(void) const
+int2 widget::get_position(void) const
 {
-	return m_position;
+	return make_relative(m_rectangle.topLeft);
+}
+
+int2 widget::get_absolute_position(void) const
+{
+	return m_rectangle.topLeft;
 }
 
 void widget::set_position(const int2 & position)
 {
-	int2 oldPosition = m_position;
+	int2      delta  = make_absolute(position) - m_rectangle.topLeft;
+	rectangle rect   = m_rectangle;
 
-	m_position = position;
-	
-	// Call virtual update functions
-	on_reposition(oldPosition, position);
-	reposition_children();
+	rect.topLeft     = rect.topLeft + delta;
+	rect.bottomRight = rect.bottomRight + delta;
+	set_rectangle(rect);
 }
 
-const int2 & widget::get_size(void) const
+int2 widget::get_size(void) const
 {
-	return m_size;
+	return rectangle_size(m_rectangle);
 }
 
 void widget::set_size(const int2 & size)
 {
-	int2 oldSize = m_size;
-	m_size = size;
-
-	// Call virtual update functions
-	on_resize(oldSize, size);
-	resize_children();
+	rectangle rect = m_rectangle;
+	rect.bottomRight = rect.topLeft + size;
+	set_rectangle(rect);
 }
 
 rectangle widget::get_rectangle(void) const
 {
-	rectangle rect;
-	rect.topLeft     = make_absolute(m_position);
-	rect.bottomRight = rect.topLeft + m_size;
-	return rect;
+	return m_rectangle;
+}
+
+void widget::set_rectangle(const rectangle & newRectangle)
+{
+	rectangle oldRectangle = m_rectangle;
+
+	m_rectangle = newRectangle;
+
+	// Call virtual update functions
+	on_rectangle_update(oldRectangle, newRectangle);
+	update_children_rectangles(oldRectangle, newRectangle);
 }
 
 int2 widget::make_absolute(const int2 & x) const
@@ -279,6 +300,11 @@ int2 widget::make_relative(const int2 & x) const
 rectangle widget::get_client_rectangle(void) const
 {
 	return m_clientRectangle;
+}
+
+void widget::destroy(void)
+{
+	m_manager->enqueue_destruction(this);
 }
 
 xng_gui_widget widget::get_widget_type(void) const
@@ -327,49 +353,28 @@ void widget::set_client_rectangle(const rectangle & rect)
 	m_clientRectangle = rect;
 }
 
-void widget::on_reposition(const int2 & oldPosition, const int2 & newPosition)
+void widget::on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle)
 {
-	int2 delta       = newPosition - oldPosition;
-
-	rectangle rect   = get_rectangle();
-	rect.topLeft     = rect.topLeft + delta;
-	rect.bottomRight = rect.topLeft + delta;
-
-	set_client_rectangle(rect);
+	set_client_rectangle(newRectangle);
 }
 
-void widget::on_resize(const int2 & oldSize, const int2 & newSize)
+void widget::update_children_rectangles(const rectangle & oldRectangle, const rectangle & newRectangle) const
 {
-	rectangle rect = get_rectangle();
-	rect.bottomRight = rect.topLeft - oldSize + newSize;
-
-	set_client_rectangle(rect);
-}
-
-void widget::reposition_children(void) const
-{
-	for (widget * child : *this)
+	if (oldRectangle.topLeft != newRectangle.topLeft)
 	{
-		child->on_parent_reposition();
+		int2 delta = newRectangle.topLeft - oldRectangle.topLeft;
+
+		for (widget * child : *this)
+		{
+			if (child->is_relative())
+			{
+				rectangle rect = child->get_rectangle();
+				rect.topLeft = rect.topLeft + delta;
+				rect.bottomRight = rect.bottomRight + delta;
+				child->set_rectangle(rect);
+			}
+		}
 	}
-}
-
-void widget::resize_children(void) const
-{
-	for (widget * child : *this)
-	{
-		child->on_parent_resize();
-	}
-}
-
-void widget::on_parent_reposition(void)
-{
-	set_position(get_position());
-}
-
-void widget::on_parent_resize(void)
-{
-	set_size(get_size());
 }
 
 bool widget::is_relative(void) const
@@ -380,6 +385,4 @@ bool widget::is_relative(void) const
 void widget::set_relative(bool relative)
 {
 	m_relative = relative;
-	int2 newPosition = relative ? make_relative(m_position) : make_absolute(m_position);
-	set_position(newPosition);
 }

@@ -4,10 +4,10 @@
 #include <string>
 #include <list>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <xng/core.hpp>
 #include <xng/res/resource.hpp>
-#include <xng/res/resource_ptr.hpp>
 
 namespace xng
 {
@@ -23,12 +23,14 @@ namespace xng
 
 			resource_ptr<resource> create(const char * name,
 				const resource_parameters & parameters = resource_parameters(),
-				resource_loader_ptr loader = resource_loader_ptr());
+				resource_loader_ptr loader = resource_loader_ptr(),
+				resource_ptr<resource> dependency = resource_ptr<resource>());
 
 			virtual void garbage_collection(void);
 
 			resource_ptr<resource> find_by_name(const char * name) const;
 			resource_ptr<resource> find_by_id(resource_id id) const;
+			resource_ptr<resource> find_by_dependency(resource_ptr<resource> r) const;
 
 			size_t get_space_threshold(void) const;
 			void set_space_threshold(size_t size);
@@ -36,6 +38,8 @@ namespace xng
 			size_t get_used_space(void) const;
 
 			const char * get_type(void) const;
+
+			void clear(void);
 
 		protected:
 
@@ -51,8 +55,10 @@ namespace xng
 
 			std::unordered_map<std::string, resource*> m_namedResources;
 			std::unordered_map<resource_id, resource*> m_resources;
+			std::unordered_map<resource*, resource*>   m_dependencies;
 
-			std::list<resource*> m_garbage;
+			std::list<resource*>          m_garbage;
+			std::unordered_set<resource*> m_garbageSet;
 
 			mutable std::mutex m_mutex;
 			mutable std::mutex m_garbageMutex;
@@ -61,6 +67,7 @@ namespace xng
 
 			resource_ptr<resource> find_by_name_internal(const char * name) const;
 			resource_ptr<resource> find_by_id_internal(resource_id id) const;
+			resource_ptr<resource> find_by_dependency_internal(resource_ptr<resource> r) const;
 
 			/* Resources calls */
 
@@ -75,9 +82,30 @@ namespace xng
 			void garbage_collection_full_internal(void);
 			void garbage_clear_duplicates_internal(void);
 
-			void clear(void);
 
 		};
 
+		template <typename Resource>
+		class basic_resource_manager :
+			public resource_manager
+		{
+
+		public:
+
+			basic_resource_manager(void) :
+				resource_manager(Resource::resource_type) {}
+
+		protected:
+
+			res::resource * create_impl(const char * name, const res::resource_parameters & params, res::resource_loader_ptr loader) override
+			{
+				return xng_new Resource(name, params, loader, this);
+			}
+
+			void free_impl(res::resource * resource) override
+			{
+				xng_delete resource;
+			}
+		};
 	}
 }

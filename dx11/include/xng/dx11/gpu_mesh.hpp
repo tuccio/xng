@@ -3,6 +3,7 @@
 #include <xng/dx11/dx11_headers.hpp>
 #include <xng/res.hpp>
 #include <xng/graphics/mesh.hpp>
+#include <tuple>
 
 namespace xng
 {
@@ -13,6 +14,13 @@ namespace xng
 		{
 
 		public:
+
+			struct load_data
+			{
+				ID3D11Device * device;
+			};
+
+			static const char * resource_type;
 
 			gpu_mesh(void) = default;
 			gpu_mesh(const char * name, const res::resource_parameters & params, res::resource_loader_ptr loader, res::resource_manager * owner);
@@ -77,7 +85,7 @@ namespace xng
 
 		protected:
 
-			bool   load_impl(void) override;
+			bool   load_impl(const void * userdata) override;
 			void   unload_impl(void) override;
 			size_t calculate_size_impl(void) override;
 
@@ -101,9 +109,7 @@ namespace xng
 
 		};
 
-		typedef res::resource_ptr<gpu_mesh> gpu_mesh_ptr;
-
-		gpu_mesh_ptr make_gpu_mesh(graphics::mesh_ptr mesh);
-
+		typedef res::resource_ptr<gpu_mesh>           gpu_mesh_ptr;
+		typedef res::basic_resource_manager<gpu_mesh> gpu_mesh_manager;
 	}
 }

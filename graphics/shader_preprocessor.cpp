@@ -117,7 +117,7 @@ bool shader_preprocessor::preprocess(const char * filename, output_type * out, s
 
 	/*for (auto & section : out->sections)
 	{
-		XNG_LOG(section.first.c_str(), section.second.c_str());
+		XNG_LOG(section.first.c_str(), section.second.content.c_str());
 	}*/
 
 	return true;
@@ -149,22 +149,23 @@ bool shader_preprocessor::expand_includes_recursive(std::ostream & out, std::ist
 
 		if (is_include(line, &include))
 		{
-			std::ifstream includeIS(path + include);
+			std::string includeFile = path + include;
+			std::ifstream includeIS(includeFile);
 
 			if (includeIS)
 			{
 				std::stringstream includeOS;
 				
-				if (expand_includes_recursive(includeOS, includeIS, include.c_str(), depth + 1, maxDepth, errors))
+				if (expand_includes_recursive(includeOS, includeIS, includeFile.c_str(), depth + 1, maxDepth, errors))
 				{
-					notify(&shader_preprocessor_observer::on_include_begin, out, filename, lineNo, include.c_str());
+					notify(&shader_preprocessor_observer::on_include_begin, out, filename, lineNo, includeFile.c_str());
 					std::copy(std::istreambuf_iterator<char>(includeOS), std::istreambuf_iterator<char>(), std::ostream_iterator<char>(out));
-					notify(&shader_preprocessor_observer::on_include_end, out, filename, lineNo, include.c_str());
+					notify(&shader_preprocessor_observer::on_include_end, out, filename, lineNo, includeFile.c_str());
 				}
 			}
 			else if (errors)
 			{
-				std::string error = "Unable to open include file \"" + include;
+				std::string error = "Unable to open include file \"" + includeFile;
 				error += "\".";
 				errors->emplace_back(std::move(error));
 				return false;

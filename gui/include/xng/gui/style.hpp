@@ -6,6 +6,8 @@
 #include <memory>
 #include <unordered_map>
 
+#define XNG_STYLE_STRING_BUFFER_SIZE 256
+
 namespace xng
 {
 	namespace gui
@@ -16,6 +18,15 @@ namespace xng
 
 			math::float4 caption_background_color;
 			uint32_t     caption_height;
+
+			char         caption_font[XNG_STYLE_STRING_BUFFER_SIZE];
+
+			math::uint2  caption_text_origin;
+			math::float4 caption_text_color;
+			math::float4 caption_text_border_color;
+			uint32_t     caption_text_border_size;
+			float        caption_text_smoothness;
+			float        caption_text_scale;
 
 			math::uint2  slider_size;
 			math::float4 slider_color;

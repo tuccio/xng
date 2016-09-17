@@ -2,6 +2,7 @@
 #include <xng/dx11/dx11_api_context.hpp>
 #include <xng/dx11/forward_renderer.hpp>
 #include <xng/dx11/dx11_gui_renderer.hpp>
+#include <xng/dx11/default_samplers.hpp>
 
 #include <memory>
 
@@ -35,6 +36,8 @@ namespace xng
 			native_window * m_window;
 
 			graphics::realtime_window_observer m_windowObserver;
+
+			default_samplers m_samplers;
 
 		};
 	}

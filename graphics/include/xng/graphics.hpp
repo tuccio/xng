@@ -9,4 +9,5 @@
 #include <xng/graphics/scene_graph.hpp>
 
 #include <xng/graphics/mesh.hpp>
-#include <xng/graphics/mesh_manager.hpp>
+#include <xng/graphics/image.hpp>
+#include <xng/graphics/font.hpp>
