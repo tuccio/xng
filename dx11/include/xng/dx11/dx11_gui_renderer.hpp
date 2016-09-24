@@ -5,6 +5,7 @@
 #include <xng/dx11/dx11_api_context.hpp>
 #include <xng/dx11/uber_shader.hpp>
 #include <xng/dx11/constant_buffer.hpp>
+#include <xng/gui/gui_command_list.hpp>
 
 namespace xng
 {
@@ -20,6 +21,8 @@ namespace xng
 			void shutdown(void);
 
 			void set_device_context(ID3D11DeviceContext * deviceContext);
+
+			void render(ID3D11DeviceContext * deviceContext, const math::uint2 & size, const gui::gui_command_list & commandList);
 
 			void render_begin(const math::uint2 & size) override;
 			void render_end(void) override;

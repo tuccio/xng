@@ -23,7 +23,6 @@ namespace xng
 		protected:
 
 			void update_impl(void) override;
-			scene_graph_geometry * clone(scene_graph_node * newParent, scene_graph * newSceneGraph) override;
 
 		private:
 

@@ -16,6 +16,16 @@ const xng_module_type editor_module::module_type        = XNG_MODULE_TYPE_RUNTIM
 
 void create_default_scene(scene_module * sceneModule);
 
+struct editor_window_observer :
+	public native_window_observer
+{
+	void on_resize(native_window * wnd, const uint2 & windowSize, const uint2 & clientSize) override
+	{
+		float ratio = clientSize.x / (float)clientSize.y;
+		game::get_singleton()->get_scene_module()->get_active_scene()->get_active_camera()->get_camera()->set_aspect_ratio(ratio);
+	}
+};
+
 bool editor_module::init(void)
 {
 	module_factory * sceneFactory = module_manager::get_singleton()->
@@ -36,6 +46,12 @@ bool editor_module::init(void)
 		}
 
 		instance->set_scene_module(sceneModule);
+
+		m_observer = std::unique_ptr<native_window_observer>(xng_new editor_window_observer);
+		instance->get_window()->add_observer(m_observer.get());
+
+		m_observer->on_resize(instance->get_window(), instance->get_window()->get_window_size(), instance->get_window()->get_client_size());
+
 		return true;
 	}
 
@@ -44,6 +60,8 @@ bool editor_module::init(void)
 
 void editor_module::shutdown(void)
 {
+	game::get_singleton()->get_window()->remove_observer(m_observer.get());
+	m_observer.reset();
 	m_editor.reset();
 }
 

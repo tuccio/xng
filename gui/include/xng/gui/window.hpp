@@ -28,12 +28,11 @@ namespace xng
 			const wchar_t * get_caption(void) const;
 			void set_caption(const wchar_t * caption);
 
+			void extract(gui_command_list_inserter & inserter, const style & style) const override;
+
 		protected:
 
 			window(const window &) = default;
-
-			window * clone(gui_manager * manager, widget * parent) const override;
-			void render(gui_renderer * renderer, const style & style) const override;
 
 			void on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle) override;
 

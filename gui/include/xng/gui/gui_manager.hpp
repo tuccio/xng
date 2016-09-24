@@ -5,6 +5,7 @@
 #include <xng/gui/window.hpp>
 #include <xng/gui/style.hpp>
 #include <xng/gui/gui_events.hpp>
+#include <xng/gui/gui_command_list.hpp>
 #include <xng/core/event_handler.hpp>
 
 #include <memory>
@@ -32,17 +33,13 @@ namespace xng
 			void set_style(const style & style);
 			const style & get_style(void) const;
 
-			void render(void);
 			void update(float dt);
-
-			void set_size(const math::uint2 & size);
-			const math::uint2 & get_size(void) const;
-
-			gui_manager * clone(void) const;
 
 			bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
 			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
 			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
+
+			gui_command_list extract(void) const;
 
 		private:
 
@@ -50,7 +47,6 @@ namespace xng
 
 			gui_renderer * m_renderer;
 			style          m_style;
-			math::uint2    m_size;
 
 			widget       * m_focus;
 
@@ -58,7 +54,6 @@ namespace xng
 			gui_event_handler * m_eventHandler;
 
 			std::unordered_set<widget*> m_destroyQueue;
-			bool m_shallow;
 
 			friend class widget;
 			friend class window;
@@ -79,6 +74,8 @@ namespace xng
 			gui_event_handler * get_event_handler(void);
 
 			void enqueue_destruction(widget * widget);
+
+			bool has_pending_objects(void) const;
 			void destroy_pending_objects(void);
 
 		};

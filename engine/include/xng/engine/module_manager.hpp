@@ -15,12 +15,17 @@ namespace xng
 	{
 
 		typedef module_factory ** (*export_modules_t) (void);
+		typedef void (*cleanup_modules_t) (void);
 
 		class module_manager :
 			public core::singleton<module_manager>
 		{
 			
 		public:
+
+			~module_manager(void);
+
+			void clear(void);
 
 			std::vector<module_factory*> get_modules(void) const;
 
@@ -33,7 +38,7 @@ namespace xng
 		private:
 
 			std::vector<module_factory*> m_modules;
-			std::unordered_map<module_factory*, std::shared_ptr<os::shared_library>> m_libraries;
+			std::unordered_map<module_factory*, os::shared_library*> m_libraries;
 
 			mutable std::mutex m_mutex;
 

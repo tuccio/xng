@@ -14,7 +14,7 @@ namespace xng
 	{
 
 		class native_window :
-			public core::observable<native_window_observer>
+			public core::observable<native_window_observer, std::mutex>
 		{
 
 		public:

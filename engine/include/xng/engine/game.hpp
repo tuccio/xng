@@ -80,8 +80,8 @@ namespace xng
 
 			std::unique_ptr<os::main_loop>    m_mainLoop;
 			bool                              m_renderReady;
-			std::unique_ptr<graphics::scene>  m_renderScene;
-			std::unique_ptr<gui::gui_manager> m_renderGUI;
+			graphics::extracted_scene         m_extractedScene;
+			gui::gui_command_list             m_guiCommandList;
 
 			std::unique_ptr<os::native_window_observer> m_quitOnClose;
 

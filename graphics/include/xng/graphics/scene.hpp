@@ -8,6 +8,8 @@ namespace xng
 {
 	namespace graphics
 	{
+		class extracted_scene;
+
 		class scene
 		{
 
@@ -31,8 +33,49 @@ namespace xng
 
 			virtual void update(void) = 0;
 
-			virtual scene * clone(void) = 0;
+			extracted_scene extract(void);
 
+		};
+
+		struct extracted_renderable
+		{
+			mesh_ptr       mesh;
+			math::float4x4 world;
+		};
+
+		class extracted_scene
+		{
+
+		public:
+
+			typedef std::vector<uint32_t> renderable_index_vector;
+			typedef std::vector<extracted_renderable> renderable_vector;
+
+			extracted_scene(void) = default;
+			extracted_scene(const extracted_scene &) = default;
+			extracted_scene(extracted_scene &&) = default;
+
+			extracted_scene & operator= (const extracted_scene &) = default;
+			extracted_scene & operator= (extracted_scene &&) = default;
+
+			void clear(void);
+
+			const camera * get_active_camera(void) const;
+
+			const extracted_renderable * get_renderable(uint32_t index) const;
+
+			const renderable_index_vector & frustum_culling_static(void) const;
+			const renderable_index_vector & frustum_culling_dynamic(void) const;
+
+		private:
+
+			camera m_activeCamera;
+
+			renderable_vector       m_renderables;
+			renderable_index_vector m_visibleDynamicObjects;
+			renderable_index_vector m_visibleStaticObjects;
+
+			friend class scene;
 		};
 	}
 }

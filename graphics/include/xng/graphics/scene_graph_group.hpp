@@ -18,10 +18,6 @@ namespace xng
 			scene_graph_group(scene_graph_node * parent) :
 				scene_graph_node(XNG_SCENE_GRAPH_GROUP, parent, parent->get_scene_graph()) {}
 
-		protected:
-
-			scene_graph_group * clone(scene_graph_node * newParent, scene_graph * newSceneGraph) override;
-
 		};
 	}
 }

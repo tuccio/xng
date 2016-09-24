@@ -20,14 +20,14 @@ namespace xng
 
 			virtual bool is_initialized(void) const = 0;
 
-			virtual void render(graphics::scene * scene, gui::gui_manager * gui) = 0;
+			virtual void render(const graphics::extracted_scene & extractedScene, const gui::gui_command_list & guiCommandList) = 0;
+
 			virtual graphics::api_context * get_api_context(void) = 0;
 
 			XNG_INLINE graphics::renderer_configuration & configuration(void)
 			{
 				return m_configuration;
 			}
-
 
 		protected:
 

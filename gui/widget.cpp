@@ -39,23 +39,6 @@ widget::widget(const widget & widget)
 
 widget::~widget(void)
 {
-	// Remove self from parent's children
-	widget * parent = get_parent();
-
-	if (parent)
-	{
-		auto & children = get_parent()->m_children;
-		std::remove(children.begin(), children.end(), this);
-	}
-
-	// Notify children destruction
-	for (widget * child : m_children)
-	{
-		child->set_parent(nullptr);
-		child->destroy();		
-	}
-
-	// Unregister and cleanup
 	if (m_manager)
 	{
 		m_manager->unregister_widget(this);
@@ -91,6 +74,11 @@ widget * widget::get_parent(void)
 
 void widget::set_parent(widget * parent)
 {
+	if (m_parent)
+	{
+		std::remove(m_parent->m_children.begin(), m_parent->m_children.end(), this);
+	}
+
 	m_parent = parent;
 
 	if (parent)
@@ -144,14 +132,15 @@ void widget::set_layout(layout * layout)
 {
 	if (m_layout)
 	{
-		xng_delete layout;
+		xng_delete m_layout;
 	}
 
 	if (layout)
 	{
 		layout->set_owner(this);
-		m_layout = layout;
 	}
+
+	m_layout = layout;
 }
 
 bool widget::on_mouse_key_down(const mouse * mouse, xng_mouse_key key)
@@ -305,6 +294,11 @@ rectangle widget::get_client_rectangle(void) const
 void widget::destroy(void)
 {
 	m_manager->enqueue_destruction(this);
+
+	for (widget * w : *this)
+	{
+		w->destroy();
+	}
 }
 
 xng_gui_widget widget::get_widget_type(void) const
@@ -322,26 +316,7 @@ void widget::set_widget_status(xng_gui_status status)
 	m_status = status;
 }
 
-void widget::clone_children(gui_manager * manager, widget * parent) const
-{
-	for (widget * child : *this)
-	{
-		child->clone(manager, parent);
-	}
-}
-
-void widget::render(gui_renderer * renderer, const style & style) const {}
-
-void widget::render_children(gui_renderer * renderer, const style & style) const
-{
-	for (widget * child : *this)
-	{
-		if (!child->is_window())
-		{
-			child->render(renderer, style);
-		}
-	}
-}
+void widget::extract(gui_command_list_inserter & inserter, const style & style) const {}
 
 bool widget::is_window(void) const
 {

@@ -87,7 +87,7 @@ bool dx11_render_module::is_initialized(void) const
 	return m_context && m_renderer;
 }
 
-void dx11_render_module::render(scene * scene, gui_manager * gui)
+void dx11_render_module::render(const extracted_scene & extractedScene, const gui_command_list & guiCommandList)
 {
 	render_variables rvars;
 	render_variables_updates updates;
@@ -98,22 +98,8 @@ void dx11_render_module::render(scene * scene, gui_manager * gui)
 
 	m_renderer->update_render_variables(rvars, updates);
 
-	scene_graph_camera * cameraNode = scene ? scene->get_active_camera() : nullptr;
-	camera             * camera     = cameraNode ? cameraNode->get_camera() : nullptr;
-
-	if (camera)
-	{
-		float ratio = rvars.render_resolution.x / (float)rvars.render_resolution.y;
-		camera->set_aspect_ratio(ratio);
-	}
-
-	m_renderer->render(m_context->get_immediate_context(), scene, camera);
-
-	if (gui)
-	{
-		gui->set_renderer(m_guiRenderer.get());
-		gui->render();
-	}
+	m_renderer->render(m_context->get_immediate_context(), extractedScene);
+	m_guiRenderer->render(m_context->get_immediate_context(), rvars.render_resolution, guiCommandList);
 	
 	m_context->frame_complete();
 }

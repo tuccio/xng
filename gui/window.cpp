@@ -25,28 +25,23 @@ window::window(gui_manager * manager, widget * parent, const int2 & position, co
 
 window::~window(void)
 {
-	for (widget * w : *this)
-	{
-		w->destroy();
-	}
-
 	if (auto manager = get_gui_manager())
 	{
 		manager->unregister_window(this);
 	}
 }
 
-void window::render(gui_renderer * renderer, const style & style) const
+void window::extract(gui_command_list_inserter & inserter, const style & style) const
 {
 	rectangle windowBodyRectangle = get_rectangle();
 	windowBodyRectangle.top = m_captionRectangle.bottom;
 
-	renderer->render_filled_rectangle(m_captionRectangle, style.caption_background_color);
-	renderer->render_filled_rectangle(windowBodyRectangle, style.window_background_color);
+	*inserter++ = make_filled_rectangle_command(m_captionRectangle, style.caption_background_color);
+	*inserter++ = make_filled_rectangle_command(windowBodyRectangle, style.window_background_color);
 
 	font_ptr fnt = resource_factory::get_singleton()->create<font>(style.caption_font);
 
-	renderer->render_text(
+	*inserter++ = make_text_command(
 		fnt,
 		m_caption.c_str(),
 		style.caption_text_color,
@@ -55,18 +50,6 @@ void window::render(gui_renderer * renderer, const style & style) const
 		style.caption_text_smoothness,
 		(uint2)get_rectangle().topLeft + style.caption_text_origin,
 		style.caption_text_scale);
-}
-
-window * window::clone(gui_manager * manager, widget * parent) const
-{
-	window * newWindow = xng_new window(*this);
-
-	newWindow->set_parent(parent);
-	newWindow->set_gui_manager(manager);
-
-	clone_children(manager, newWindow);
-
-	return newWindow;
 }
 
 bool window::on_mouse_key_down(const mouse * mouse, xng_mouse_key key)

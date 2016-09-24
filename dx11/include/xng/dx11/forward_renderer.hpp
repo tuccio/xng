@@ -18,7 +18,7 @@ namespace xng
 			void shutdown(void);
 
 			void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);
-			void render(ID3D11DeviceContext * deviceContext, graphics::scene * scene, graphics::camera * camera);
+			void render(ID3D11DeviceContext * deviceContext, const graphics::extracted_scene & extractedScene);
 
 		private:
 

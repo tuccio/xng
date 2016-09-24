@@ -252,3 +252,31 @@ void dx11_gui_renderer::render_text(font_ptr fnt, const wchar_t * text, const fl
 	}
 	
 }
+
+void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, const uint2 & size, const gui_command_list & commandList)
+{
+	set_device_context(deviceContext);
+
+	render_begin(size);
+
+	for (auto & cmd : commandList)
+	{
+		switch (cmd.type)
+		{
+		case XNG_GUI_COMMAND_FILLED_RECTANGLE:
+			render_filled_rectangle(cmd.rect, cmd.color);
+			break;
+
+		case XNG_GUI_COMMAND_TEXTURED_RECTANGLE:
+			render_textured_rectangle(cmd.rect, cmd.uv0, cmd.uv1, cmd.image);
+			break;
+
+		case XNG_GUI_COMMAND_TEXT:
+			render_text(cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.smoothness, cmd.position, cmd.scale);
+			break;
+		}
+
+	}
+
+	render_end();
+}

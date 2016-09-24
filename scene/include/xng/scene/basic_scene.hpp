@@ -26,8 +26,6 @@ namespace xng
 
 			void update(void) override;
 
-			scene * clone(void) override;
-
 		private:
 
 			graphics::scene_graph m_sceneGraph;

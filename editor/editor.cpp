@@ -19,30 +19,34 @@ using namespace xng::res;
 struct wx_app :
 	public wxApp
 {
-	bool OnInit(void) override { return true; }
+	bool OnInit(void) override { wxApp::OnInit(); return true; }
 };
+
+IMPLEMENT_APP_NO_MAIN(wx_app);
+IMPLEMENT_WX_THEME_SUPPORT;
 
 void create_menu(wxFrame * editor);
 void create_gui(void);
 
-editor::editor(native_window * window_body)
+editor::editor(native_window * wnd)
 {
-	wxApp::SetInstance(xng_new wx_app);
-	wxTheApp->SetEvtHandlerEnabled(false);
-
 	static int argc = 1;
 	static char * argv[] = { "xngeditor", nullptr };
 
 	if (wxEntryStart(argc, argv))
 	{
-		math::uint2 size = window_body->get_window_size();
+		wxTheApp->CallOnInit();
+
+		wnd->show();
+
+		math::uint2 size = wnd->get_window_size();
 
 		m_editor = xng_new wxFrame(nullptr, wxID_ANY, "XNG Editor");
-		render_panel * renderPanel = xng_new render_panel(window_body, m_editor, wxID_ANY);
+		render_panel * renderPanel = xng_new render_panel(wnd, m_editor, wxID_ANY);
 
 		m_editor->Show();
 		renderPanel->Show();
-		window_body->show();
+		wnd->show();
 
 		m_auiManager = std::make_unique<wxAuiManager>();
 
@@ -76,8 +80,9 @@ editor::~editor(void)
 	m_auiManager->UnInit();
 	m_auiManager.reset();
 
+	m_editor->Destroy();
+
 	wxEntryCleanup();
-	wxUninitialize();
 }
 
 void editor::update(void)

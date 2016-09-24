@@ -5,6 +5,7 @@
 #include <xng/gui/rectangle.hpp>
 #include <xng/gui/layout.hpp>
 #include <xng/gui/gui_events.hpp>
+#include <xng/gui/gui_command_list.hpp>
 
 #include <xng/math.hpp>
 #include <xng/input.hpp>
@@ -70,19 +71,16 @@ namespace xng
 				get_gui_manager()->get_event_handler()->bind<evt>(this, std::forward<F>(function));
 			}
 
+			virtual void extract(gui_command_list_inserter & inserter, const style & style) const;
 
 		protected:
 
 			widget(const widget & widget);
 
-			virtual widget * clone(gui_manager * manager, widget * parent) const = 0;
-			virtual void render(gui_renderer * renderer, const style & style) const;
-
 			void set_client_rectangle(const rectangle & rect);
 
 			virtual void on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle);
 
-			void clone_children(gui_manager * manager, widget * parent) const;
 			void update_children_rectangles(const rectangle & oldRectangle, const rectangle & newRectangle) const;
 
 			xng_gui_widget get_widget_type(void) const;
@@ -146,8 +144,6 @@ namespace xng
 					}
 				}
 			}
-
-			void render_children(gui_renderer * renderer, const style & style) const;
 
 		};
 	}

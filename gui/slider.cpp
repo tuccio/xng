@@ -18,32 +18,19 @@ slider::slider(gui_manager * manager, widget * parent, const int2 & position, co
 	set_size(newSize);
 }
 
-void slider::render(gui_renderer * renderer, const style & style) const
+void slider::extract(gui_command_list_inserter & inserter, const style & style) const
 {
 	rectangle filled = m_sliderBarRectangle;
-	rectangle empty  = m_sliderBarRectangle;
+	rectangle empty = m_sliderBarRectangle;
 
 	int middle = m_sliderRectangle.right - rectangle_width(m_sliderRectangle) / 2;
 
 	filled.right = middle;
-	empty.left   = middle;
+	empty.left = middle;
 
-	renderer->render_filled_rectangle(filled, style.slider_bar_filled);
-	renderer->render_filled_rectangle(empty, style.slider_bar_empty);
-
-	renderer->render_filled_rectangle(m_sliderRectangle, style.slider_color);
-}
-
-slider * slider::clone(gui_manager * manager, widget * parent) const
-{
-	slider * newWidget = xng_new slider(*this);
-
-	newWidget->set_parent(parent);
-	newWidget->set_gui_manager(manager);
-
-	clone_children(manager, newWidget);
-
-	return newWidget;
+	*inserter++ = make_filled_rectangle_command(filled, style.slider_bar_filled);
+	*inserter++ = make_filled_rectangle_command(empty, style.slider_bar_empty);
+	*inserter++ = make_filled_rectangle_command(m_sliderRectangle, style.slider_color);
 }
 
 void slider::on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle)

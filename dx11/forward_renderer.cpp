@@ -41,7 +41,7 @@ void forward_renderer::shutdown(void)
 	m_vbFactory.clear();
 }
 
-void forward_renderer::render(ID3D11DeviceContext * deviceContext, scene * scene, camera * camera)
+void forward_renderer::render(ID3D11DeviceContext * deviceContext, const extracted_scene & scene)
 {
 	ID3D11Device * device  = m_apiContext->get_device();
 
@@ -61,56 +61,57 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext, scene * scene
 	deviceContext->RSSetState(m_rasterizerState.get());
 	deviceContext->OMSetRenderTargets(1, &backBuffer, nullptr);
 
-	if (scene && camera)
+	const camera * camera = scene.get_active_camera();
+
+	const float4x4 & viewMatrix = camera->get_directx_view_matrix();
+	const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
+
+	float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+
+	auto & dynamicGeometry = scene.frustum_culling_dynamic();
+
+	shader_program program = m_program.compile(m_apiContext->get_device());
+	program.use(deviceContext);
+
+	deviceContext->VSSetConstantBuffers(0, 1, &m_cbPerObject);
+	deviceContext->PSSetConstantBuffers(0, 1, &m_cbPerObject);
+
+	int ColorIndex = 0;
+
+	gpu_mesh::load_data meshLoadData = { m_apiContext->get_device() };
+
+	for (auto renderableIndex : dynamicGeometry)
 	{
-		const float4x4 & viewMatrix = camera->get_directx_view_matrix();
-		const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
+		auto renderable = scene.get_renderable(renderableIndex);
 
-		float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+		gpu_mesh_ptr m = resource_factory::get_singleton()->create<gpu_mesh>("", resource_parameters(), resource_loader_ptr(), renderable->mesh);
 
-		auto geometry = scene->get_geometry_nodes();
-
-		shader_program program = m_program.compile(m_apiContext->get_device());
-		program.use(deviceContext);
-
-		deviceContext->VSSetConstantBuffers(0, 1, &m_cbPerObject);
-		deviceContext->PSSetConstantBuffers(0, 1, &m_cbPerObject);
-
-		int ColorIndex = 0;
-
-		gpu_mesh::load_data meshLoadData = { m_apiContext->get_device() };
-
-		for (auto gNode : geometry)
+		if (m && m->load(&meshLoadData))
 		{
-			gpu_mesh_ptr m = resource_factory::get_singleton()->create<gpu_mesh>("", resource_parameters(), resource_loader_ptr(), gNode->get_mesh());
+			const float4x4 & modelMatrix = renderable->world;
 
-			if (m && m->load(&meshLoadData))
-			{
-				const float4x4 & modelMatrix = gNode->get_global_matrix();
+			__cbPerObject bufferPerObjectData = {
+				viewMatrix * modelMatrix,
+				viewProjectionMatrix * modelMatrix,
+				colors[ColorIndex++ % 3]
+			};
 
-				__cbPerObject bufferPerObjectData = {
-					viewMatrix * modelMatrix,
-					viewProjectionMatrix * modelMatrix,
-					colors[ColorIndex++ % 3]
-				};
+			m_cbPerObject.write(deviceContext, &bufferPerObjectData);
 
-				m_cbPerObject.write(deviceContext, &bufferPerObjectData);
+			UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
+			UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
 
-				UINT strides[] = { m->get_positional_data_stride(), m->get_non_positional_data_stride() };
-				UINT offsets[] = { m->get_positional_data_offset(), m->get_non_positional_data_offset() };
+			ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
 
-				ID3D11Buffer * buffers[] = { m->get_positional_data(), m->get_non_positional_data() };
+			deviceContext->IASetVertexBuffers(0, 1, buffers, strides, offsets);
+			deviceContext->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
+			deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				deviceContext->IASetVertexBuffers(0, 1, buffers, strides, offsets);
-				deviceContext->IASetIndexBuffer(m->get_indices_data(), m->get_indices_format(), m->get_indices_offset());
-				deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-				deviceContext->DrawIndexed(m->get_num_indices(), 0, 0);
-			}
+			deviceContext->DrawIndexed(m->get_num_indices(), 0, 0);
 		}
-
-		program.dispose(deviceContext);
 	}
+
+	program.dispose(deviceContext);
 }
 
 void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)

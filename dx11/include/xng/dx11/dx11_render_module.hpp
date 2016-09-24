@@ -24,7 +24,7 @@ namespace xng
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
 
-			void render(graphics::scene * scene, gui::gui_manager * gui) override;
+			void render(const graphics::extracted_scene & extractedScene, const gui::gui_command_list & guiCommandList) override;
 			graphics::api_context * get_api_context(void) override;
 
 		private:

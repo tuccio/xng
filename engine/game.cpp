@@ -18,7 +18,7 @@ struct game_window_observer :
 	game_window_observer(main_loop * loop) :
 		m_loop(loop) {}
 
-	void on_destroy(native_window * window_body)
+	void on_destroy(native_window * wnd) override
 	{
 		m_loop->quit();
 	}
@@ -34,42 +34,42 @@ struct game_window_input_observer :
 	game_window_input_observer(input_handler * inputHandler) :
 		m_inputHandler(inputHandler) {}
 
-	void on_keyboard_key_down(native_window * window_body, xng_keyboard_key key) override
+	void on_keyboard_key_down(native_window * wnd, xng_keyboard_key key) override
 	{
 		m_inputHandler->on_keyboard_key_down(key, timestamp());
 	}
 
-	void on_keyboard_key_up(native_window * window_body, xng_keyboard_key key) override
+	void on_keyboard_key_up(native_window * wnd, xng_keyboard_key key) override
 	{
 		m_inputHandler->on_keyboard_key_up(key, timestamp());
 	}
 
-	void on_mouse_key_down(native_window * window_body, xng_mouse_key key) override
+	void on_mouse_key_down(native_window * wnd, xng_mouse_key key) override
 	{
 		m_inputHandler->on_mouse_key_down(key, timestamp());
 	}
 
-	void on_mouse_key_up(native_window * window_body, xng_mouse_key key) override
+	void on_mouse_key_up(native_window * wnd, xng_mouse_key key) override
 	{
 		m_inputHandler->on_mouse_key_up(key, timestamp());
 	}
 
-	void on_mouse_move(native_window * window_body, const xng::math::uint2 & position) override
+	void on_mouse_move(native_window * wnd, const xng::math::uint2 & position) override
 	{
 		m_inputHandler->on_mouse_move(position, timestamp());
 	}
 
-	void on_mouse_wheel(native_window * window_body, int32_t wheel) override
+	void on_mouse_wheel(native_window * wnd, int32_t wheel) override
 	{
 		m_inputHandler->on_mouse_wheel(wheel, timestamp());
 	}
 
-	void on_focus(native_window * window_body) override
+	void on_focus(native_window * wnd) override
 	{
 		m_inputHandler->on_focus_change(timestamp());
 	}
 
-	void on_unfocus(native_window * window_body) override
+	void on_unfocus(native_window * wnd) override
 	{
 		m_inputHandler->on_focus_change(timestamp());
 	}
@@ -130,8 +130,6 @@ game::game(void) :
 	m_running(false),
 	m_rendering(false),
 	m_renderReady(false),
-	m_renderScene(nullptr),
-	m_renderGUI(nullptr),
 	m_ticksPerSecond(30)
 {
 }
@@ -173,8 +171,8 @@ void game::shutdown(void)
 #undef XNG_GAME_SHUTDOWN_MODULE
 
 	m_guiManager.reset();
-	m_quitOnClose.reset();
 	m_window.reset();
+	m_quitOnClose.reset();
 	m_mainLoop.reset();
 }
 
@@ -203,8 +201,10 @@ void game::run(void)
 	stop_rendering();
 	m_gameLoopThread.join();
 
-	m_renderScene.reset();
-	m_renderGUI.reset();
+	m_extractedScene.clear();
+
+	m_guiCommandList.clear();
+	m_guiCommandList.shrink_to_fit();
 }
 
 bool game::is_running(void) const
@@ -267,7 +267,7 @@ void game::rendering_loop(void)
 
 		if (m_renderReady)
 		{
-			m_render->render(m_renderScene.get(), m_renderGUI.get());
+			m_render->render(m_extractedScene, m_guiCommandList);
 			m_renderReady = false;
 			m_renderCV.notify_all();
 		}
@@ -324,9 +324,6 @@ void game::game_loop(void)
 				}
 			}
 
-			// TODO: Use events to set GUI size
-			m_guiManager->set_size(m_window->get_client_size());
-
 			//XNG_LOG("Update", XNG_LOG_STREAM() << "Game time " << nextTick << ", current time " << timestamp() << ", difference " << to_seconds<float>(timestamp() - nextTick));
 
 			nextTick += SkipTicks;
@@ -352,10 +349,10 @@ void game::game_loop(void)
 				{
 					if (currentScene)
 					{
-						m_renderScene = std::unique_ptr<scene>(currentScene->clone());
+						m_extractedScene = currentScene->extract();
 					}
 
-					m_renderGUI  = std::unique_ptr<gui_manager>(m_guiManager->clone());
+					m_guiCommandList = m_guiManager->extract();
 				}
 				
 				m_renderReady = true;
@@ -372,8 +369,8 @@ void game::set_quit_on_close(bool quitOnClose)
 {
 	if (m_window && m_window->exists())
 	{
-		game_window_observer windowObserver(m_mainLoop.get());
-		m_window->add_observer(&windowObserver);
+		m_quitOnClose = std::unique_ptr<native_window_observer>(xng_new game_window_observer(m_mainLoop.get()));
+		m_window->add_observer(m_quitOnClose.get());
 	}
 }
 

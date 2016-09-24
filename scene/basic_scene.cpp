@@ -66,11 +66,6 @@ void basic_scene::update(void)
 	m_sceneGraph.get_root()->update();
 }
 
-scene * basic_scene::clone(void)
-{
-	return xng_new basic_scene(*this);
-}
-
 scene::geometry_vector basic_scene::get_geometry_nodes(void)
 {
 	geometry_vector v;

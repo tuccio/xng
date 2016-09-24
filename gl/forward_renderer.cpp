@@ -32,7 +32,7 @@ void forward_renderer::shutdown(void)
 	m_program.clear();
 }
 
-void forward_renderer::render(scene * scene, camera * camera)
+void forward_renderer::render(const extracted_scene & scene)
 {
 	XNG_GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	XNG_GL_CHECK(glViewport(0, 0, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
@@ -41,66 +41,63 @@ void forward_renderer::render(scene * scene, camera * camera)
 	XNG_GL_CHECK(glCullFace(GL_BACK));
 	XNG_GL_CHECK(glEnable(GL_CULL_FACE));
 
-	if (scene && camera)
+	const shader_program * program = m_program.compile();
+
+	program->use();
+
+	float4 colors[] = {
+		{ 1, 0, 0, 1 },
+		{ 0, 1, 0, 1 },
+		{ 0, 0, 1, 1 }
+	};
+
+	auto camera = scene.get_active_camera();
+	auto geometry = scene.frustum_culling_dynamic();
+
+	const float4x4 & viewMatrix = camera->get_gl_view_matrix();
+	const float4x4 & projectionMatrix = camera->get_gl_projection_matrix();
+
+	float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
+
+	int ColorIndex = 0;
+
+	for (auto renderableIndex : geometry)
 	{
-		const shader_program * program = m_program.compile();
+		auto renderable = scene.get_renderable(renderableIndex);
+		gpu_mesh_ptr m = make_gpu_mesh(renderable->mesh);
 
-		program->use();
-
-		float4 colors[] = {
-			{ 1, 0, 0, 1 },
-			{ 0, 1, 0, 1 },
-			{ 0, 0, 1, 1 }
-		};
-
-		scene::geometry_vector geometry = scene->get_geometry_nodes();
-
-		const float4x4 & viewMatrix       = camera->get_gl_view_matrix();
-		const float4x4 & projectionMatrix = camera->get_gl_projection_matrix();
-
-		float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
-
-		int ColorIndex = 0;
-
-		for (scene_graph_geometry * gNode : geometry)
+		if (m && m->load())
 		{
-			gpu_mesh_ptr m = make_gpu_mesh(gNode->get_mesh());
-
-			if (m && m->load())
+			struct __bufferPerObject
 			{
-				struct __bufferPerObject
-				{
-					float4x4 viewMatrix;
-					float4x4 viewProjectionMatrix;
-					float4   color;
-				};
-				
-				GLuint bPerObjectOffset, bPerObjectSize;
-				void * buffer = m_bPerObject.allocate_buffer(sizeof(__bufferPerObject), &bPerObjectOffset, &bPerObjectSize);
+				float4x4 viewMatrix;
+				float4x4 viewProjectionMatrix;
+				float4   color;
+			};
 
-				const float4x4 & modelMatrix = gNode->get_global_matrix();
+			GLuint bPerObjectOffset, bPerObjectSize;
+			void * buffer = m_bPerObject.allocate_buffer(sizeof(__bufferPerObject), &bPerObjectOffset, &bPerObjectSize);
 
-				__bufferPerObject bufferPerObjectData = {
-					transpose(viewMatrix * modelMatrix),
-					transpose(viewProjectionMatrix * modelMatrix),
-					colors[ColorIndex++ % 3]
-				};
+			const float4x4 & modelMatrix = renderable->world;
 
-				memcpy(buffer, &bufferPerObjectData, bPerObjectSize);
+			__bufferPerObject bufferPerObjectData = {
+				transpose(viewMatrix * modelMatrix),
+				transpose(viewProjectionMatrix * modelMatrix),
+				colors[ColorIndex++ % 3]
+			};
 
-				XNG_GL_CHECK(glBindBufferRange(m_bPerObject.get_target(), 0, m_bPerObject.get_buffer(), bPerObjectOffset, bPerObjectSize));
+			memcpy(buffer, &bufferPerObjectData, bPerObjectSize);
 
-				XNG_GL_CHECK(glBindVertexArray(m->get_positional_vao()));
-				XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->get_indices_ebo()));
-				XNG_GL_CHECK(glDrawElements(GL_TRIANGLES, m->get_num_indices(), m->get_indices_format(), nullptr));
+			XNG_GL_CHECK(glBindBufferRange(m_bPerObject.get_target(), 0, m_bPerObject.get_buffer(), bPerObjectOffset, bPerObjectSize));
 
-				XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-				XNG_GL_CHECK(glBindVertexArray(0));
-			}
-		}		
+			XNG_GL_CHECK(glBindVertexArray(m->get_positional_vao()));
+			XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->get_indices_ebo()));
+			XNG_GL_CHECK(glDrawElements(GL_TRIANGLES, m->get_num_indices(), m->get_indices_format(), nullptr));
+
+			XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+			XNG_GL_CHECK(glBindVertexArray(0));
+		}
 	}
-
-	
 }
 
 void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)

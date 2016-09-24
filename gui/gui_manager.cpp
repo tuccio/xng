@@ -11,9 +11,7 @@ using namespace xng::input;
 
 gui_manager::gui_manager(void) :
 	m_renderer(nullptr),
-	m_size(1280, 720),
-	m_focus(nullptr),
-	m_shallow(false)
+	m_focus(nullptr)
 {
 	m_style        = make_default_style();
 	m_eventHandler = xng_new gui_event_handler();
@@ -21,19 +19,20 @@ gui_manager::gui_manager(void) :
 
 gui_manager::~gui_manager(void)
 {
-	if (!m_shallow)
+	for (window * wnd : m_windowStack)
 	{
-		for (window * wnd : m_windowStack)
-		{
-			wnd->destroy();
-		}
+		wnd->set_parent(nullptr);
+		wnd->destroy();
+	}
 
+	while (has_pending_objects())
+	{
 		destroy_pending_objects();
+	}
 
-		if (m_eventHandler)
-		{
-			xng_delete m_eventHandler;
-		}
+	if (m_eventHandler)
+	{
+		xng_delete m_eventHandler;
 	}
 }
 
@@ -57,19 +56,10 @@ const style & gui_manager::get_style(void) const
 	return m_style;
 }
 
-const uint2 & gui_manager::get_size(void) const
+gui_command_list gui_manager::extract(void) const
 {
-	return m_size;
-}
-
-void gui_manager::set_size(const uint2 & size)
-{
-	m_size = size;
-}
-
-void gui_manager::render(void)
-{
-	assert(m_renderer && "A renderer is needed to render the GUI.");
+	gui_command_list commandList;
+	gui_command_list_inserter commandListInserter(commandList);
 
 	// Sort the widgets (put the modal widget and its window on top, sort following the stack order)
 	// Highest z is on top, default top window has z=0 by default, modal window has z>0
@@ -98,17 +88,15 @@ void gui_manager::render(void)
 		}
 	}
 
-	m_renderer->render_begin(m_size);
-
 	for (auto & p : visibleWidgets)
 	{
 		for (widget * w : p.second)
 		{
-			w->render(get_renderer(), get_style());
+			w->extract(commandListInserter, get_style());
 		}
 	}
 
-	m_renderer->render_end();
+	return commandList;
 }
 
 void gui_manager::update(float dt)
@@ -121,24 +109,19 @@ void gui_manager::enqueue_destruction(widget * widget)
 	m_destroyQueue.insert(widget);
 }
 
+bool gui_manager::has_pending_objects(void) const
+{
+	return !m_destroyQueue.empty();
+}
+
 void gui_manager::destroy_pending_objects(void)
 {
-	for (widget * w : m_destroyQueue)
+	std::unordered_set<widget*> destroyQueue = std::move(m_destroyQueue);
+
+	for (widget * w : destroyQueue)
 	{
 		xng_delete w;
 	}
-
-	m_destroyQueue.clear();
-}
-
-gui_manager * gui_manager::clone(void) const
-{
-	gui_manager * newGUI = xng_new gui_manager(*this);
-
-	newGUI->m_eventHandler = nullptr;
-	newGUI->m_shallow      = true;
-
-	return newGUI;
 }
 
 bool gui_manager::on_mouse_key_down(const mouse * mouse, xng_mouse_key key)

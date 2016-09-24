@@ -4,6 +4,24 @@
 using namespace xng::engine;
 using namespace xng::os;
 
+module_manager::~module_manager(void)
+{
+	clear();
+}
+
+void module_manager::clear(void)
+{
+	for (auto & p : m_libraries)
+	{
+		cleanup_modules_t cleanup_modules = (cleanup_modules_t)p.second->get_symbol_address(XNG_CLEANUP_MODULES_FNAME);
+		cleanup_modules();
+		xng_delete p.second;
+	}
+
+	m_libraries.clear();
+	m_modules.clear();
+}
+
 std::vector<module_factory*> module_manager::get_modules(void) const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
@@ -71,7 +89,7 @@ bool module_manager::register_shared_library(const path & path)
 			std::lock_guard<std::mutex> lock(m_mutex);
 
 			XNG_LOG("Loading dynamic module", path.c_str());
-			std::shared_ptr<shared_library> persistentLibrary(xng_new shared_library(std::move(library)));
+			shared_library * persistentLibrary = xng_new shared_library(std::move(library));
 
 			for (module_factory ** factory = factories; *factory != nullptr; ++factory)
 			{
@@ -89,5 +107,5 @@ bool module_manager::register_shared_library(const path & path)
 
 void module_manager::unregister_shared_library(const path & path)
 {
-
+	// TODO
 }

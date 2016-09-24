@@ -15,6 +15,8 @@ namespace xng
 			static const char *          module_description;
 			static const xng_module_type module_type;
 
+			editor_module(void) = default;
+
 			bool init(void) override;
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
@@ -24,6 +26,7 @@ namespace xng
 		private:
 
 			std::unique_ptr<editor> m_editor;
+			std::unique_ptr<os::native_window_observer> m_observer;
 
 		};
 	}

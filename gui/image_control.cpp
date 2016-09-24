@@ -9,28 +9,16 @@ using namespace xng::res;
 image_control::image_control(gui_manager * manager, widget * parent, const int2 & position, const int2 & size) :
 	widget(manager, parent, XNG_GUI_IMAGE_CONTROL, position, size) {}
 
-void image_control::render(gui_renderer * renderer, const style & style) const
+void image_control::extract(gui_command_list_inserter & inserter, const style & style) const
 {
 	if (m_image)
 	{
-		renderer->render_textured_rectangle(get_rectangle(), float2(0), float2(1), m_image);
+		*inserter++ = make_textured_rectangle_command(get_rectangle(), float2(0), float2(1), m_image);
 	}
 	else
 	{
-		renderer->render_filled_rectangle(get_rectangle(), float4(0, 0, 0, 1));
+		*inserter++ = make_filled_rectangle_command(get_rectangle(), float4(0, 0, 0, 1));
 	}
-}
-
-image_control * image_control::clone(gui_manager * manager, widget * parent) const
-{
-	image_control * newWidget = xng_new image_control(*this);
-
-	newWidget->set_parent(parent);
-	newWidget->set_gui_manager(manager);
-
-	clone_children(manager, newWidget);
-
-	return newWidget;
 }
 
 image_ptr image_control::get_image(void) const

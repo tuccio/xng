@@ -64,7 +64,7 @@ bool gl_render_module::is_initialized(void) const
 	return m_context && m_renderer;
 }
 
-void gl_render_module::render(scene * scene, gui_manager * guiManager)
+void gl_render_module::render(const extracted_scene & scene, const gui_command_list & guiCommandList)
 {
 	render_variables rvars;
 	render_variables_updates updates;
@@ -77,13 +77,7 @@ void gl_render_module::render(scene * scene, gui_manager * guiManager)
 
 	m_renderer->update_render_variables(rvars, updates);
 
-	scene_graph_camera * cameraNode = scene ? scene->get_active_camera() : nullptr;
-	camera             * camera     = cameraNode ? cameraNode->get_camera() : nullptr;
-
-	float ratio = rvars.render_resolution.x / (float)rvars.render_resolution.y;
-	camera->set_aspect_ratio(ratio);
-
-	m_renderer->render(scene, camera);
+	m_renderer->render(scene);
 
 	m_context->frame_complete();
 

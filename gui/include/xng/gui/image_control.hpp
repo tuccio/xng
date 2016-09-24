@@ -15,17 +15,16 @@ namespace xng
 
 			image_control(gui_manager * manager, widget * parent, const math::int2 & position = math::int2(0), const math::int2 & size = math::int2(0));
 
-			image_control * clone(gui_manager * manager, widget * parent) const override;
-
 			graphics::image_ptr get_image(void) const;
 			void set_image(graphics::image_ptr image);
 
 			void fit(void);
 
+			void extract(gui_command_list_inserter & inserter, const style & style) const override;
+
 		protected:
 
 			image_control(const image_control &) = default;
-			void render(gui_renderer * renderer, const style & styleManager) const override;
 
 		private:
 

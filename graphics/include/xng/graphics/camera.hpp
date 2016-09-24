@@ -21,6 +21,10 @@ namespace xng
 
 			camera(void);
 			camera(const camera &) = default;
+			camera(camera &&) = default;
+
+			camera & operator= (const camera &) = default;
+			camera & operator= (camera &&) = default;
 
 			void look_at(const math::float3 & eye, const math::float3 & up, const math::float3 & target);
 
