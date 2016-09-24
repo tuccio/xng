@@ -1,7 +1,6 @@
 #pragma once
 
 #include <xng/gui/widget.hpp>
-#include <xng/gui/gui_renderer.hpp>
 #include <xng/gui/window.hpp>
 #include <xng/gui/style.hpp>
 #include <xng/gui/gui_events.hpp>
@@ -27,9 +26,6 @@ namespace xng
 
 			~gui_manager(void);
 
-			void set_renderer(gui_renderer * renderer);
-			gui_renderer * get_renderer(void) const;
-
 			void set_style(const style & style);
 			const style & get_style(void) const;
 
@@ -45,13 +41,12 @@ namespace xng
 
 			typedef core::event_handler<const widget, xng_gui_events> gui_event_handler;
 
-			gui_renderer * m_renderer;
-			style          m_style;
+			style               m_style;
 
-			widget       * m_focus;
+			widget            * m_focus;
+			gui_event_handler * m_eventHandler;
 
 			std::list<window*> m_windowStack;
-			gui_event_handler * m_eventHandler;
 
 			std::unordered_set<widget*> m_destroyQueue;
 

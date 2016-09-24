@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <xng/core/debug_new.hpp>
 
 namespace xng
 {

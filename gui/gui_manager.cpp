@@ -10,7 +10,6 @@ using namespace xng::math;
 using namespace xng::input;
 
 gui_manager::gui_manager(void) :
-	m_renderer(nullptr),
 	m_focus(nullptr)
 {
 	m_style        = make_default_style();
@@ -34,16 +33,6 @@ gui_manager::~gui_manager(void)
 	{
 		xng_delete m_eventHandler;
 	}
-}
-
-void gui_manager::set_renderer(gui_renderer * renderer)
-{
-	m_renderer = renderer;
-}
-
-gui_renderer * gui_manager::get_renderer(void) const
-{
-	return m_renderer;
 }
 
 void gui_manager::set_style(const style & style)

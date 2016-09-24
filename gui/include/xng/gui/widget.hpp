@@ -1,6 +1,5 @@
 #pragma once
 
-#include <xng/gui/gui_renderer.hpp>
 #include <xng/gui/style.hpp>
 #include <xng/gui/rectangle.hpp>
 #include <xng/gui/layout.hpp>

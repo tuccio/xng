@@ -2,6 +2,8 @@
 #include <xng/geometry.hpp>
 #include <xng/dx11/texture.hpp>
 
+#include <xng/graphics/make_text.hpp>
+
 using namespace xng::core;
 using namespace xng::gui;
 using namespace xng::dx11;
@@ -29,7 +31,6 @@ struct alignas(16) __cbPerFrame
 bool dx11_gui_renderer::init(dx11_api_context * context)
 {
 	m_device = context->get_device();
-	set_device_context(context->get_immediate_context());
 
 	CD3D11_RASTERIZER_DESC rasterizerDesc(D3D11_DEFAULT);
 	rasterizerDesc.FrontCounterClockwise = TRUE;
@@ -53,7 +54,7 @@ bool dx11_gui_renderer::init(dx11_api_context * context)
 			nullptr,
 			m_quadBuffer.reset_and_get_address())) &&
 		!XNG_HR_FAILED(m_device->CreateBuffer(
-			&CD3D11_BUFFER_DESC(sizeof(font::vertex) * MAX_VERTICES, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE),
+			&CD3D11_BUFFER_DESC(sizeof(text_vertex) * MAX_VERTICES, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE),
 			nullptr,
 			m_textBuffer.reset_and_get_address())) &&
 		!XNG_HR_FAILED(m_device->CreateRasterizerState(&rasterizerDesc, m_rasterizerState.reset_and_get_address())) &&
@@ -65,47 +66,25 @@ void dx11_gui_renderer::shutdown(void)
 	m_program.clear();
 	m_constantBuffer.reset();
 	m_device.reset();
-	m_deviceContext.reset();
 	m_quadBuffer.reset();
 	m_textBuffer.reset();
 }
 
-void dx11_gui_renderer::set_device_context(ID3D11DeviceContext * deviceContext)
-{
-	m_deviceContext = deviceContext;
-}
-
-void dx11_gui_renderer::render_begin(const uint2 & size)
-{
-	m_projection = ortho_rh_directx(0, size.x, size.y, 0, 0, 1);
-
-	m_deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
-	m_deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
-
-	m_deviceContext->RSSetState(m_rasterizerState.get());
-	m_deviceContext->OMSetBlendState(m_blendState.get(), nullptr, 0xFFFFFFFF);
-}
-
-void dx11_gui_renderer::render_end(void)
-{
-
-}
-
-void dx11_gui_renderer::render_filled_rectangle(const rectangle & rect, const float4 & color)
+void dx11_gui_renderer::render_filled_rectangle(ID3D11DeviceContext * deviceContext, const rectangle & rect, const float4 & color)
 {
 	shader_program shader = m_program.compile(m_device.get(), "filled_rectangle");
 
-	shader.use(m_deviceContext.get());
+	shader.use(deviceContext);
 
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	
-	if (!XNG_HR_FAILED(m_deviceContext->Map(m_quadBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
+	if (!XNG_HR_FAILED(deviceContext->Map(m_quadBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 	{
 		__cbPerFrame data = {
 			m_projection, color
 		};
 
-		m_constantBuffer.write(m_deviceContext.get(), &data);
+		m_constantBuffer.write(deviceContext, &data);
 
 		__vertex * vertices = (__vertex*)mappedResource.pData;
 
@@ -125,22 +104,23 @@ void dx11_gui_renderer::render_filled_rectangle(const rectangle & rect, const fl
 		vertices[3].position.y = rect.bottom;
 		vertices[3].uv         = float2(0);
 
-		m_deviceContext->Unmap(m_quadBuffer.get(), 0);
+		deviceContext->Unmap(m_quadBuffer.get(), 0);
 
 		UINT strides = sizeof(__vertex);
 		UINT offsets = 0;
 
 
-		m_deviceContext->IASetVertexBuffers(0, 1, m_quadBuffer.get_address(), &strides, &offsets);
-		m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		deviceContext->IASetVertexBuffers(0, 1, m_quadBuffer.get_address(), &strides, &offsets);
+		deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-		m_deviceContext->Draw(4, 0);
+		deviceContext->Draw(4, 0);
 	}
 
-	shader.dispose(m_deviceContext.get());
+	shader.dispose(deviceContext);
 }
 
 void dx11_gui_renderer::render_textured_rectangle(
+	ID3D11DeviceContext * deviceContext,
 	const rectangle & rect,
 	const float2 & uv0,
 	const float2 & uv1,
@@ -148,23 +128,23 @@ void dx11_gui_renderer::render_textured_rectangle(
 {
 	texture_ptr tex = resource_factory::get_singleton()->create<texture>("", resource_parameters(), resource_loader_ptr(), img);
 
-	if (tex && tex->load(&texture::load_data(m_device.get(), m_deviceContext.get())))
+	if (tex && tex->load(&texture::load_data(m_device.get(), deviceContext)))
 	{
 		shader_program shader = m_program.compile(m_device.get(), "textured_rectangle",
 		{ { "XNG_TEXTURED", "" },{ nullptr, nullptr } });
 
-		shader.use(m_deviceContext.get());
+		shader.use(deviceContext);
 
 		D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-		if (tex->load(&texture::load_data(m_device.get(), m_deviceContext.get())) &&
-			!XNG_HR_FAILED(m_deviceContext->Map(m_quadBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
+		if (tex->load(&texture::load_data(m_device.get(), deviceContext)) &&
+			!XNG_HR_FAILED(deviceContext->Map(m_quadBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 		{
 			__cbPerFrame data = {
 				m_projection
 			};
 
-			m_constantBuffer.write(m_deviceContext.get(), &data);
+			m_constantBuffer.write(deviceContext, &data);
 
 			__vertex * vertices = (__vertex*)mappedResource.pData;
 
@@ -186,97 +166,98 @@ void dx11_gui_renderer::render_textured_rectangle(
 
 			ID3D11ShaderResourceView * srv = tex->get_shader_resource_view();
 
-			m_deviceContext->PSSetShaderResources(0, 1, &srv);
+			deviceContext->PSSetShaderResources(0, 1, &srv);
 
-			m_deviceContext->Unmap(m_quadBuffer.get(), 0);
+			deviceContext->Unmap(m_quadBuffer.get(), 0);
 
 			UINT strides = sizeof(__vertex);
 			UINT offsets = 0;
 
-			m_deviceContext->IASetVertexBuffers(0, 1, m_quadBuffer.get_address(), &strides, &offsets);
-			m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			deviceContext->IASetVertexBuffers(0, 1, m_quadBuffer.get_address(), &strides, &offsets);
+			deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-			m_deviceContext->Draw(4, 0);
+			deviceContext->Draw(4, 0);
 		}
 
-		shader.dispose(m_deviceContext.get());
+		shader.dispose(deviceContext);
 	}
 }
 
-void dx11_gui_renderer::render_text(font_ptr fnt, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float smoothness, const uint2 & position, const float2 & scale)
+void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_ptr fnt, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float smoothness, const uint2 & position, const float2 & scale)
 {
 	if (fnt && fnt->load())
 	{
 		texture_ptr tex = resource_factory::get_singleton()->create<texture>("", fnt->get_parameters(), resource_loader_ptr(), fnt->get_image());
 
-		if (tex && tex->load(&texture::load_data(m_device.get(), m_deviceContext.get())))
+		if (tex && tex->load(&texture::load_data(m_device.get(), deviceContext)))
 		{			
 			D3D11_MAPPED_SUBRESOURCE mappedResource;
 
-			if (!XNG_HR_FAILED(m_deviceContext->Map(m_textBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
+			if (!XNG_HR_FAILED(deviceContext->Map(m_textBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
 				__cbPerFrame data = {
 					m_projection * to_translation4(float3(position.x, position.y, 0)) * to_scale4(float3(scale, 1.f)),
 					color, borderColor, borderSize, smoothness
 				};
 				
-				m_constantBuffer.write(m_deviceContext.get(), &data);
+				m_constantBuffer.write(deviceContext, &data);
 
 				shader_program shader = m_program.compile(m_device.get(), "text",
 					{ { "XNG_TEXT", "" }, { nullptr, nullptr } });
 
-				shader.use(m_deviceContext.get());
+				shader.use(deviceContext);
 				
 				ID3D11ShaderResourceView * srv = tex->get_shader_resource_view();
 
-				m_deviceContext->PSSetShaderResources(1, 1, &srv);
+				deviceContext->PSSetShaderResources(1, 1, &srv);
 
-				font::text_info info;
+				text_info info;
 
-				font::vertex * vertices = (font::vertex*)mappedResource.pData;
-				fnt->make_text(text, vertices, &info, int2(borderSize));
+				text_vertex * vertices = (text_vertex*)mappedResource.pData;
 
-				UINT strides = sizeof(font::vertex);
+				make_text(fnt, text, vertices, int2(borderSize), &info);
+
+				UINT strides = sizeof(text_vertex);
 				UINT offsets = 0;
 
-				m_deviceContext->IASetVertexBuffers(0, 1, m_textBuffer.get_address(), &strides, &offsets);
-				m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				deviceContext->IASetVertexBuffers(0, 1, m_textBuffer.get_address(), &strides, &offsets);
+				deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				m_deviceContext->Unmap(m_textBuffer.get(), 0);
-				m_deviceContext->Draw(info.numVertices, 0);
+				deviceContext->Unmap(m_textBuffer.get(), 0);
+				deviceContext->Draw(info.numVertices, 0);
 
-				shader.dispose(m_deviceContext.get());
+				shader.dispose(deviceContext);
 			}
-			
 		}
 	}
-	
 }
 
 void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, const uint2 & size, const gui_command_list & commandList)
 {
-	set_device_context(deviceContext);
+	m_projection = ortho_rh_directx(0, size.x, size.y, 0, 0, 1);
 
-	render_begin(size);
+	deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
+	deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+
+	deviceContext->RSSetState(m_rasterizerState.get());
+	deviceContext->OMSetBlendState(m_blendState.get(), nullptr, 0xFFFFFFFF);
 
 	for (auto & cmd : commandList)
 	{
 		switch (cmd.type)
 		{
 		case XNG_GUI_COMMAND_FILLED_RECTANGLE:
-			render_filled_rectangle(cmd.rect, cmd.color);
+			render_filled_rectangle(deviceContext, cmd.rect, cmd.color);
 			break;
 
 		case XNG_GUI_COMMAND_TEXTURED_RECTANGLE:
-			render_textured_rectangle(cmd.rect, cmd.uv0, cmd.uv1, cmd.image);
+			render_textured_rectangle(deviceContext, cmd.rect, cmd.uv0, cmd.uv1, cmd.image);
 			break;
 
 		case XNG_GUI_COMMAND_TEXT:
-			render_text(cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.smoothness, cmd.position, cmd.scale);
+			render_text(deviceContext, cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.smoothness, cmd.position, cmd.scale);
 			break;
 		}
 
 	}
-
-	render_end();
 }

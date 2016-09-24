@@ -241,9 +241,9 @@ void create_gui(void)
 	window * test2 = xng_new window(gui, test1, int2(256, 64), int2(250, 150));
 	window * test3 = xng_new window(gui, test1, int2(128, 128), int2(250, 450));
 
-	test1->set_caption(L"Test 1");
-	test2->set_caption(L"Test 2");
-	test3->set_caption(L"Test 3");
+	test1->set_caption(L"Simple caption text 1");
+	test2->set_caption(L"Simple caption text 2");
+	test3->set_caption(L"Simple caption text 3");
 
 	test3->set_relative(false);
 

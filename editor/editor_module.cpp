@@ -35,8 +35,8 @@ bool editor_module::init(void)
 	{
 		game * instance = game::get_singleton();
 
-		native_window * window_body = instance->get_window();
-		m_editor = std::make_unique<editor>(window_body);
+		native_window * wnd = instance->get_window();
+		m_editor = std::make_unique<editor>(wnd);
 
 		scene_module * sceneModule = dynamic_cast<scene_module*>(sceneFactory->create());
 
