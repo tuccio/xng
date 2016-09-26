@@ -69,6 +69,10 @@ find_package(PNG REQUIRED)
 list(APPEND CMAKE_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/thirdparty/glew/include)
 list(APPEND CMAKE_LIBRARY_PATH thirdparty/glew/lib)
 
+# Add TCLAP to the include_directories
+
+include_directories(${CMAKE_SOURCE_DIR}/thirdparty/tclap/include)
+
 # Gather XNG components to compile
 
 xng_add_components(core res math graphics input engine gui)
@@ -94,10 +98,16 @@ xng_make_modules_projects()
 
 add_subdirectory(launcher)
 
+# Font baker
+
+if (XNG_USE_FREETYPE)
+	add_subdirectory(fontbaker)
+endif ()
+
 # Export linking
 
 xng_make_exporter(${XNG_EXPORT_LIBRARIES} xngexporter)
-xng_make_importer(${XNG_IMPORT_LIBRARIES} ${XNG_MODULES_LIBRARIES} xnglauncher)
+xng_make_importer(${XNG_IMPORT_LIBRARIES} ${XNG_MODULES_LIBRARIES} xnglauncher xngfontbaker)
 
 # Test stuff
 

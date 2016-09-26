@@ -25,9 +25,10 @@ struct alignas(16) __cbPerText
 	float4   Color;
 	float4   BorderColor;
 	float    BorderSize;
-	float    FontWidth;
+	float    FontThinness;
 	float    FontSpreadFactor;
 	float    FontScale;
+	float2   FontTexelSize;
 };
 
 bool dx11_gui_renderer::init(dx11_api_context * context)
@@ -187,9 +188,11 @@ void dx11_gui_renderer::render_textured_rectangle(
 
 void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_ptr fnt, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float width, const uint2 & position, const float2 & scale)
 {
+	const bool SuperSample = true;
+	
 	if (fnt && fnt->load())
 	{
-		texture_ptr tex = resource_factory::get_singleton()->create<texture>("", make_resource_parameters("generate_mipmaps", true), resource_loader_ptr(), fnt->get_image());
+		texture_ptr tex = resource_factory::get_singleton()->create<texture>("", make_resource_parameters(), resource_loader_ptr(), fnt->get_image());
 
 		if (tex && tex->load(&texture::load_data(m_device.get(), deviceContext)))
 		{			
@@ -197,16 +200,19 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 			if (!XNG_HR_FAILED(deviceContext->Map(m_textBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
+				float2 fontTexelSize = { 1.f / fnt->get_image()->get_width(), 1.f / fnt->get_image()->get_height() };
+				float borderDistance = borderSize * .25f / fnt->get_spread_factor();
+
 				__cbPerText data = {
 					m_projection * to_translation4(float3(position.x, position.y, 0)) * to_scale4(float3(scale, 1.f)),
-					color, borderColor, borderSize / (float) fnt->get_spread_factor(), width, fnt->get_spread_factor(), (scale.x + scale.y) * .5f
+					color, borderColor, borderDistance, width, fnt->get_spread_factor(), (scale.x + scale.y) * .5f, fontTexelSize
 				};
 				
 				m_constantBuffer.write(deviceContext, &data);
 
 				shader_program shader = m_program.compile(m_device.get(), "text",
-					{ { "XNG_TEXT", "" }, { nullptr, nullptr } });
-
+					{ { SuperSample ? "XNG_TEXT_SUPERSAMPLE" : "XNG_TEXT", "" }, { nullptr, nullptr } });
+				
 				shader.use(deviceContext);
 				
 				ID3D11ShaderResourceView * srv = tex->get_shader_resource_view();
@@ -257,7 +263,7 @@ void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, const uint2 
 			break;
 
 		case XNG_GUI_COMMAND_TEXT:
-			render_text(deviceContext, cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.width, cmd.position, cmd.scale);
+			render_text(deviceContext, cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.thinness, cmd.position, cmd.scale);
 			break;
 		}
 

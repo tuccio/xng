@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include <xng/core/export.hpp>
+#include <xng/core/platform.hpp>
 
 namespace xng
 {

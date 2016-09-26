@@ -237,100 +237,54 @@ void create_gui(void)
 	game * instance = game::get_singleton();
 	gui_manager * gui = instance->get_gui_manager();
 
-	window * test1 = xng_new window(gui, nullptr, int2(16), int2(256));
-	window * test2 = xng_new window(gui, test1, int2(256, 64), int2(250, 150));
-	window * test3 = xng_new window(gui, test1, int2(128, 128), int2(250, 450));
+	window * captionTextStyle = xng_new window(gui, nullptr, int2(16), int2(256));
 
-	test1->set_caption(L"Simple caption text 1");
-	test2->set_caption(L"Simple caption text 2");
-	test3->set_caption(L"Simple caption text 3");
+	vertical_layout * wndLayout = xng_new vertical_layout();
 
-	test3->set_relative(false);
+	slider * borderSlider = xng_new slider(gui, captionTextStyle);
+	slider * widthSlider  = xng_new slider(gui, captionTextStyle);
+	slider * scaleSlider  = xng_new slider(gui, captionTextStyle);
 
-	vertical_layout * t1layout = xng_new vertical_layout();
-
-	image_control * testImage = xng_new image_control(gui, test1);
-
-	t1layout->add(testImage, XNG_LAYOUT_EXPAND, 1, 0);
-
-	vertical_layout * t3layout = xng_new vertical_layout();
-
-	slider * testSlider1 = xng_new slider(gui, test3);
-	slider * testSlider2 = xng_new slider(gui, test3);
-	slider * testSlider3 = xng_new slider(gui, test3);
-	slider * testSlider4 = xng_new slider(gui, test3);
-	slider * testSlider5 = xng_new slider(gui, test3);
-
-	testSlider1->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		style s = gui->get_style();
-		s.slider_bar_height = 5 + (int)(20 * x);
-		gui->set_style(s);
-	});
-
-	testSlider2->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		style s = gui->get_style();
-		s.slider_size = (uint2)(float2(5.f + 25.f * x));
-		gui->set_style(s);
-	});
-
-	testSlider3->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	borderSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
 		s.caption_text_border_size = 10.f * x;
 		gui->set_style(s);
 	});
 
-	testSlider4->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	widthSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
-		s.caption_text_width = x;
+		s.caption_text_thinness = x;
 		gui->set_style(s);
 	});
 
-	testSlider5->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	scaleSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
 		s.caption_text_scale = .01f + 10 * x;
 		gui->set_style(s);
 	});
 
-	t3layout->add(testSlider1, XNG_LAYOUT_EXPAND, 0, 8);
-	t3layout->add(testSlider2, XNG_LAYOUT_EXPAND, 0, 8);
-	t3layout->add(testSlider3, XNG_LAYOUT_EXPAND, 0, 8);
-	t3layout->add(testSlider4, XNG_LAYOUT_EXPAND, 0, 8);
-	t3layout->add(testSlider5, XNG_LAYOUT_EXPAND, 0, 8);
+	text_control * borderText = xng_new text_control(gui, captionTextStyle);
+	text_control * widthText = xng_new text_control(gui, captionTextStyle);
+	text_control * scaleText = xng_new text_control(gui, captionTextStyle);
 
-	test1->set_layout(t1layout);
-	test1->apply_layout();
+	borderText->set_text_and_fit("Border:");
+	widthText->set_text_and_fit("Thinness:");
+	scaleText->set_text_and_fit("Scale:");
 
-	test3->set_layout(t3layout);
-	test3->apply_layout();
+	wndLayout->add(borderText, XNG_LAYOUT_EXPAND, 0, 4);
+	wndLayout->add(borderSlider, XNG_LAYOUT_EXPAND, 0, 4);
+	wndLayout->add(widthText, XNG_LAYOUT_EXPAND, 0, 4);
+	wndLayout->add(widthSlider, XNG_LAYOUT_EXPAND, 0, 4);
+	wndLayout->add(scaleText, XNG_LAYOUT_EXPAND, 0, 4);
+	wndLayout->add(scaleSlider, XNG_LAYOUT_EXPAND, 0, 4);
 
-	test1->show();
+	captionTextStyle->set_caption(L"Caption Text Style Test");
 
-	/*font_ptr openSans16 = resource_factory::get_singleton()->create<font>(
-		"./fonts/OpenSans-Regular.ttf",
-		make_resource_parameters(),
-		resource_loader_ptr(xng_new freetype_font_loader));
+	captionTextStyle->set_layout(wndLayout);
+	captionTextStyle->apply_layout();
 
-	if (openSans16->load())
-	{
-		openSans16->write_file("./fonts/OpenSans-Regular-16.xml");
-	}*/
-
-	/*font_ptr sourceSans = resource_factory::get_singleton()->create<font>(
-		"./fonts/SourceSansPro-Regular.ttf",
-		make_resource_parameters(),
-		resource_loader_ptr(xng_new freetype_font_loader));	
-
-	if (sourceSans->load())
-	{
-		sourceSans->write_file("./fonts/SourceSansPro-Regular-16.xml");
-	}*/
-
-	/*style s = gui->get_style();
-	strcpy(s.caption_font, "./fonts/SourceSansPro-Regular-16.xml");
-	gui->set_style(s);*/
+	captionTextStyle->show();
 }

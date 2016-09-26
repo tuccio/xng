@@ -1,14 +1,48 @@
-float4 RenderText(in float2 uv, in float4 color, in float4 borderColor, in float borderSize, in float width, in float spreadFactor, in float scale, Texture2D<float4> font, SamplerState s)
+float4 RenderText(in float2 uv, in float4 color, in float4 borderColor, in float borderSize, in float thinness, in float spreadFactor, in float scale, Texture2D<float4> font, SamplerState s)
 {
 	// Sample the distance from the SDF
 	float sdfDistance = font.Sample(s, uv).a;
 	
 	// Calculate smoothing and alpha
 	float smoothing   = .25f / (spreadFactor * scale);
-	float alpha       = smoothstep(width - smoothing, width + smoothing, sdfDistance);
-	float borderAlpha = smoothstep(width - borderSize - smoothing, width - borderSize + smoothing, sdfDistance);
+	float alpha       = smoothstep(thinness - smoothing, thinness + smoothing, sdfDistance);
+	float borderAlpha = smoothstep(thinness - borderSize - smoothing, thinness - borderSize + smoothing, sdfDistance);
 	
 	float4 baseColor = lerp(borderColor, color, alpha);
 
 	return float4(baseColor.rgb, baseColor.a * borderAlpha);
+}
+
+float4 RenderTextSuperSample(in float2 texelSize, in float2 uv, in float4 color, in float4 borderColor, in float borderSize, in float thinness, in float spreadFactor, in float scale, Texture2D<float4> font, SamplerState s)
+{
+	const int KernelSize   = 3;
+	const int KernelOffset = KernelSize / 2;
+	
+	// const float Kernel[KernelSize][KernelSize] = {
+		// 0.002284f, 0.043222f, 0.002284f,
+		// 0.043222f, 0.817976f, 0.043222f,
+		// 0.002284f, 0.043222f, 0.002284f
+	// };
+	
+	const float Kernel[KernelSize][KernelSize] = {
+		0.f, 0.f, 0.f,
+		0.f, 1.f, 0.f,
+		0.f, 0.f, 0.f
+	};
+	
+	float4 avgSum = 0;
+	
+	for (int i = -KernelOffset; i <= KernelOffset; ++i)
+	{
+		for (int j = -KernelOffset; j <= KernelOffset; ++j)
+		{
+			float2 jittered = uv + texelSize * float2(i, j);
+			
+			avgSum +=
+				Kernel[i + KernelOffset][j + KernelOffset] *
+				RenderText(jittered, color, borderColor, borderSize, thinness, spreadFactor, scale, font, s);
+		}
+	}
+	
+	return avgSum;
 }

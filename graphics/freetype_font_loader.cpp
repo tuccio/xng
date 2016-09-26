@@ -184,13 +184,15 @@ bool load_image(image * img, const load_data * data)
 bool load_font(resource_loader * loader, FT_Library library, font * fnt)
 {
 	const char * name = fnt->get_name();
-	auto optSize = fnt->get_parameters().get_optional<uint32_t>("size");
 
-	const uint32_t SpreadFactor   = 8;
-	const uint32_t UpsampleFactor = 4;
+	auto optSize     = fnt->get_parameters().get_optional<uint32_t>("size");
+	auto optSpread   = fnt->get_parameters().get_optional<uint32_t>("spread_factor");
+	auto optUpsample = fnt->get_parameters().get_optional<uint32_t>("samples");
 
-	uint32_t size       = optSize ? optSize.get() : 16;
-	uint32_t renderSize = size * UpsampleFactor;
+	const uint32_t SpreadFactor   = optSpread ? optSpread.get() : 8;
+	const uint32_t UpsampleFactor = optUpsample ? optUpsample.get() : 4;
+
+	const uint32_t FontSize = optSize ? optSize.get() : 16;
 
 	FT_Face face;
 
@@ -211,12 +213,12 @@ bool load_font(resource_loader * loader, FT_Library library, font * fnt)
 	data.face              = face;
 	data.supersampleFactor = UpsampleFactor;
 	data.spreadFactor      = SpreadFactor;
-	data.size              = size;
+	data.size              = FontSize;
 
 	bool loaded = img->load(&data);
 
 	fnt->set_image(img);
-	fnt->set_point_size(size);
+	fnt->set_point_size(FontSize);
 	fnt->set_spread_factor(SpreadFactor);
 	fnt->set_glyph_map(glyphs);
 

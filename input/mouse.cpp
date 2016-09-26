@@ -56,6 +56,7 @@ void mouse::notify_held_keys(high_resolution_timestamp t)
 void mouse::move(const xng::math::uint2 & position)
 {
 	m_position = position;
+	notify(&mouse_observer::on_mouse_move, this, m_position);
 }
 
 void mouse::wheel(int32_t delta)

@@ -122,7 +122,7 @@ bool font::write_file(const path & filename) const
 				glyphXML.put(L"uv1.x", p.second.uv1.x);
 				glyphXML.put(L"uv1.y", p.second.uv1.y);
 
-				glyphs.put_child(std::to_wstring(p.first), glyphXML);
+				glyphs.add_child(L"glyph", glyphXML);
 			}
 
 			fontXML.put(L"font.spread_factor", m_spreadFactor);

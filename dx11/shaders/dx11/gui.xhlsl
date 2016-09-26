@@ -10,7 +10,7 @@ struct PSInput
 	float2 uv       : TEXCOORD0;
 };
 
-#if defined(XNG_TEXT)
+#if defined(XNG_TEXT) || defined(XNG_TEXT_SUPERSAMPLE)
 
 	cbuffer cbPerFrame : register(b0)
 	{
@@ -18,9 +18,10 @@ struct PSInput
 		float4   Color;
 		float4   BorderColor;
 		float    BorderSize;
-		float    FontWidth;
+		float    FontThinness;
 		float    FontSpreadFactor;
 		float    FontScale;
+		float2   FontTexelSize;
 	};
 
 #else
@@ -66,7 +67,9 @@ float4 main_ps(PSInput input) : SV_Target0
 	#if defined(XNG_TEXTURED)
 		return RenderTexturedRectangle(input.uv, RectTex, LinearClamp);
 	#elif defined(XNG_TEXT)
-		return RenderText(input.uv, Color, BorderColor, BorderSize, FontWidth, FontSpreadFactor, FontScale, FontTex, LinearClamp);
+		return RenderText(input.uv, Color, BorderColor, BorderSize, FontThinness, FontSpreadFactor, FontScale, FontTex, LinearClamp);
+	#elif defined(XNG_TEXT_SUPERSAMPLE)
+		return RenderTextSuperSample(FontTexelSize, input.uv, Color, BorderColor, BorderSize, FontThinness, FontSpreadFactor, FontScale, FontTex, LinearClamp);
 	#else
 		return RenderMonochromaticRectangle(Color);
 	#endif

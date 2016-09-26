@@ -107,6 +107,7 @@ shader_program uber_shader::compile(ID3D11Device * device, const char * name, st
 		}
 		else
 		{
+			XNG_DEBUGBREAK();
 			return shader_program();
 		}
 	}
@@ -132,6 +133,7 @@ shader_program uber_shader::compile(ID3D11Device * device, const char * name, st
 		}
 		else
 		{
+			XNG_DEBUGBREAK();
 			return shader_program();
 		}
 	}

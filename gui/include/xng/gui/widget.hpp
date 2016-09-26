@@ -36,6 +36,8 @@ namespace xng
 			children_iterator begin(void) const;
 			children_iterator end(void) const;
 
+			xng_gui_status get_status(void) const;
+
 			math::int2 get_position(void) const;
 			math::int2 get_absolute_position(void) const;
 			void set_position(const math::int2 & position);
@@ -93,12 +95,15 @@ namespace xng
 			bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
 			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t millis) override;
 			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t millis) override;
+			bool on_mouse_move(const input::mouse * mouse, const math::uint2 & position) override;
 
 			bool propagate_key_down(const input::mouse * mouse, xng_mouse_key key);
 			bool propagate_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t millis);
 			bool propagate_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t millis);
+			bool propagate_mouse_move(const input::mouse * mouse, const math::uint2 & position);
 
 			void set_relative(bool relative);
+			void hover(void);
 
 			math::int2 make_absolute(const math::int2 & x) const;
 			math::int2 make_relative(const math::int2 & x) const;

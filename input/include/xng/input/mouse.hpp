@@ -19,6 +19,7 @@ namespace xng
 			virtual bool on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis) { return true; }
 			virtual bool on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis) { return true; }
 			virtual bool on_mouse_wheel(const mouse * mouse, int32_t delta) { return true; }
+			virtual bool on_mouse_move(const mouse * mouse, const math::uint2 & position) { return true; }
 		};
 
 		class mouse :

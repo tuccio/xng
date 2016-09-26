@@ -21,7 +21,7 @@ slider::slider(gui_manager * manager, widget * parent, const int2 & position, co
 void slider::extract(gui_command_list_inserter & inserter, const style & style) const
 {
 	rectangle filled = m_sliderBarRectangle;
-	rectangle empty = m_sliderBarRectangle;
+	rectangle empty =  m_sliderBarRectangle;
 
 	int middle = m_sliderRectangle.right - rectangle_width(m_sliderRectangle) / 2;
 
@@ -30,7 +30,8 @@ void slider::extract(gui_command_list_inserter & inserter, const style & style) 
 
 	*inserter++ = make_filled_rectangle_command(filled, style.slider_bar_filled);
 	*inserter++ = make_filled_rectangle_command(empty, style.slider_bar_empty);
-	*inserter++ = make_filled_rectangle_command(m_sliderRectangle, style.slider_color);
+	*inserter++ = make_filled_rectangle_command(m_sliderRectangle,
+		(get_status() == XNG_GUI_STATUS_HOVER || m_dragging) ? style.slider_hover_color : style.slider_color);
 }
 
 void slider::on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle)
@@ -81,7 +82,7 @@ bool slider::on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t 
 		int basePosition   = get_position().x;
 		int sliderWidth    = rectangle_width(m_sliderRectangle);
 		int length         = rectangle_width(m_sliderBarRectangle);
-		int sliderPosition = min<int>(max<int>(rect.left, mouse->get_position().x), rect.left + length) - rect.left;
+		int sliderPosition = std::min<int>(std::max<int>(rect.left, mouse->get_position().x), rect.left + length) - rect.left;
 
 		m_percentage = sliderPosition / (float) length;
 		update_rectangles();
@@ -94,6 +95,17 @@ bool slider::on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t 
 	{
 		return propagate_key_hold(mouse, key, millis);
 	}
+}
+
+bool slider::on_mouse_move(const mouse * mouse, const uint2 & position)
+{
+	if (rectangle_contains(m_sliderRectangle, (int2)position))
+	{
+		hover();
+		return false;
+	}
+
+	return true;
 }
 
 float slider::get_percentage(void) const

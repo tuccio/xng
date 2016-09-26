@@ -28,12 +28,14 @@ namespace xng
 
 			void set_style(const style & style);
 			const style & get_style(void) const;
+			style & style(void);
 
 			void update(float dt);
 
 			bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
 			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
 			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
+			bool on_mouse_move(const input::mouse * mouse, const math::uint2 & position) override;
 
 			gui_command_list extract(void) const;
 
@@ -41,9 +43,10 @@ namespace xng
 
 			typedef core::event_handler<const widget, xng_gui_events> gui_event_handler;
 
-			style               m_style;
+			xng::gui::style     m_style;
 
 			widget            * m_focus;
+			widget            * m_hover;
 			gui_event_handler * m_eventHandler;
 
 			std::list<window*> m_windowStack;
@@ -60,6 +63,7 @@ namespace xng
 			void unregister_window(window * wnd);
 
 			void set_focus(widget * widget);
+			void set_hover(widget * widget);
 
 			void move_on_top(window * wnd);
 			window * find_first_window(widget * w);

@@ -38,7 +38,7 @@ namespace xng
 				
 				struct
 				{
-					float        width;
+					float        thinness;
 					uint32_t     border_size;
 					math::float4 border_color;
 					float        scale;

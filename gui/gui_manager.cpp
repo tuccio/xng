@@ -10,7 +10,8 @@ using namespace xng::math;
 using namespace xng::input;
 
 gui_manager::gui_manager(void) :
-	m_focus(nullptr)
+	m_focus(nullptr),
+	m_hover(nullptr)
 {
 	m_style        = make_default_style();
 	m_eventHandler = xng_new gui_event_handler();
@@ -35,12 +36,17 @@ gui_manager::~gui_manager(void)
 	}
 }
 
-void gui_manager::set_style(const style & style)
+void gui_manager::set_style(const xng::gui::style & style)
 {
 	m_style = style;
 }
 
 const style & gui_manager::get_style(void) const
+{
+	return m_style;
+}
+
+style & gui_manager::style(void)
 {
 	return m_style;
 }
@@ -152,6 +158,21 @@ bool gui_manager::on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint
 	return true;
 }
 
+bool gui_manager::on_mouse_move(const mouse * mouse, const uint2 & position)
+{
+	for (window * wnd : m_windowStack)
+	{
+		if (!wnd->on_mouse_move(mouse, position))
+		{
+			return false;
+		}
+	}
+
+	set_hover(nullptr);
+
+	return true;
+}
+
 void gui_manager::register_widget(widget * widget)
 {
 }
@@ -183,6 +204,21 @@ void gui_manager::set_focus(widget * child)
 	}
 	
 	m_focus = child;
+}
+
+void gui_manager::set_hover(widget * wgt)
+{
+	if (m_hover)
+	{
+		m_hover->m_status = XNG_GUI_STATUS_DEFAULT;
+	}
+
+	if (wgt)
+	{
+		wgt->m_status = XNG_GUI_STATUS_HOVER;
+	}
+
+	m_hover = wgt;
 }
 
 void gui_manager::move_on_top(window * wnd)

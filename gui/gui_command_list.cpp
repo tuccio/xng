@@ -30,7 +30,7 @@ gui_command xng::gui::make_textured_rectangle_command(const rectangle & rect, co
 	return cmd;
 }
 
-gui_command xng::gui::make_text_command(const font_ptr & font, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float width, const uint2 & position, float scale)
+gui_command xng::gui::make_text_command(const font_ptr & font, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float thinness, const uint2 & position, float scale)
 {
 	gui_command cmd;
 
@@ -41,7 +41,7 @@ gui_command xng::gui::make_text_command(const font_ptr & font, const wchar_t * t
 	cmd.color        = color;
 	cmd.border_color = borderColor;
 	cmd.border_size  = borderSize;
-	cmd.width        = width;
+	cmd.thinness     = thinness;
 	cmd.position     = position;
 	cmd.scale        = scale;
 

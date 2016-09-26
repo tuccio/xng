@@ -1,4 +1,4 @@
-#include <xng/core/export.hpp>
+#include <xng/core/platform.hpp>
 
 #include <cstdint>
 #include <limits>

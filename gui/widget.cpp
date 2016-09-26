@@ -170,6 +170,11 @@ bool widget::on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t mi
 	return propagate_key_up(mouse, key, millis);
 }
 
+bool widget::on_mouse_move(const mouse * mouse, const uint2 & position)
+{
+	return propagate_mouse_move(mouse, position);
+}
+
 bool widget::propagate_key_down(const mouse * mouse, xng_mouse_key key)
 {
 	for (widget * child : *this)
@@ -204,6 +209,20 @@ bool widget::propagate_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t
 	{
 		// Propagate to non window children (windows are notified input in stack order)
 		if (!child->is_window() && !child->on_mouse_key_hold(mouse, key, millis))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool widget::propagate_mouse_move(const mouse * mouse, const uint2 & position)
+{
+	for (widget * child : *this)
+	{
+		// Propagate to non window children (windows are notified input in stack order)
+		if (!child->is_window() && !child->on_mouse_move(mouse, position))
 		{
 			return false;
 		}
@@ -360,4 +379,14 @@ bool widget::is_relative(void) const
 void widget::set_relative(bool relative)
 {
 	m_relative = relative;
+}
+
+void widget::hover(void)
+{
+	get_gui_manager()->set_hover(this);
+}
+
+xng_gui_status widget::get_status(void) const
+{
+	return m_status;
 }
