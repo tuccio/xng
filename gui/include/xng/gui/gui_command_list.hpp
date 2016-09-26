@@ -38,7 +38,7 @@ namespace xng
 				
 				struct
 				{
-					float        smoothness;
+					float        width;
 					uint32_t     border_size;
 					math::float4 border_color;
 					float        scale;
@@ -57,7 +57,7 @@ namespace xng
 
 		gui_command make_filled_rectangle_command(const rectangle & rect, const math::float4 & color);
 		gui_command make_textured_rectangle_command(const rectangle & rect, const math::float2 & uv0, const math::float2 & uv1, const graphics::image_ptr & img);
-		gui_command make_text_command(const graphics::font_ptr & font, const wchar_t * text, const math::float4 & color, const math::float4 & borderColor, uint32_t borderSize, float smoothness, const math::uint2 & position, float scale);
+		gui_command make_text_command(const graphics::font_ptr & font, const wchar_t * text, const math::float4 & color, const math::float4 & borderColor, uint32_t borderSize, float width, const math::uint2 & position, float scale);
 
 	}
 }

@@ -19,13 +19,15 @@ struct __vertex
 	float2 uv;
 };
 
-struct alignas(16) __cbPerFrame
+struct alignas(16) __cbPerText
 {
 	float4x4 ProjectionMatrix;
 	float4   Color;
 	float4   BorderColor;
 	float    BorderSize;
-	float    SmoothnessFactor;
+	float    FontWidth;
+	float    FontSpreadFactor;
+	float    FontScale;
 };
 
 bool dx11_gui_renderer::init(dx11_api_context * context)
@@ -48,7 +50,7 @@ bool dx11_gui_renderer::init(dx11_api_context * context)
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	return m_program.preprocess(XNG_DX11_SHADER_FILE("gui.xhlsl")) &&
-		m_constantBuffer.create<__cbPerFrame>(m_device.get()) &&
+		m_constantBuffer.create<__cbPerText>(m_device.get()) &&
 		!XNG_HR_FAILED(m_device->CreateBuffer(
 			&CD3D11_BUFFER_DESC(sizeof(__vertex) * 4, D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE),
 			nullptr,
@@ -80,7 +82,7 @@ void dx11_gui_renderer::render_filled_rectangle(ID3D11DeviceContext * deviceCont
 	
 	if (!XNG_HR_FAILED(deviceContext->Map(m_quadBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 	{
-		__cbPerFrame data = {
+		__cbPerText data = {
 			m_projection, color
 		};
 
@@ -140,7 +142,7 @@ void dx11_gui_renderer::render_textured_rectangle(
 		if (tex->load(&texture::load_data(m_device.get(), deviceContext)) &&
 			!XNG_HR_FAILED(deviceContext->Map(m_quadBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 		{
-			__cbPerFrame data = {
+			__cbPerText data = {
 				m_projection
 			};
 
@@ -178,16 +180,16 @@ void dx11_gui_renderer::render_textured_rectangle(
 
 			deviceContext->Draw(4, 0);
 		}
-
+		
 		shader.dispose(deviceContext);
 	}
 }
 
-void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_ptr fnt, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float smoothness, const uint2 & position, const float2 & scale)
+void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_ptr fnt, const wchar_t * text, const float4 & color, const float4 & borderColor, uint32_t borderSize, float width, const uint2 & position, const float2 & scale)
 {
 	if (fnt && fnt->load())
 	{
-		texture_ptr tex = resource_factory::get_singleton()->create<texture>("", fnt->get_parameters(), resource_loader_ptr(), fnt->get_image());
+		texture_ptr tex = resource_factory::get_singleton()->create<texture>("", make_resource_parameters("generate_mipmaps", true), resource_loader_ptr(), fnt->get_image());
 
 		if (tex && tex->load(&texture::load_data(m_device.get(), deviceContext)))
 		{			
@@ -195,9 +197,9 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 			if (!XNG_HR_FAILED(deviceContext->Map(m_textBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
-				__cbPerFrame data = {
+				__cbPerText data = {
 					m_projection * to_translation4(float3(position.x, position.y, 0)) * to_scale4(float3(scale, 1.f)),
-					color, borderColor, borderSize, smoothness
+					color, borderColor, borderSize / (float) fnt->get_spread_factor(), width, fnt->get_spread_factor(), (scale.x + scale.y) * .5f
 				};
 				
 				m_constantBuffer.write(deviceContext, &data);
@@ -215,7 +217,7 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 				text_vertex * vertices = (text_vertex*)mappedResource.pData;
 
-				make_text(fnt, text, vertices, int2(borderSize), &info);
+				make_text(fnt, text, vertices, int2(borderSize), int2(borderSize), &info);
 
 				UINT strides = sizeof(text_vertex);
 				UINT offsets = 0;
@@ -255,7 +257,7 @@ void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, const uint2 
 			break;
 
 		case XNG_GUI_COMMAND_TEXT:
-			render_text(deviceContext, cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.smoothness, cmd.position, cmd.scale);
+			render_text(deviceContext, cmd.font, cmd.text.c_str(), cmd.color, cmd.border_color, cmd.border_size, cmd.width, cmd.position, cmd.scale);
 			break;
 		}
 

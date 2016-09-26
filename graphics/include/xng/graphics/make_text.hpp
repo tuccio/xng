@@ -20,7 +20,13 @@ namespace xng
 		};
 
 		template <typename String, typename OutputIterator>
-		bool make_text(const font_ptr fnt, String str, OutputIterator out, const math::int2 & padding = math::int2(0), text_info * pInfo = nullptr)
+		bool make_text(
+			const font_ptr fnt,
+			String str, 
+			OutputIterator out,
+			const math::int2 & padding = math::int2(0),
+			const math::int2 & spacing = math::int2(0),
+			text_info * pInfo = nullptr)
 		{
 			if (fnt && fnt->load())
 			{
@@ -31,7 +37,7 @@ namespace xng
 				std::wstring wstr;
 				core::string_convert(str, wstr);
 
-				uint32_t offset = 0;
+				int2 offset(0);
 
 				const glyph_map & glyphs = fnt->get_glyph_map();
 
@@ -41,13 +47,11 @@ namespace xng
 
 					if (g)
 					{
-						int2 glyphSize = g->x1 - g->x0;
+						int2 glyphSize = g->size;
 
 						text_vertex v[4];
 
-						v[0].position.x = offset - g->offset.x;
-						v[0].position.y = -g->offset.y;
-
+						v[0].position   = (float2)(offset + g->offset);
 						v[0].texcoord   = g->uv0;
 
 						v[1].position.x = v[0].position.x;
@@ -55,7 +59,7 @@ namespace xng
 
 						v[1].texcoord   = float2(g->uv0.x, g->uv1.y);
 
-						v[2].position.x = offset + glyphSize.x;
+						v[2].position.x = v[0].position.x + glyphSize.x;
 						v[2].position.y = v[1].position.y;
 
 						v[2].texcoord   = g->uv1;
@@ -95,7 +99,7 @@ namespace xng
 						*out++ = v[3];
 						*out++ = v[0];
 
-						offset += g->width + padding.x;
+						offset.x += g->advance + spacing.x;
 
 						++info.numGlyphs;
 						info.height = max<uint32_t>(info.height, glyphSize.y);

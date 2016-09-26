@@ -28,10 +28,9 @@ if (WIN32)
 endif ()
 
 if (MSVC)
-	# Need to compile wxWidgets with fast fp to use the following
+	# Need to compile all libraries with fast fp to use the following
 	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} /fp:fast")
-	add_definitions("-DXNG_EXPORT=__declspec(dllexport)")
-	add_definitions("-DXNG_IMPORT=__declspec(dllimport)")
+	add_definitions(-DXNG_MSVC)
 endif()
 
 # Search Boost includes

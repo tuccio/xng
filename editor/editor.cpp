@@ -285,7 +285,7 @@ void create_gui(void)
 	testSlider4->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
-		s.caption_text_smoothness = x;
+		s.caption_text_width = x;
 		gui->set_style(s);
 	});
 
@@ -310,13 +310,27 @@ void create_gui(void)
 
 	test1->show();
 
-	font_ptr openSans16 = resource_factory::get_singleton()->create<font>(
+	/*font_ptr openSans16 = resource_factory::get_singleton()->create<font>(
 		"./fonts/OpenSans-Regular.ttf",
 		make_resource_parameters(),
 		resource_loader_ptr(xng_new freetype_font_loader));
 
 	if (openSans16->load())
 	{
-		openSans16->write_file("./fonts/OpenSans-16.xml");
-	}
+		openSans16->write_file("./fonts/OpenSans-Regular-16.xml");
+	}*/
+
+	/*font_ptr sourceSans = resource_factory::get_singleton()->create<font>(
+		"./fonts/SourceSansPro-Regular.ttf",
+		make_resource_parameters(),
+		resource_loader_ptr(xng_new freetype_font_loader));	
+
+	if (sourceSans->load())
+	{
+		sourceSans->write_file("./fonts/SourceSansPro-Regular-16.xml");
+	}*/
+
+	/*style s = gui->get_style();
+	strcpy(s.caption_font, "./fonts/SourceSansPro-Regular-16.xml");
+	gui->set_style(s);*/
 }

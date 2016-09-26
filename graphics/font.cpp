@@ -75,6 +75,17 @@ void font::set_point_size(uint32_t pointSize)
 	m_pointSize = pointSize;
 }
 
+uint32_t font::get_spread_factor(void) const
+{
+	return m_spreadFactor;
+}
+
+void font::set_spread_factor(uint32_t spreadFactor)
+{
+	m_spreadFactor = spreadFactor;
+}
+
+
 bool font::write_file(const path & filename) const
 {
 	path xmlFile(filename);
@@ -101,13 +112,11 @@ bool font::write_file(const path & filename) const
 				boost::property_tree::wptree glyphXML;
 
 				glyphXML.put(L"code", p.first);
-				glyphXML.put(L"width", p.second.width);
+				glyphXML.put(L"advance", p.second.advance);
 				glyphXML.put(L"offset.x", p.second.offset.x);
 				glyphXML.put(L"offset.y", p.second.offset.y);
-				glyphXML.put(L"x0.x", p.second.x0.x);
-				glyphXML.put(L"x0.y", p.second.x0.y);
-				glyphXML.put(L"x1.x", p.second.x1.x);
-				glyphXML.put(L"x1.y", p.second.x1.y);
+				glyphXML.put(L"size.x", p.second.size.x);
+				glyphXML.put(L"size.y", p.second.size.y);
 				glyphXML.put(L"uv0.x", p.second.uv0.x);
 				glyphXML.put(L"uv0.y", p.second.uv0.y);
 				glyphXML.put(L"uv1.x", p.second.uv1.x);
@@ -116,6 +125,7 @@ bool font::write_file(const path & filename) const
 				glyphs.put_child(std::to_wstring(p.first), glyphXML);
 			}
 
+			fontXML.put(L"font.spread_factor", m_spreadFactor);
 			fontXML.put(L"font.point_size", m_pointSize);
 			fontXML.put_child(L"font.glyphs", glyphs);
 			fontXML.put(L"font.texture.source", pngFile.filename().c_str());
@@ -173,13 +183,11 @@ bool font::read_file(const path & filename)
 				glyph g = {};
 
 				g.code     = p.second.get(L"code", g.code);
-				g.width    = p.second.get(L"width", g.width);
+				g.advance  = p.second.get(L"advance", g.advance);
 				g.offset.x = p.second.get(L"offset.x", g.offset.x);
 				g.offset.y = p.second.get(L"offset.y", g.offset.y);
-				g.x0.x     = p.second.get(L"x0.x", g.x0.x);
-				g.x0.y     = p.second.get(L"x0.y", g.x0.y);
-				g.x1.x     = p.second.get(L"x1.x", g.x1.x);
-				g.x1.y     = p.second.get(L"x1.y", g.x1.y);
+				g.size.x   = p.second.get(L"size.x", g.size.x);
+				g.size.y   = p.second.get(L"size.y", g.size.y);
 				g.uv0.x    = p.second.get(L"uv0.x", g.uv0.x);
 				g.uv0.y    = p.second.get(L"uv0.y", g.uv0.y);
 				g.uv1.x    = p.second.get(L"uv1.x", g.uv1.x);
@@ -189,12 +197,14 @@ bool font::read_file(const path & filename)
 			}
 		}
 
-		m_pointSize = 0;
+		m_spreadFactor = 0;
+		m_pointSize    = 0;
 
 		std::wstring imageFile;
 
-		m_pointSize = fontXML.get(L"font.point_size", m_pointSize);
-		imageFile   = fontXML.get(L"font.texture.source", imageFile);
+		m_spreadFactor = fontXML.get(L"font.spread_factor", m_spreadFactor);
+		m_pointSize    = fontXML.get(L"font.point_size", m_pointSize);
+		imageFile      = fontXML.get(L"font.texture.source", imageFile);
 
 		m_image = resource_factory::get_singleton()->create<image>(
 			(xmlFile.parent_path() / imageFile).make_unix_like().string().c_str(),

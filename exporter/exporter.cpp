@@ -7,3 +7,4 @@ template struct xng::core::singleton<xng::core::logger>;
 template struct xng::core::singleton<xng::res::resource_factory>;
 template struct xng::core::singleton<xng::engine::module_manager>;
 template struct xng::core::singleton<xng::engine::game>;
+template struct xng::core::singleton<xng::graphics::acceleration_library>;

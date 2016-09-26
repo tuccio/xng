@@ -37,7 +37,7 @@ namespace xng
 				const wchar_t * text,
 				const math::float4 & color,
 				const math::float4 & borderColor, uint32_t borderSize,
-				float smoothness,
+				float width,
 				const math::uint2 & position, const math::float2 & scale);
 
 		private:

@@ -47,7 +47,7 @@ void window::extract(gui_command_list_inserter & inserter, const style & style) 
 		style.caption_text_color,
 		style.caption_text_border_color,
 		style.caption_text_border_size,
-		style.caption_text_smoothness,
+		style.caption_text_width,
 		(uint2)get_rectangle().topLeft + style.caption_text_origin,
 		style.caption_text_scale);
 }

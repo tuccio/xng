@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include <xng/core/export.hpp>
+
 namespace xng
 {
 	namespace core

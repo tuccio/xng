@@ -31,6 +31,9 @@ namespace xng
 			uint32_t get_point_size(void) const;
 			void set_point_size(uint32_t pointSize);
 
+			uint32_t get_spread_factor(void) const;
+			void set_spread_factor(uint32_t spreadFactor);
+
 			bool write_file(const os::path & filename) const;
 			bool read_file(const os::path & filename);
 
@@ -47,6 +50,7 @@ namespace xng
 			image_ptr m_image;
 			glyph_map m_glyphs;
 			uint32_t  m_pointSize;
+			uint32_t  m_spreadFactor;
 
 		};
 

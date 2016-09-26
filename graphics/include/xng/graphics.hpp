@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xng/graphics/api_context.hpp>
+#include <xng/graphics/acceleration_library.hpp>
 #include <xng/graphics/renderer_configuration.hpp>
 #include <xng/graphics/realtime_window_observer.hpp>
 

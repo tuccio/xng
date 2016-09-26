@@ -18,7 +18,9 @@ struct PSInput
 		float4   Color;
 		float4   BorderColor;
 		float    BorderSize;
-		float    Smoothness;
+		float    FontWidth;
+		float    FontSpreadFactor;
+		float    FontScale;
 	};
 
 #else
@@ -64,7 +66,7 @@ float4 main_ps(PSInput input) : SV_Target0
 	#if defined(XNG_TEXTURED)
 		return RenderTexturedRectangle(input.uv, RectTex, LinearClamp);
 	#elif defined(XNG_TEXT)
-		return RenderText(input.uv, Color, BorderColor, BorderSize, Smoothness, FontTex, LinearClamp);
+		return RenderText(input.uv, Color, BorderColor, BorderSize, FontWidth, FontSpreadFactor, FontScale, FontTex, LinearClamp);
 	#else
 		return RenderMonochromaticRectangle(Color);
 	#endif

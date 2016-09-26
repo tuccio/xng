@@ -2,6 +2,7 @@
 
 #include <xng/graphics/freetype_font_loader.hpp>
 #include <xng/graphics/font.hpp>
+#include <xng/graphics/acceleration_library.hpp>
 #include <xng/math.hpp>
 
 #include <omp.h>
@@ -12,6 +13,8 @@ using namespace xng::math;
 
 #define pixel(Data, I, J, Cols) (Data)[(I) * (Cols) + (J)]
 
+typedef void (*sdf_calculate_t) (uint8_t *, const uint8_t *, uint32_t, uint32_t, int8_t);
+
 struct load_data
 {
 	glyph_map     * glyphs;
@@ -19,102 +22,51 @@ struct load_data
 	FT_Face         face;
 	uint32_t        size;
 	uint32_t        supersampleFactor;
+	uint32_t        spreadFactor;
 };
-
-int8_t sdf_search_radius(const uint8_t * src, uint32_t w, uint32_t h, int32_t i, int32_t j, int8_t radius)
-{
-	bool allWhite = true;
-	bool allBlack = true;
-	bool isWhite  = pixel(src, i, j, w) != 0;
-
-	for (int32_t m = i - radius; m < i + radius; ++m)
-	{
-		if (m >= 0 && m < h)
-		{
-			for (int32_t n = j - radius; n < j + radius; ++n)
-			{
-				if (n >= 0 && n < w)
-				{
-					uint8_t px = pixel(src, m, n, w);
-
-					if (px == 0)
-					{
-						allWhite = false;
-					}
-					else
-					{
-						allBlack = false;
-					}
-				}
-			}
-		}
-	}
-
-	if (isWhite)
-	{
-		return allWhite ? CHAR_MAX : 1 - radius;
-	}
-	else
-	{
-		return allBlack ? CHAR_MAX : radius;
-	}
-}
-
-void sdf_calculate_radar(uint8_t * dst, const uint8_t * src, uint32_t w, uint32_t h, int8_t spreadFactor)
-{
-	const float invNorm = 255.f / (spreadFactor + spreadFactor);
-
-	for (int32_t i = 0; i < h; ++i)
-	{
-		for (int32_t j = 0; j < w; ++j)
-		{
-			int32_t maxRadius = min<int32_t>(spreadFactor, max<int32_t>(max(max<int32_t>(i, h - i), j), w - j));
-
-			uint8_t & px = pixel(dst, i, j, w);
-
-			int8_t result = spreadFactor;
-
-			for (int32_t radius = 1; radius < maxRadius; ++radius)
-			{
-				int8_t search = sdf_search_radius(src, w, h, i, j, radius);
-
-				if (search != CHAR_MAX)
-				{
-					result = search;
-					break;
-				}
-			}
-
-			float mappedValue = ((float)-result + spreadFactor) * invNorm;
-			px = mappedValue;
-		}
-	}
-}
 
 bool load_image(image * img, const load_data * data)
 {
-	const int8_t   SpreadFactor         = 4;
-	const uint32_t SupersampledFontSize = data->size * data->supersampleFactor;
+	acceleration_library * accelLib = nullptr;
 
-	const int8_t   Padding = SpreadFactor * data->supersampleFactor;
+	if (!(accelLib = acceleration_library::get_singleton()))
+	{
+		accelLib = xng_new acceleration_library;
+	}
+
+	sdf_calculate_t sdf_calculate = (sdf_calculate_t) accelLib->get_symbol_address("sdf_calculate");
+
+	if (!sdf_calculate)
+	{
+		XNG_LOG("xng::graphics::freetype_font_loader", "Couldn't load sdf_calculate from the acceleration library.")
+		return false;
+	}
+
+	const int8_t SpreadFactor = data->spreadFactor;
+	const int8_t Padding      = SpreadFactor * data->supersampleFactor;
 
 	uint32_t totalWidth  = 0;
 	uint32_t totalHeight = 0;
 	uint32_t numGlyphs   = 0;
 
-	FT_Set_Pixel_Sizes(data->face, 0, SupersampledFontSize);
+	FT_Matrix scale = {
+		(FT_Fixed) (0x10000L * data->supersampleFactor), 0,
+		0, (FT_Fixed) (0x10000L * data->supersampleFactor)
+	};
+
+	FT_Set_Pixel_Sizes(data->face, 0, data->size);
 
 	for (const wchar_t *c = data->charset; *c != 0; ++c)
 	{
-		if (FT_Load_Char(data->face, *c, FT_LOAD_RENDER))
+		if (FT_Load_Char(data->face, *c, 0))
 		{
 			continue;
 		}
 
 		++numGlyphs;
 
-		totalWidth += data->face->glyph->bitmap.width;
-		totalHeight = max<uint32_t>(totalHeight, data->face->glyph->bitmap.rows);
+		totalWidth += data->supersampleFactor * data->face->glyph->metrics.width / 64;
+		totalHeight = max<uint32_t>(totalHeight, data->supersampleFactor *  data->face->glyph->metrics.height / 64);
 	}
 
 	uint32_t supersampledWidth  = totalWidth + 2 * Padding * (numGlyphs + 1);
@@ -125,58 +77,52 @@ bool load_image(image * img, const load_data * data)
 
 	std::vector<uint8_t> upsampledImg(supersampledWidth * supersampledHeight);
 
-	int2 currentOffset(SpreadFactor);
+	int2 currentOffset(Padding);
 
 	float2 invTexelSize = { 1.f / supersampledWidth, 1.f / supersampledHeight };
-	//float2 invTexelSize = { 1.f / imageWidth, 1.f / imageHeight };
 
 	for (const wchar_t * c = data->charset; *c != 0; ++c)
 	{
-		if (FT_Load_Char(data->face, *c, FT_LOAD_RENDER))
+		FT_Set_Transform(data->face, nullptr, nullptr);
+		if (FT_Load_Char(data->face, *c, 0))
 		{
 			continue;
 		}
 
+		glyph * g = (*data->glyphs)[*c];
+		FT_GlyphSlot ftGlyph = data->face->glyph;
+
+		g->code    = *c;
+		g->advance = ftGlyph->advance.x / 64;
+		g->size    = int2(data->face->glyph->metrics.width, data->face->glyph->metrics.height) / 64;
+		g->offset  = int2(data->face->glyph->metrics.horiBearingX, -data->face->glyph->metrics.horiBearingY) / 64;
+
+		FT_Set_Transform(data->face, &scale, nullptr);
+		FT_Load_Char(data->face, *c, FT_LOAD_RENDER);
+
 		int2 glyphSize(data->face->glyph->bitmap.width, data->face->glyph->bitmap.rows);
-
-		/*glyph * g = (*data->glyphs)[*c];
-
-		g->code   = *c;
-		g->width  = data->face->glyph->advance.x / 64;
-		g->offset = int2(data->face->glyph->bitmap_left, data->face->glyph->bitmap_top);
-		g->x0     = currentOffset;
-		g->x1     = currentOffset + glyphSize;
-		g->uv0    = (float2)g->x0 * invTexelSize;
-		g->uv1    = (float2)g->x1 * invTexelSize;*/
 
 		int2 textureOffset = {
 			currentOffset.x,
 			((int32_t)supersampledHeight - glyphSize.y) / 2
 		};
 
-		glyph * g = (*data->glyphs)[*c];
-
-		g->code   = *c;
-		g->width  = (data->face->glyph->advance.x / 64) / data->supersampleFactor;
-		g->offset = int2(data->face->glyph->bitmap_left, data->face->glyph->bitmap_top) / data->supersampleFactor;
-		g->x0     = currentOffset / data->supersampleFactor;
-		g->x1     = currentOffset / data->supersampleFactor + glyphSize / data->supersampleFactor;
-		g->uv0    = (float2)textureOffset * invTexelSize;
-		g->uv1    = (float2)(textureOffset + glyphSize) * invTexelSize;
-
 		for (int i = 0; i < glyphSize.y; ++i)
 		{
-			for (int j = 0; j < glyphSize.x; ++j)
-			{
-				pixel(upsampledImg, textureOffset.y + i, textureOffset.x + j, supersampledWidth) = pixel(data->face->glyph->bitmap.buffer, i, j, glyphSize.x);
-			}
+			memcpy(
+				&pixel(upsampledImg, textureOffset.y + i, textureOffset.x, supersampledWidth),
+				&pixel(data->face->glyph->bitmap.buffer, i, 0, glyphSize.x),
+				glyphSize.x);
 		}
+
+		g->uv0 = (float2)textureOffset * invTexelSize;
+		g->uv1 = (float2)(textureOffset + glyphSize) * invTexelSize;
 
 		currentOffset.x += glyphSize.x + 2 * Padding;
 	}
 
 	std::vector<uint8_t> upsampledSDF(supersampledWidth * supersampledHeight);
-	sdf_calculate_radar(upsampledSDF.data(), upsampledImg.data(), supersampledWidth, supersampledHeight, Padding);
+	sdf_calculate(upsampledSDF.data(), upsampledImg.data(), supersampledWidth, supersampledHeight, SpreadFactor);
 
 	/*img->create(XNG_IMAGE_FORMAT_A8_UINT, supersampledWidth, supersampledHeight, upsampledImg.data());
 	img->write_png_file("upsampled.png");*/
@@ -240,6 +186,7 @@ bool load_font(resource_loader * loader, FT_Library library, font * fnt)
 	const char * name = fnt->get_name();
 	auto optSize = fnt->get_parameters().get_optional<uint32_t>("size");
 
+	const uint32_t SpreadFactor   = 8;
 	const uint32_t UpsampleFactor = 4;
 
 	uint32_t size       = optSize ? optSize.get() : 16;
@@ -263,12 +210,14 @@ bool load_font(resource_loader * loader, FT_Library library, font * fnt)
 	data.charset           = make_default_charset();
 	data.face              = face;
 	data.supersampleFactor = UpsampleFactor;
+	data.spreadFactor      = SpreadFactor;
 	data.size              = size;
 
 	bool loaded = img->load(&data);
 
 	fnt->set_image(img);
 	fnt->set_point_size(size);
+	fnt->set_spread_factor(SpreadFactor);
 	fnt->set_glyph_map(glyphs);
 
 	FT_Done_Face(face);

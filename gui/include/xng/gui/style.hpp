@@ -25,7 +25,7 @@ namespace xng
 			math::float4 caption_text_color;
 			math::float4 caption_text_border_color;
 			uint32_t     caption_text_border_size;
-			float        caption_text_smoothness;
+			float        caption_text_width;
 			float        caption_text_scale;
 
 			math::uint2  slider_size;

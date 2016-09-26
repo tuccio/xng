@@ -10,10 +10,9 @@ namespace xng
 		struct glyph
 		{
 			wchar_t      code;
-			uint32_t     width;
+			uint32_t     advance;
 			math::int2   offset;
-			math::int2   x0;
-			math::int2   x1;
+			math::int2   size;
 			math::float2 uv0;
 			math::float2 uv1;
 		};
