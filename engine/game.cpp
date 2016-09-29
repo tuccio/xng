@@ -268,6 +268,7 @@ void game::rendering_loop(void)
 		if (m_renderReady)
 		{
 			m_render->render(m_extractedScene, m_guiCommandList);
+
 			m_renderReady = false;
 			m_renderCV.notify_all();
 		}
@@ -296,6 +297,8 @@ void game::game_loop(void)
 
 	game_window_input_observer inputWindowObserver(&m_inputHandler);
 	m_window->add_observer(&inputWindowObserver);
+
+	init_fps_counter();
 
 	while (m_running)
 	{
@@ -342,7 +345,7 @@ void game::game_loop(void)
 
 			if (!m_renderReady)
 			{
-				// If an update happened, clone the scene to be rendered and feed
+				// If an update happened, extract the scene to be rendered and feed
 				// it to the rendering thread, otherwise render the previous scene
 
 				if (gameLogicUpdated)
@@ -354,6 +357,8 @@ void game::game_loop(void)
 
 					m_guiCommandList = m_guiManager->extract();
 				}
+
+				update_fps_counter();
 				
 				m_renderReady = true;
 				m_renderCV.notify_all();
@@ -438,4 +443,38 @@ uint32_t game::get_ticks_per_second(void) const
 const input_handler * game::get_input_handler(void) const
 {
 	return &m_inputHandler;
+}
+
+void game::init_fps_counter(void)
+{
+	m_fpsIndex = 0;
+	m_fpsLast  = timestamp();
+	m_fpsSum   = 0;
+
+	m_fpsTimings.assign(0);
+}
+
+void game::update_fps_counter(void)
+{
+	high_resolution_timestamp now  = timestamp();
+	high_resolution_timestamp prev = m_fpsTimings[m_fpsIndex];
+	high_resolution_timestamp diff = now - m_fpsLast;
+
+	m_fpsTimings[m_fpsIndex] = diff;
+	m_fpsIndex = (m_fpsIndex + 1) % m_fpsTimings.size();
+
+	m_fpsLast = now;
+	m_fpsSum  = (m_fpsSum - prev) + diff;
+}
+
+float game::get_frames_per_second(void) const
+{
+	float dt = to_seconds<float>(m_fpsSum);
+	return dt > 0.001f ? m_fpsTimings.size() / dt : std::numeric_limits<float>::infinity();
+}
+
+float game::get_frame_time(void) const
+{
+	float dt = to_seconds<float>(m_fpsSum);
+	return dt / m_fpsTimings.size();
 }

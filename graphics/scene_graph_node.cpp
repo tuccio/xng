@@ -143,10 +143,7 @@ void scene_graph_node::update(void)
 
 		update_impl();
 
-		/*for (scene_graph_node_listener * listener : m_listeners)
-		{
-			listener->on_scene_graph_node_move(this, oldTransform, newTransform);
-		}*/
+		m_graph->notify(&scene_graph_observer::on_move, m_graph, this, oldTransform, newTransform);
 
 		set_moved(false);
 	}
@@ -160,8 +157,16 @@ void scene_graph_node::on_parent_destruction(void)
 	xng_delete this;
 }
 
+void scene_graph_node::on_child_creation(scene_graph_node * child)
+{
+	m_children.push_back(child);
+	m_graph->notify(&scene_graph_observer::on_create, m_graph, child);
+}
+
 void scene_graph_node::on_child_destruction(scene_graph_node * child)
 {
+	m_graph->notify(&scene_graph_observer::on_destroy, m_graph, child);
+
 	auto it = std::find(m_children.begin(), m_children.end(), child);
 	assert(it != m_children.end() && "Consistency error: parent children list doesn't contain the child node.");
 	m_children.erase(it);

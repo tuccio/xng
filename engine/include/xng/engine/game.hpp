@@ -10,6 +10,7 @@
 
 #include <xng/os.hpp>
 
+#include <array>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -59,6 +60,9 @@ namespace xng
 			void set_ticks_per_second(uint32_t ticks);
 			uint32_t get_ticks_per_second(void) const;
 
+			float get_frames_per_second(void) const;
+			float get_frame_time(void) const;
+
 		private:
 
 			std::unique_ptr<os::native_window> m_window;
@@ -69,7 +73,6 @@ namespace xng
 			scene_module   * m_scene;
 			render_module  * m_render;
 			runtime_module * m_runtime;
-
 
 			// Loop members
 
@@ -90,6 +93,13 @@ namespace xng
 			std::thread             m_renderingThread;
 			std::thread             m_gameLoopThread;
 
+			// FPS
+
+			std::array<os::high_resolution_timestamp, 15> m_fpsTimings;
+			os::high_resolution_timestamp                 m_fpsLast;
+			os::high_resolution_timestamp                 m_fpsSum;
+			uint32_t                                      m_fpsIndex;
+
 			// Input
 
 			input::input_handler m_inputHandler;
@@ -99,6 +109,8 @@ namespace xng
 			void rendering_loop(void);
 			void game_loop(void);
 
+			void init_fps_counter(void);
+			void update_fps_counter(void);
 		};
 	}
 }

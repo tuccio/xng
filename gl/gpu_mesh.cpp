@@ -64,7 +64,7 @@ bool gpu_mesh::load_impl(const void * userdata)
 		XNG_GL_CHECK(glGenBuffers(1, &m_indicesEBO));
 
 		XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indicesEBO));
-		XNG_GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->get_num_indices() * sizeof(uint32_t) * 3, m->get_indices(), GL_STATIC_DRAW));
+		XNG_GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->get_num_indices() * sizeof(uint32_t), m->get_indices(), GL_STATIC_DRAW));
 		m_indicesFormat = GL_UNSIGNED_INT;
 
 		XNG_GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));

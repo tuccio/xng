@@ -12,3 +12,6 @@
 #include <xng/graphics/mesh.hpp>
 #include <xng/graphics/image.hpp>
 #include <xng/graphics/font.hpp>
+
+#include <xng/graphics/assimp_load.hpp>
+#include <xng/graphics/assimp_loader.hpp>

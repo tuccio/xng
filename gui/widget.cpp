@@ -47,6 +47,11 @@ widget::~widget(void)
 	set_layout(nullptr);
 }
 
+const gui_manager * widget::get_gui_manager(void) const
+{
+	return m_manager;
+}
+
 gui_manager * widget::get_gui_manager(void)
 {
 	return m_manager;

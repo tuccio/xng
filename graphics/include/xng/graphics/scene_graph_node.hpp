@@ -55,7 +55,7 @@ namespace xng
 			XNG_INLINE  NodeType * add_child(Args && ... args)
 			{
 				NodeType * child = xng_new NodeType(this, std::forward<Args>(args) ...);
-				m_children.push_back(child);
+				on_child_creation(child);
 				return child;
 			}
 
@@ -91,6 +91,7 @@ namespace xng
 
 			void on_parent_destruction(void);
 			void on_child_destruction(scene_graph_node * child);
+			void on_child_creation(scene_graph_node * child);
 
 			virtual void update_impl(void) {}
 

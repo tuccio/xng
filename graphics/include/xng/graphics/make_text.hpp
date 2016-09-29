@@ -105,6 +105,11 @@ namespace xng
 						info.height = max<uint32_t>(info.height, glyphSize.y);
 						info.width += glyphSize.x;
 					}
+					else if (c == L'\n')
+					{
+						offset.x = 0;
+						offset.y += fnt->get_point_size() * 1.5f;
+					}
 				}
 
 

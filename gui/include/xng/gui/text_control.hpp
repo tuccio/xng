@@ -36,10 +36,18 @@ namespace xng
 
 			void fit(void);
 
+			void set_text_control_style(const text_control_style & style);
+
+		protected:
+
+			const text_control_style * get_text_control_style(void) const;
+
 		private:
 
 			std::wstring m_text;
 			bool         m_editable;
+
+			std::unique_ptr<text_control_style> m_style;
 
 		};
 	}

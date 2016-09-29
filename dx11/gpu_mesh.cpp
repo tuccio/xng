@@ -80,7 +80,7 @@ bool gpu_mesh::load_impl(const void * userdata)
 			initializer.pSysMem = m->get_indices();
 
 			success = success && !XNG_HR_FAILED(device->CreateBuffer(
-				&CD3D11_BUFFER_DESC(3 * sizeof(uint32_t) * m->get_num_indices(), D3D11_BIND_INDEX_BUFFER, D3D11_USAGE_IMMUTABLE),
+				&CD3D11_BUFFER_DESC(sizeof(uint32_t) * m->get_num_indices(), D3D11_BIND_INDEX_BUFFER, D3D11_USAGE_IMMUTABLE),
 				&initializer,
 				&m_indices
 			));

@@ -36,20 +36,22 @@ void window::extract(gui_command_list_inserter & inserter, const style & style) 
 	rectangle windowBodyRectangle = get_rectangle();
 	windowBodyRectangle.top = m_captionRectangle.bottom;
 
-	*inserter++ = make_filled_rectangle_command(m_captionRectangle, style.caption_background_color);
-	*inserter++ = make_filled_rectangle_command(windowBodyRectangle, style.window_background_color);
+	const window_style * wndStyle = get_window_style();
 
-	font_ptr fnt = resource_factory::get_singleton()->create<font>(style.caption_font.c_str());
+	*inserter++ = make_filled_rectangle_command(m_captionRectangle, wndStyle->caption.background_color);
+	*inserter++ = make_filled_rectangle_command(windowBodyRectangle, wndStyle->background_color);
+
+	font_ptr fnt = resource_factory::get_singleton()->create<font>(wndStyle->caption.text.font.c_str());
 
 	*inserter++ = make_text_command(
 		fnt,
 		m_caption.c_str(),
-		style.caption_text_color,
-		style.caption_text_border_color,
-		style.caption_text_border_size,
-		style.caption_text_thinness,
-		(uint2)get_rectangle().topLeft + style.caption_text_origin,
-		style.caption_text_scale);
+		wndStyle->caption.text.color,
+		wndStyle->caption.text.border_color,
+		wndStyle->caption.text.border_size,
+		wndStyle->caption.text.thinness,
+		(uint2)get_rectangle().topLeft + wndStyle->caption.text.origin,
+		wndStyle->caption.text.scale);
 }
 
 bool window::on_mouse_key_down(const mouse * mouse, xng_mouse_key key)
@@ -117,7 +119,7 @@ void window::on_rectangle_update(const rectangle & oldRectangle, const rectangle
 
 void window::update_rectangles(void)
 {
-	int32_t h = get_gui_manager()->get_style().caption_height;
+	int32_t h = get_window_style()->caption.height;
 
 	rectangle rect = get_rectangle();
 
@@ -142,4 +144,14 @@ const wchar_t * window::get_caption(void) const
 void window::set_caption(const wchar_t * caption)
 {
 	m_caption = caption;
+}
+
+void window::set_window_style(const window_style & wnd)
+{
+	m_style = std::make_unique<window_style>(wnd);
+}
+
+const window_style * window::get_window_style(void) const
+{
+	return m_style ? m_style.get() : &get_gui_manager()->get_style().window;
 }

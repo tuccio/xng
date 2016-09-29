@@ -29,7 +29,9 @@ namespace xng
 			widget(gui_manager * manager, widget * parent, xng_gui_widget type, const math::int2 & position, const math::int2 & size);
 			virtual ~widget(void);
 
+			const gui_manager * get_gui_manager(void) const;
 			gui_manager * get_gui_manager(void);
+
 			widget * get_parent(void);
 			const widget * get_parent(void) const;
 

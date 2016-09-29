@@ -14,8 +14,9 @@ include(xng)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DXNG_DEBUG")
 
-option(XNG_DEBUG_NEW "Use memory allocation logging to debug memory leaks" OFF)
-option(XNG_USE_FREETYPE "Compile with freetype font loader" ON)
+option(XNG_DEBUG_NEW    "Use memory allocation logging to debug memory leaks" OFF)
+option(XNG_USE_FREETYPE "Compile with freetype font loader" OFF)
+option(XNG_USE_ASSIMP   "Compile with Assimp support for loading scenes" OFF)
 
 if (XNG_DEBUG_NEW)
 		add_definitions(-DXNG_DEBUG_NEW)
@@ -37,6 +38,18 @@ endif()
 
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
+
+# Search Assimp if used
+
+if (XNG_USE_ASSIMP)
+
+	find_package(Assimp REQUIRED)
+	
+	add_definitions(-DXNG_ASSIMP)
+	include_directories(${ASSIMP_INCLUDE_DIR})
+	xng_add_dependencies(${ASSIMP_LIBRARY})
+	
+endif()
 
 # Search freetype2 if used
 

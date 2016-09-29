@@ -9,37 +9,53 @@ namespace xng
 {
 	namespace gui
 	{
+		struct text_style
+		{
+			std::string  font;
+			math::uint2  origin;
+			math::float4 color;
+			math::float4 border_color;
+			uint32_t     border_size;
+			float        thinness;
+			float        scale;
+		};
+
+		struct caption_style
+		{
+			math::float4 background_color;
+			uint32_t     height;
+			text_style   text;
+		};
+
+		struct window_style
+		{
+			math::float4  background_color;
+			caption_style caption;
+		};
+
+		struct slider_style
+		{
+			math::uint2  size;
+			math::float4 color;
+			math::float4 hover_color;
+			math::float4 bar_filled_color;
+			math::float4 bar_empty_color;
+			uint32_t     bar_height;
+		};
+
+		struct text_control_style
+		{
+			math::float4 background_color;
+			math::float4 editable_background_color;
+			uint32_t     padding;
+			text_style   text;
+		};
+
 		struct style
 		{
-			math::float4 window_background_color;
-
-			math::float4 caption_background_color;
-			uint32_t     caption_height;
-
-			std::string  caption_font;
-			math::uint2  caption_text_origin;
-			math::float4 caption_text_color;
-			math::float4 caption_text_border_color;
-			uint32_t     caption_text_border_size;
-			float        caption_text_thinness;
-			float        caption_text_scale;
-
-			math::uint2  slider_size;
-			math::float4 slider_color;
-			math::float4 slider_hover_color;
-			math::float4 slider_bar_filled;
-			math::float4 slider_bar_empty;
-			uint32_t     slider_bar_height;
-
-			std::string  text_control_font;
-			math::float4 text_control_background_color;
-			math::float4 text_control_editable_background_color;
-			math::float4 text_control_text_color;
-			math::float4 text_control_text_border_color;
-			uint32_t     text_control_text_border_size;
-			float        text_control_text_thinness;
-			float        text_control_text_scale;
-			uint32_t     text_control_padding;
+			window_style       window;
+			slider_style       slider;
+			text_control_style text_control;			
 		};
 
 		style make_default_style(void);

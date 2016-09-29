@@ -1,0 +1,54 @@
+if (WIN32)
+
+	set ( ASSIMP_INCLUDE_HINTS ${ASSIMP_ROOT} )
+	set ( ASSIMP_INCLUDE_SUFFIXES include )
+	
+	set ( ASSIMP_LIBRARY_HINTS ${ASSIMP_ROOT} )
+	
+	if (CMAKE_CL_64)
+		set ( ASSIMP_LIBRARY_SUFFIXES lib64 )
+	else (CMAKE_CL_64)
+		set ( ASSIMP_LIBRARY_SUFFIXES lib32 )
+	endif (CMAKE_CL_64)
+
+else (WIN32)
+
+	set ( ASSIMP_INCLUDE_HINTS
+		/usr/include
+		/usr/local/include
+		/opt/local/include
+	)
+	
+	set ( ASSIMP_LIBRARY_HINTS
+		/usr/lib64
+		/usr/lib
+		/usr/local/lib
+		/opt/local/lib
+	)
+	
+endif (WIN32)
+
+find_path( ASSIMP_INCLUDE_DIR assimp/mesh.h
+	HINTS ${ASSIMP_INCLUDE_HINTS}
+	PATH_SUFFIXES ${ASSIMP_INCLUDE_SUFFIXES}
+)
+
+find_library( ASSIMP_LIBRARY assimp
+	HINTS ${ASSIMP_LIBRARY_HINTS}
+	PATH_SUFFIXES ${ASSIMP_LIBRARY_SUFFIXES}
+)
+
+if ( ASSIMP_INCLUDE_DIR AND ASSIMP_LIBRARY )
+	set( ASSIMP_FOUND TRUE )
+	set( ASSIMP_LIBRARIES ${ASSIMP_LIBRARY} )
+endif ( ASSIMP_INCLUDE_DIR AND ASSIMP_LIBRARY )
+
+if ( ASSIMP_FOUND )
+	if ( NOT ASSIMP_FIND_QUIETLY )
+		message ( STATUS "Found ASSIMP: ${ASSIMP_LIBRARY}" )
+	endif ( NOT ASSIMP_FIND_QUIETLY )
+else ( ASSIMP_FOUND )
+	if ( ASSIMP_FIND_REQUIRED )
+		message ( FATAL_ERROR "Could not find libASSIMP" )
+	endif ( ASSIMP_FIND_REQUIRED )
+endif ( ASSIMP_FOUND )

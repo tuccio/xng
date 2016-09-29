@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xng/gui/widget.hpp>
+
 #include <string>
 
 namespace xng
@@ -30,11 +31,15 @@ namespace xng
 
 			void extract(gui_command_list_inserter & inserter, const style & style) const override;
 
+			void set_window_style(const window_style & style);
+
 		protected:
 
 			window(const window &) = default;
 
 			void on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle) override;
+
+			const window_style * get_window_style(void) const;
 
 		private:
 
@@ -42,6 +47,8 @@ namespace xng
 			math::int2   m_mouseDelta;
 			rectangle    m_captionRectangle;
 			std::wstring m_caption;
+
+			std::unique_ptr<window_style> m_style;
 
 			void update_rectangles(void);
 

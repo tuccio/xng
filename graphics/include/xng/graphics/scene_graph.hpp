@@ -15,7 +15,17 @@ namespace xng
 {
 	namespace graphics
 	{
-		class scene_graph
+		class scene_graph;
+
+		struct scene_graph_observer
+		{
+			virtual void on_create(scene_graph * sg, scene_graph_node * node) {}
+			virtual void on_destroy(scene_graph * sg, scene_graph_node * node) {}
+			virtual void on_move(scene_graph * sg, scene_graph_node * node, const math::float4x4 & lastTransform, const math::float4x4 & newTransform) {}
+		};
+
+		class scene_graph :
+			public core::observable<scene_graph_observer>
 		{
 
 		public:

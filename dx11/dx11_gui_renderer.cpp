@@ -223,7 +223,7 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 				text_vertex * vertices = (text_vertex*)mappedResource.pData;
 
-				make_text(fnt, text, vertices, int2(borderSize), int2(borderSize), &info);
+				make_text(fnt, text, vertices, int2(borderSize), int2(0), &info);
 
 				UINT strides = sizeof(text_vertex);
 				UINT offsets = 0;

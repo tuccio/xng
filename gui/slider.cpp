@@ -28,10 +28,10 @@ void slider::extract(gui_command_list_inserter & inserter, const style & style) 
 	filled.right = middle;
 	empty.left = middle;
 
-	*inserter++ = make_filled_rectangle_command(filled, style.slider_bar_filled);
-	*inserter++ = make_filled_rectangle_command(empty, style.slider_bar_empty);
+	*inserter++ = make_filled_rectangle_command(filled, style.slider.bar_filled_color);
+	*inserter++ = make_filled_rectangle_command(empty, style.slider.bar_empty_color);
 	*inserter++ = make_filled_rectangle_command(m_sliderRectangle,
-		(get_status() == XNG_GUI_STATUS_HOVER || m_dragging) ? style.slider_hover_color : style.slider_color);
+		(get_status() == XNG_GUI_STATUS_HOVER || m_dragging) ? style.slider.hover_color : style.slider.color);
 }
 
 void slider::on_rectangle_update(const rectangle & oldRectangle, const rectangle & newRectangle)
@@ -126,20 +126,20 @@ void slider::update_rectangles(void)
 	rectangle rect = get_rectangle();
 
 	int2 basePosition = rect.topLeft;
-	int  height       = max(style.slider_bar_height, style.slider_size.y);
+	int  height       = max(style.slider.bar_height, style.slider.size.y);
 
-	int  sliderWidth  = style.slider_size.x;
+	int  sliderWidth  = style.slider.size.x;
 
-	m_sliderBarRectangle.left   = basePosition.x + style.slider_size.x / 2;
-	m_sliderBarRectangle.top    = basePosition.y + (height - style.slider_bar_height) / 2;
-	m_sliderBarRectangle.right  = m_sliderBarRectangle.left + max<int>(0, get_size().x - style.slider_size.x);
-	m_sliderBarRectangle.bottom = m_sliderBarRectangle.top + style.slider_bar_height;
+	m_sliderBarRectangle.left   = basePosition.x + style.slider.size.x / 2;
+	m_sliderBarRectangle.top    = basePosition.y + (height - style.slider.bar_height) / 2;
+	m_sliderBarRectangle.right  = m_sliderBarRectangle.left + max<int>(0, get_size().x - style.slider.size.x);
+	m_sliderBarRectangle.bottom = m_sliderBarRectangle.top + style.slider.bar_height;
 
 	int2 sliderPosition = {
 		(int) (basePosition.x + rectangle_width(m_sliderBarRectangle) * m_percentage),
-		basePosition.y + (height - (int)style.slider_size.y) / 2
+		basePosition.y + (height - (int)style.slider.size.y) / 2
 	};
 
 	m_sliderRectangle.topLeft     = sliderPosition;
-	m_sliderRectangle.bottomRight = m_sliderRectangle.topLeft + (int2)style.slider_size;
+	m_sliderRectangle.bottomRight = m_sliderRectangle.topLeft + (int2)style.slider.size;
 }

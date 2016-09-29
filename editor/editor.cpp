@@ -7,6 +7,8 @@
 #include <xng/gui.hpp>
 #include <xng/graphics/freetype_font_loader.hpp>
 
+#include <iomanip>
+
 using namespace xng::editor;
 using namespace xng::os;
 using namespace xng::engine;
@@ -26,7 +28,6 @@ IMPLEMENT_APP_NO_MAIN(wx_app);
 IMPLEMENT_WX_THEME_SUPPORT;
 
 void create_menu(wxFrame * editor);
-void create_gui(void);
 
 editor::editor(native_window * wnd)
 {
@@ -88,6 +89,14 @@ editor::~editor(void)
 void editor::update(void)
 {
 	wxTheApp->ProcessIdle();
+
+	std::ostringstream ss;
+
+	ss << std::fixed << std::setprecision(2) <<
+		"FPS: " << game::get_singleton()->get_frames_per_second() << std::endl <<
+		"Frame Time: " << game::get_singleton()->get_frame_time() * 1000.f << " ms";
+	
+	m_fpsText->set_text(ss.str());
 }
 
 wxFrame * editor::get_main_window(void)
@@ -232,7 +241,7 @@ void create_menu(wxFrame * editor)
 	editor->SetMenuBar(menuBar);
 }
 
-void create_gui(void)
+void editor::create_gui(void)
 {
 	game * instance = game::get_singleton();
 	gui_manager * gui = instance->get_gui_manager();
@@ -248,21 +257,21 @@ void create_gui(void)
 	borderSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
-		s.caption_text_border_size = 10.f * x;
+		s.window.caption.text.border_size = 10.f * x;
 		gui->set_style(s);
 	});
 
 	widthSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
-		s.caption_text_thinness = x;
+		s.window.caption.text.thinness = x;
 		gui->set_style(s);
 	});
 
 	scaleSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
 	{
 		style s = gui->get_style();
-		s.caption_text_scale = .01f + 10 * x;
+		s.window.caption.text.scale = .01f + 10 * x;
 		gui->set_style(s);
 	});
 
@@ -287,4 +296,30 @@ void create_gui(void)
 	captionTextStyle->apply_layout();
 
 	captionTextStyle->show();
+
+	// FPS text
+
+	window_style transparentWindowStyle = {};
+
+	window * transparentWindow = xng_new window(gui, nullptr, int2(0), int2(0));
+
+	text_control * fpsText = xng_new text_control(gui, transparentWindow, int2(8, 8));
+
+	text_control_style fpsTextStyle = {};
+
+	fpsTextStyle.text.font         = "./fonts/OpenSans-Regular-64.xml";
+	fpsTextStyle.text.color        = float4(1);
+	fpsTextStyle.text.border_color = float4(0, 0, 0, 1);
+	fpsTextStyle.text.border_size  = 4;
+	fpsTextStyle.text.thinness     = .5f;
+	fpsTextStyle.text.scale        = .35f;
+
+	fpsText->set_text_control_style(fpsTextStyle);
+	fpsText->set_text_and_fit("");
+
+	transparentWindow->show();
+
+	// Set member variables
+
+	m_fpsText = fpsText;
 }
