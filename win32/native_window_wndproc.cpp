@@ -183,6 +183,8 @@ LRESULT CALLBACK native_window::wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 			break;
 		}
 		}
+
+		break;
 	}
 
 	case WM_LBUTTONDOWN:
@@ -224,6 +226,14 @@ LRESULT CALLBACK native_window::wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		native_window * wnd = get_window_object(hWnd);
 		wnd->notify(&os::native_window_observer::on_mouse_key_up, wnd, XNG_MOUSE_BUTTON_3);
+		break;
+	}
+
+	case WM_MOUSEWHEEL:
+	{
+		native_window * wnd = get_window_object(hWnd);
+		int32_t wheel = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;
+		wnd->notify(&os::native_window_observer::on_mouse_wheel, wnd, wheel);
 		break;
 	}
 	}

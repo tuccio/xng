@@ -79,48 +79,6 @@ private:
 	input_handler * m_inputHandler;
 };
 
-struct game_handled_input_observer :
-	public keyboard_observer,
-	public mouse_observer
-{
-	bool on_keyboard_key_down(const keyboard * keyboard, xng_keyboard_key key) override
-	{
-		//XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
-		return true;
-	}
-
-	bool on_keyboard_key_up(const keyboard * keyboard, xng_keyboard_key key, uint32_t millis) override
-	{
-		//XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
-		return true;
-	}
-
-	bool on_mouse_key_down(const mouse * mouse, xng_mouse_key key) override
-	{
-		XNG_LOG("Pressed key", XNG_LOG_STREAM() << key);
-		//XNG_LOG("Mouse position", XNG_LOG_STREAM() << mouse->get_position());
-		return true;
-	}
-
-	bool on_mouse_key_hold(const mouse * mouse, xng_mouse_key key, uint32_t millis) override
-	{
-		//XNG_LOG("Held key", XNG_LOG_STREAM() << key);
-		return true;
-	}
-
-	bool on_mouse_key_up(const mouse * mouse, xng_mouse_key key, uint32_t millis) override
-	{
-		XNG_LOG("Released key", XNG_LOG_STREAM() << key << " after " << millis << "ms.");
-		return true;
-	}
-
-	bool on_mouse_wheel(const mouse * mouse, int32_t wheel) override
-	{
-		//XNG_LOG("Mouse wheel", XNG_LOG_STREAM() << wheel);
-		return true;
-	}
-};
-
 /* Game class implementation */
 
 game::game(void) :
@@ -144,6 +102,12 @@ bool game::init(void)
 
 	if (m_window->create())
 	{
+		m_inputHandler.clear();
+		m_inputHandler.mouse().add_observer(m_guiManager.get());
+
+		m_inputObserver = std::make_unique<game_window_input_observer>(&m_inputHandler);
+		m_window->add_observer(m_inputObserver.get());
+
 #define XNG_GAME_INIT_MODULE(Module, ...) if (Module && !Module->is_initialized()) { bool success = Module->init(__VA_ARGS__); if (!success) { XNG_LOG("Module initialization failed:", #Module); return false; } }
 
 		XNG_GAME_INIT_MODULE(m_runtime);
@@ -169,6 +133,11 @@ void game::shutdown(void)
 	XNG_GAME_SHUTDOWN_MODULE(m_render);
 
 #undef XNG_GAME_SHUTDOWN_MODULE
+
+	m_window->remove_observer(m_inputObserver.get());
+	m_inputObserver.reset();
+
+	m_inputHandler.mouse().remove_observer(m_guiManager.get());
 
 	m_guiManager.reset();
 	m_window.reset();
@@ -287,16 +256,6 @@ void game::game_loop(void)
 	uint64_t nextTick = GameStart;
 
 	scene * currentScene = nullptr;
-	
-	m_inputHandler.mouse().add_observer(m_guiManager.get());
-
-	game_handled_input_observer inputObserver;
-
-	m_inputHandler.keyboard().add_observer(&inputObserver);
-	m_inputHandler.mouse().add_observer(&inputObserver);
-
-	game_window_input_observer inputWindowObserver(&m_inputHandler);
-	m_window->add_observer(&inputWindowObserver);
 
 	init_fps_counter();
 
@@ -365,9 +324,6 @@ void game::game_loop(void)
 			}
 		}
 	}
-
-	m_window->remove_observer(&inputWindowObserver);
-	m_inputHandler.clear();
 }
 
 void game::set_quit_on_close(bool quitOnClose)

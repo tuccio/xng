@@ -196,22 +196,22 @@ const float4x4 & camera::get_directx_projection_matrix(void) const
 
 const float3 camera::forward(void)
 {
-	return transform(float3(0, 0, 1), m_orientation);
+	return transform(float3(0, 0, -1), m_orientation);
 }
 
 const float3 camera::back(void)
 {
-	return transform(float3(0, 0, -1), m_orientation);
+	return transform(float3(0, 0, 1), m_orientation);
 }
 
 const float3 camera::left(void)
 {
-	return transform(float3(1, 0, 0), m_orientation);
+	return transform(float3(-1, 0, 0), m_orientation);
 }
 
 const float3 camera::right(void)
 {
-	return transform(float3(-1, 0, 0), m_orientation);
+	return transform(float3(1, 0, 0), m_orientation);
 }
 
 const float3 camera::up(void)

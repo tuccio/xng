@@ -1,9 +1,9 @@
 #include <xng/dx11/dx11_api_context.hpp>
 
-using namespace xng;
 using namespace xng::dx11;
+using namespace xng::graphics;
 
-bool dx11_api_context::init(os::native_window_handle handle, xng_api_version version, bool debug)
+bool dx11_api_context::init(native_window_handle handle, xng_api_version version, bool debug)
 {
 	DXGI_SWAP_CHAIN_DESC swapDesc        = {};
 
@@ -29,7 +29,7 @@ bool dx11_api_context::init(os::native_window_handle handle, xng_api_version ver
 	return init(handle, version, debug, &swapDesc);
 }
 
-bool dx11_api_context::init(os::native_window_handle handle, xng_api_version version, bool debug, DXGI_SWAP_CHAIN_DESC * swapChainDesc)
+bool dx11_api_context::init(native_window_handle handle, xng_api_version version, bool debug, DXGI_SWAP_CHAIN_DESC * swapChainDesc)
 {
 	if (!swapChainDesc)
 	{
@@ -60,8 +60,8 @@ bool dx11_api_context::init(os::native_window_handle handle, xng_api_version ver
 		com_ptr<IDXGIAdapter> dxgiAdapter;
 		com_ptr<IDXGIFactory> dxgiFactory;
 
-		;
 		return
+			m_profiler.init(m_device.get(), swapChainDesc->BufferCount + 1) &&
 			!XNG_HR_FAILED(m_device->QueryInterface(IID_PPV_ARGS(&dxgiDevice))) &&
 			!XNG_HR_FAILED(dxgiDevice->GetParent(IID_PPV_ARGS(&dxgiAdapter))) &&
 			!XNG_HR_FAILED(dxgiAdapter->GetParent(IID_PPV_ARGS(&dxgiFactory))) &&
@@ -85,9 +85,16 @@ bool dx11_api_context::is_initialized(void) const
 	return (bool) m_device;
 }
 
+void dx11_api_context::frame_start(void)
+{
+	m_profiler.frame_start(m_immediateContext.get());
+}
+
 void dx11_api_context::frame_complete(void)
 {
 	m_swapChain->Present(m_vsync ? 1 : 0, 0);
+	m_profiler.frame_complete(m_immediateContext.get());
+	m_profilerData = m_profiler.collect_data(m_immediateContext.get());
 }
 
 void dx11_api_context::on_resize(uint32_t width, uint32_t height)
@@ -153,4 +160,19 @@ void dx11_api_context::set_vsync(bool vsync)
 bool dx11_api_context::get_vsync(void) const
 {
 	return m_vsync;
+}
+
+void dx11_api_context::profile_start(const char * name)
+{
+	m_profiler.profile_start(name, m_immediateContext.get());
+}
+
+void dx11_api_context::profile_complete(const char * name)
+{
+	m_profiler.profile_complete(name, m_immediateContext.get());
+}
+
+profiler_data dx11_api_context::get_profiler_data(void)
+{
+	return m_profilerData;
 }

@@ -20,7 +20,7 @@ namespace xng
 		};
 
 		class keyboard :
-			public core::observable<keyboard_observer>
+			public core::observable<keyboard_observer, std::mutex>
 		{
 
 		public:

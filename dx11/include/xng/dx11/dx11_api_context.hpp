@@ -4,6 +4,7 @@
 #include <xng/graphics/api_version.hpp>
 
 #include <xng/dx11/dx11_headers.hpp>
+#include <xng/dx11/gpu_profiler.hpp>
 
 namespace xng
 {
@@ -21,7 +22,9 @@ namespace xng
 
 			bool is_initialized(void) const override;
 
+			void frame_start(void) override;
 			void frame_complete(void) override;
+
 			void on_resize(uint32_t width, uint32_t height) override;
 
 			ID3D11Device * get_device(void);
@@ -34,12 +37,20 @@ namespace xng
 			void set_vsync(bool vsync) override;
 			bool get_vsync(void) const override;
 
+			void profile_start(const char * name) override;
+			void profile_complete(const char * name) override;
+
+			graphics::profiler_data get_profiler_data(void) override;
+
 		private:
 
 			com_ptr<ID3D11Device>           m_device;
 			com_ptr<ID3D11DeviceContext>    m_immediateContext;
 			com_ptr<IDXGISwapChain>         m_swapChain;
 			com_ptr<ID3D11RenderTargetView> m_backBufferRTV;
+
+			gpu_profiler            m_profiler;
+			graphics::profiler_data m_profilerData;
 
 			DXGI_FORMAT m_backBufferFormat;
 			bool m_vsync;

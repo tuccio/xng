@@ -41,15 +41,11 @@ void forward_renderer::shutdown(void)
 	m_vbFactory.clear();
 }
 
-void forward_renderer::render(ID3D11DeviceContext * deviceContext, const extracted_scene & scene)
+void forward_renderer::render(ID3D11DeviceContext * deviceContext, ID3D11RenderTargetView * rtv, ID3D11DepthStencilView * dsv, const extracted_scene & scene)
 {
 	ID3D11Device * device  = m_apiContext->get_device();
 
-	float clearColor[4] = { 0 };
 
-	ID3D11RenderTargetView * backBuffer = m_apiContext->get_back_buffer_rtv();
-
-	deviceContext->ClearRenderTargetView(backBuffer, clearColor);
 	deviceContext->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
 
 	float4 colors[] = {
@@ -59,7 +55,15 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext, const extract
 	};
 
 	deviceContext->RSSetState(m_rasterizerState.get());
-	deviceContext->OMSetRenderTargets(1, &backBuffer, nullptr);
+	deviceContext->OMSetDepthStencilState(nullptr, 0);
+	deviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+
+	deviceContext->OMSetRenderTargets(1, &rtv, dsv);
+
+	float clearColor[4] = { 0 };
+
+	deviceContext->ClearRenderTargetView(rtv, clearColor);
+	deviceContext->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.f, 0);
 
 	const camera * camera = scene.get_active_camera();
 
@@ -79,6 +83,8 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext, const extract
 	int ColorIndex = 0;
 
 	gpu_mesh::load_data meshLoadData = { m_apiContext->get_device() };
+
+	m_apiContext->profile_start("Forward Draw");
 
 	for (auto renderableIndex : dynamicGeometry)
 	{
@@ -112,6 +118,8 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext, const extract
 	}
 
 	program.dispose(deviceContext);
+
+	m_apiContext->profile_complete("Forward Draw");
 }
 
 void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & update)

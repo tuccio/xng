@@ -200,12 +200,14 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 			if (!XNG_HR_FAILED(deviceContext->Map(m_textBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
 			{
+				float avgScale = (scale.x + scale.y) * .5f;
 				float2 fontTexelSize = { 1.f / fnt->get_image()->get_width(), 1.f / fnt->get_image()->get_height() };
-				float borderDistance = borderSize * .25f / fnt->get_spread_factor();
+				float borderDistance = .5f * borderSize / fnt->get_spread_factor();
+
 
 				__cbPerText data = {
 					m_projection * to_translation4(float3(position.x, position.y, 0)) * to_scale4(float3(scale, 1.f)),
-					color, borderColor, borderDistance, width, fnt->get_spread_factor(), (scale.x + scale.y) * .5f, fontTexelSize
+					color, borderColor, borderDistance, width, fnt->get_spread_factor(), avgScale, fontTexelSize
 				};
 				
 				m_constantBuffer.write(deviceContext, &data);
@@ -223,7 +225,8 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 				text_vertex * vertices = (text_vertex*)mappedResource.pData;
 
-				make_text(fnt, text, vertices, int2(borderSize), int2(0), &info);
+				int2 spacing = borderSize + 2;
+				make_text(fnt, text, vertices, int2(borderSize), spacing, &info);
 
 				UINT strides = sizeof(text_vertex);
 				UINT offsets = 0;
@@ -240,7 +243,7 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 	}
 }
 
-void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, const uint2 & size, const gui_command_list & commandList)
+void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, ID3D11RenderTargetView * rtv, const uint2 & size, const gui_command_list & commandList)
 {
 	m_projection = ortho_rh_directx(0, size.x, size.y, 0, 0, 1);
 
@@ -249,6 +252,8 @@ void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, const uint2 
 
 	deviceContext->RSSetState(m_rasterizerState.get());
 	deviceContext->OMSetBlendState(m_blendState.get(), nullptr, 0xFFFFFFFF);
+
+	deviceContext->OMSetRenderTargets(1, &rtv, nullptr);
 
 	for (auto & cmd : commandList)
 	{

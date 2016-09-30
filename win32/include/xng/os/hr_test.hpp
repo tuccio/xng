@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xng/core/platform.hpp>
+
 #define XNG_DEBUG_LOG(Message) OutputDebugStringA(Message)
 #define XNG_HR_LOG(HR)\
 		{\
@@ -13,6 +15,7 @@
 			nullptr);\
 			XNG_DEBUG_LOG(output);\
 			LocalFree((HLOCAL) output);\
+			XNG_DEBUGBREAK();\
 		}
 
 #define XNG_HR_CHECK(HR)  { HRESULT hr = HR; if (FAILED(hr)) XNG_HR_LOG(hr); }

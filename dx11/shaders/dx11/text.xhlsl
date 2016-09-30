@@ -24,11 +24,18 @@ float4 RenderTextSuperSample(in float2 texelSize, in float2 uv, in float4 color,
 		// 0.002284f, 0.043222f, 0.002284f
 	// };
 	
+	// Should probably use a different kernel depending on the spreadFactor and the scale
 	const float Kernel[KernelSize][KernelSize] = {
-		0.f, 0.f, 0.f,
-		0.f, 1.f, 0.f,
-		0.f, 0.f, 0.f
+		0.000518, 0.021715, 0.000518,
+		0.021715, 0.91107, 0.021715,
+		0.000518, 0.021715, 0.000518,
 	};
+	
+	// const float Kernel[KernelSize][KernelSize] = {
+		// 0.f, 0.f, 0.f,
+		// 0.f, 1.f, 0.f,
+		// 0.f, 0.f, 0.f
+	// };
 	
 	float4 avgSum = 0;
 	

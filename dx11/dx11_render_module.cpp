@@ -92,14 +92,33 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
 	render_variables rvars;
 	render_variables_updates updates;
 
+	// Update render variables
+
 	m_windowObserver.update(&rvars, &updates);
+
+	if (updates.find(XNG_RV_RENDER_RESOLUTION) != updates.end())
+	{
+		m_renderResourceManager.clear();
+	}
 
 	m_context->frame_start();
 
+	// Grab the resources needed
+
+	ID3D11RenderTargetView * backBuffer = m_context->get_back_buffer_rtv();
+
+	render_resource_handle_ptr depthBufferHandle = m_renderResourceManager.get_texture_2d(
+		m_context->get_device(),
+		CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, rvars.render_resolution.x, rvars.render_resolution.y, 1, 0, D3D11_BIND_DEPTH_STENCIL));
+
+	const render_resource * depthBuffer = depthBufferHandle->get_render_resource();
+
+	// Render
+
 	m_renderer->update_render_variables(rvars, updates);
 
-	m_renderer->render(m_context->get_immediate_context(), extractedScene);
-	m_guiRenderer->render(m_context->get_immediate_context(), rvars.render_resolution, guiCommandList);
+	m_renderer->render(m_context->get_immediate_context(), backBuffer, depthBuffer->get_depth_stencil_view(), extractedScene);
+	m_guiRenderer->render(m_context->get_immediate_context(), backBuffer, rvars.render_resolution, guiCommandList);
 	
 	m_context->frame_complete();
 }

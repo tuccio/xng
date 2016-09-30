@@ -93,6 +93,8 @@ namespace xng
 			std::thread             m_renderingThread;
 			std::thread             m_gameLoopThread;
 
+			std::unique_ptr<os::native_window_observer> m_inputObserver;
+
 			// FPS
 
 			std::array<os::high_resolution_timestamp, 15> m_fpsTimings;

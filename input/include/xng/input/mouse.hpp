@@ -23,7 +23,7 @@ namespace xng
 		};
 
 		class mouse :
-			public core::observable<mouse_observer>
+			public core::observable<mouse_observer, std::mutex>
 		{
 
 		public:

@@ -94,9 +94,16 @@ void editor::update(void)
 
 	ss << std::fixed << std::setprecision(2) <<
 		"FPS: " << game::get_singleton()->get_frames_per_second() << std::endl <<
-		"Frame Time: " << game::get_singleton()->get_frame_time() * 1000.f << " ms";
+		"Frame Time: " << game::get_singleton()->get_frame_time() * 1000.f << " ms" << std::endl;
+
+	auto profilerData = game::get_singleton()->get_render_module()->get_api_context()->get_profiler_data();
+
+	for (auto & p : profilerData)
+	{
+		ss << p.name << ": " << p.time << " ms" << std::endl;
+	}
 	
-	m_fpsText->set_text(ss.str());
+	m_fpsText->set_text_and_fit(ss.str());
 }
 
 wxFrame * editor::get_main_window(void)
@@ -246,34 +253,13 @@ void editor::create_gui(void)
 	game * instance = game::get_singleton();
 	gui_manager * gui = instance->get_gui_manager();
 
-	window * captionTextStyle = xng_new window(gui, nullptr, int2(16), int2(256));
+	window * captionTextStyle = xng_new window(gui, nullptr, int2(24, 96), int2(256));
 
 	vertical_layout * wndLayout = xng_new vertical_layout();
 
 	slider * borderSlider = xng_new slider(gui, captionTextStyle);
 	slider * widthSlider  = xng_new slider(gui, captionTextStyle);
 	slider * scaleSlider  = xng_new slider(gui, captionTextStyle);
-
-	borderSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		style s = gui->get_style();
-		s.window.caption.text.border_size = 10.f * x;
-		gui->set_style(s);
-	});
-
-	widthSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		style s = gui->get_style();
-		s.window.caption.text.thinness = x;
-		gui->set_style(s);
-	});
-
-	scaleSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		style s = gui->get_style();
-		s.window.caption.text.scale = .01f + 10 * x;
-		gui->set_style(s);
-	});
 
 	text_control * borderText = xng_new text_control(gui, captionTextStyle);
 	text_control * widthText = xng_new text_control(gui, captionTextStyle);
@@ -290,7 +276,7 @@ void editor::create_gui(void)
 	wndLayout->add(scaleText, XNG_LAYOUT_EXPAND, 0, 4);
 	wndLayout->add(scaleSlider, XNG_LAYOUT_EXPAND, 0, 4);
 
-	captionTextStyle->set_caption(L"Caption Text Style Test");
+	captionTextStyle->set_caption(L"FPS Text Style Test");
 
 	captionTextStyle->set_layout(wndLayout);
 	captionTextStyle->apply_layout();
@@ -307,17 +293,39 @@ void editor::create_gui(void)
 
 	text_control_style fpsTextStyle = {};
 
-	fpsTextStyle.text.font         = "./fonts/OpenSans-Regular-64.xml";
+	fpsTextStyle.text.font         = "./fonts/OpenSans-Regular.xml";
 	fpsTextStyle.text.color        = float4(1);
 	fpsTextStyle.text.border_color = float4(0, 0, 0, 1);
-	fpsTextStyle.text.border_size  = 4;
-	fpsTextStyle.text.thinness     = .5f;
-	fpsTextStyle.text.scale        = .35f;
+	fpsTextStyle.text.border_size  = 10;
+	fpsTextStyle.text.thinness     = .45f;
+	fpsTextStyle.text.scale        = .14f;
 
 	fpsText->set_text_control_style(fpsTextStyle);
 	fpsText->set_text_and_fit("");
 
 	transparentWindow->show();
+
+	text_control_style * fpsTextStyle2 = xng_new text_control_style(fpsTextStyle);
+
+	// Slider binds
+
+	borderSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		fpsTextStyle2->text.border_size = 20.f * x;
+		fpsText->set_text_control_style(*fpsTextStyle2);
+	});
+
+	widthSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		fpsTextStyle2->text.thinness = x;
+		fpsText->set_text_control_style(*fpsTextStyle2);
+	});
+
+	scaleSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
+	{
+		fpsTextStyle2->text.scale = .01f + 10 * x;
+		fpsText->set_text_control_style(*fpsTextStyle2);
+	});
 
 	// Set member variables
 

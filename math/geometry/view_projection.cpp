@@ -13,9 +13,9 @@ namespace xng
 			float3 y = cross(z, x);
 
 			return float4x4(
-				x.x, x.y, x.z, -dot(x, position),
-				y.x, y.y, y.z, -dot(y, position),
-				z.x, z.y, z.z, -dot(z, position),
+				x.x, x.y, x.z, dot(x, position),
+				y.x, y.y, y.z, dot(y, position),
+				z.x, z.y, z.z, dot(z, position),
 				0.f, 0.f, 0.f, 1.f
 			);
 		}

@@ -18,7 +18,7 @@ namespace xng
 			bool init(dx11_api_context * context);
 			void shutdown(void);
 
-			void render(ID3D11DeviceContext * deviceContext, const math::uint2 & size, const gui::gui_command_list & commandList);
+			void render(ID3D11DeviceContext * deviceContext, ID3D11RenderTargetView * rtv, const math::uint2 & size, const gui::gui_command_list & commandList);
 
 		private:
 

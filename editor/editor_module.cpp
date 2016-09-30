@@ -15,11 +15,14 @@ const char *          editor_module::module_name        = "xngeditor";
 const char *          editor_module::module_description = "XNG Editor Module";
 const xng_module_type editor_module::module_type        = XNG_MODULE_TYPE_RUNTIME;
 
-void create_default_scene(scene_module * sceneModule);
+void create_default_scene(fps_camera_controller & cameraController, scene_module * sceneModule);
 
 struct editor_window_observer :
 	public native_window_observer
 {
+
+	editor_window_observer(fps_camera_controller * cameraController) : m_cameraController(cameraController) {}
+
 	void on_resize(native_window * wnd, const uint2 & windowSize, const uint2 & clientSize) override
 	{
 		float ratio = clientSize.x / (float)clientSize.y;
@@ -36,7 +39,17 @@ struct editor_window_observer :
 				cam->get_camera()->set_aspect_ratio(ratio);
 			}
 		}
+
+		if (m_cameraController)
+		{
+			m_cameraController->set_screen_size((float2)clientSize);
+		}
 	}
+
+private:
+
+	fps_camera_controller * m_cameraController;
+
 };
 
 bool editor_module::init(void)
@@ -55,15 +68,18 @@ bool editor_module::init(void)
 
 		if (sceneModule->init())
 		{
-			create_default_scene(sceneModule);
+			create_default_scene(m_cameraController, sceneModule);
 		}
 
 		instance->set_scene_module(sceneModule);
 
-		m_observer = std::unique_ptr<native_window_observer>(xng_new editor_window_observer);
+		m_observer = std::unique_ptr<native_window_observer>(xng_new editor_window_observer(&m_cameraController));
 		instance->get_window()->add_observer(m_observer.get());
 
 		m_observer->on_resize(instance->get_window(), instance->get_window()->get_window_size(), instance->get_window()->get_client_size());
+
+		instance->get_input_handler()->keyboard().add_observer(&m_cameraController);
+		instance->get_input_handler()->mouse().add_observer(&m_cameraController);
 
 		return true;
 	}
@@ -73,7 +89,13 @@ bool editor_module::init(void)
 
 void editor_module::shutdown(void)
 {
-	game::get_singleton()->get_window()->remove_observer(m_observer.get());
+	game * instance = game::get_singleton();
+
+	instance->get_window()->remove_observer(m_observer.get());
+
+	instance->get_input_handler()->keyboard().remove_observer(&m_cameraController);
+	instance->get_input_handler()->mouse().remove_observer(&m_cameraController);
+
 	m_observer.reset();
 	m_editor.reset();
 }
@@ -110,9 +132,10 @@ void editor_module::update(float dt)
 	}*/
 
 	m_editor->update();
+	m_cameraController.on_update(dt);
 }
 
-void create_default_scene(scene_module * sceneModule)
+void create_default_scene(fps_camera_controller & cameraController, scene_module * sceneModule)
 {
 	scene * defaultScene = sceneModule->create_scene("default_scene");
 
@@ -128,6 +151,7 @@ void create_default_scene(scene_module * sceneModule)
 		if (!cameras.empty())
 		{
 			defaultScene->set_active_camera(cameras[0]);
+			cameraController.set_camera(cameras[0]);
 		}
 	}
 

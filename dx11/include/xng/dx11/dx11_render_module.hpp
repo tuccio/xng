@@ -1,8 +1,10 @@
 #include <xng/engine.hpp>
+
 #include <xng/dx11/dx11_api_context.hpp>
 #include <xng/dx11/forward_renderer.hpp>
 #include <xng/dx11/dx11_gui_renderer.hpp>
 #include <xng/dx11/default_samplers.hpp>
+#include <xng/dx11/render_resource_manager.hpp>
 
 #include <memory>
 
@@ -32,6 +34,8 @@ namespace xng
 			std::unique_ptr<dx11_api_context>  m_context;
 			std::unique_ptr<forward_renderer>  m_renderer;
 			std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
+
+			render_resource_manager m_renderResourceManager;
 
 			native_window * m_window;
 

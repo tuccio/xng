@@ -54,12 +54,12 @@ bool native_window::create(void)
 
 	if (m_hWnd)
 	{
-		/*RAWINPUTDEVICE devices[] = {
-			{ 0x01, 0x06, RIDEV_NOLEGACY, m_hWnd },
-			{ 0x01, 0x02, RIDEV_NOLEGACY, m_hWnd }
+		RAWINPUTDEVICE devices[] = {
+			{ 0x01, 0x06, RIDEV_NOLEGACY, m_hWnd }
+			//{ 0x01, 0x02, RIDEV_NOLEGACY, m_hWnd }
 		};
 
-		RegisterRawInputDevices(devices, sizeof(devices) / sizeof(devices[0]), sizeof(RAWINPUTDEVICE));*/
+		RegisterRawInputDevices(devices, sizeof(devices) / sizeof(devices[0]), sizeof(RAWINPUTDEVICE));
 		SetWindowLongPtr(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);
 
 		notify(&os::native_window_observer::on_create, this);

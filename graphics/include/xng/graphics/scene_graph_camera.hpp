@@ -23,6 +23,10 @@ namespace xng
 				return &m_camera;
 			}
 
+		protected:
+
+			void update_impl(void) override;
+
 		private:
 
 			camera m_camera;

@@ -69,6 +69,7 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 
 			switch (newNode->get_type())
 			{
+
 			case XNG_SCENE_GRAPH_GEOMETRY:
 			{
 				scene_graph_geometry * gNode = static_cast<scene_graph_geometry*>(newNode);
@@ -87,8 +88,10 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 
 					gNode->set_mesh(nodeMesh);
 				}
+
+				break;
 			}
-			break;
+
 			case XNG_SCENE_GRAPH_CAMERA:
 			{
 				scene_graph_camera * cNode = static_cast<scene_graph_camera*>(newNode);
@@ -107,8 +110,12 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 
 				cam->set_znear(aiCam->mClipPlaneNear);
 				cam->set_zfar(aiCam->mClipPlaneFar);
+
+				cNode->set_local_rotation(cam->get_orientation());
+				cNode->set_local_translation(cam->get_position());
+
+				break;
 			}
-			break;
 			}
 		}
 	}

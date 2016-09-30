@@ -11,7 +11,20 @@ namespace xng
 
 		class resource;
 
-		class resource_loader
+		class resource_loader :
+			public core::refcounted_obj<resource_loader>
+		{
+
+		public:
+
+			virtual ~resource_loader(void) = default;
+
+			virtual bool load(resource *, const void * userdata) = 0;
+			virtual void unload(resource *) = 0;
+
+		};
+
+		/*class resource_loader
 		{
 
 		public:
@@ -45,7 +58,7 @@ namespace xng
 			template <typename Resource>
 			friend class xng::core::refcounted_ptr;
 
-		};
+		};*/
 
 		typedef xng::core::refcounted_ptr<resource_loader> resource_loader_ptr;
 

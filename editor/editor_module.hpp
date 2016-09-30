@@ -1,5 +1,7 @@
 #include <xng/engine.hpp>
+
 #include "editor.hpp"
+#include "fps_camera_controller.hpp"
 
 namespace xng
 {
@@ -27,6 +29,8 @@ namespace xng
 
 			std::unique_ptr<editor> m_editor;
 			std::unique_ptr<os::native_window_observer> m_observer;
+
+			fps_camera_controller m_cameraController;
 
 		};
 	}
