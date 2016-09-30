@@ -53,6 +53,8 @@ namespace xng
 			bool write_png_file(const os::path & filename) const;
 			bool read_png_file(const os::path & filename);
 
+			uint32_t get_scan_width(void) const;
+
 		protected:
 
 			bool   load_impl(const void * userdata = nullptr) override;
@@ -67,6 +69,7 @@ namespace xng
 
 			uint32_t             m_width;
 			uint32_t             m_height;
+			uint32_t             m_scanWidth;
 
 		};
 

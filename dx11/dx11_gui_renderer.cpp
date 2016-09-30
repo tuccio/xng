@@ -204,7 +204,6 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 				float2 fontTexelSize = { 1.f / fnt->get_image()->get_width(), 1.f / fnt->get_image()->get_height() };
 				float borderDistance = .5f * borderSize / fnt->get_spread_factor();
 
-
 				__cbPerText data = {
 					m_projection * to_translation4(float3(position.x, position.y, 0)) * to_scale4(float3(scale, 1.f)),
 					color, borderColor, borderDistance, width, fnt->get_spread_factor(), avgScale, fontTexelSize
@@ -225,8 +224,8 @@ void dx11_gui_renderer::render_text(ID3D11DeviceContext * deviceContext, font_pt
 
 				text_vertex * vertices = (text_vertex*)mappedResource.pData;
 
-				int2 spacing = borderSize + 2;
-				make_text(fnt, text, vertices, int2(borderSize), spacing, &info);
+				int2 spacing = 2 * borderSize;
+				make_text(fnt, text, vertices, int2(2 * borderSize), spacing, &info);
 
 				UINT strides = sizeof(text_vertex);
 				UINT offsets = 0;

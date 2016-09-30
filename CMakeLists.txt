@@ -72,10 +72,10 @@ if (OPENMP_FOUND)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-# Search libpng
+# Search FreeImage
 
-set(PNG_DEFINITIONS -DPNG_STATIC)
-find_package(PNG REQUIRED)
+list(APPEND CMAKE_LIBRARY_PATH thirdparty/FreeImage)
+find_package(FreeImage REQUIRED)
 
 # Add glew path for find_package
 

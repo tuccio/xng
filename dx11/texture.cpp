@@ -32,7 +32,7 @@ bool texture::create(
 		D3D11_SUBRESOURCE_DATA data = {};
 
 		data.pSysMem     = image->data();
-		data.SysMemPitch = image->get_width() * get_dxgi_format_byte_size(m_format);
+		data.SysMemPitch = image->get_scan_width();
 
 		if (!generateMipmaps)
 		{

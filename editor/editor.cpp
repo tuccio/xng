@@ -262,8 +262,8 @@ void editor::create_gui(void)
 	slider * scaleSlider  = xng_new slider(gui, captionTextStyle);
 
 	text_control * borderText = xng_new text_control(gui, captionTextStyle);
-	text_control * widthText = xng_new text_control(gui, captionTextStyle);
-	text_control * scaleText = xng_new text_control(gui, captionTextStyle);
+	text_control * widthText  = xng_new text_control(gui, captionTextStyle);
+	text_control * scaleText  = xng_new text_control(gui, captionTextStyle);
 
 	borderText->set_text_and_fit("Border:");
 	widthText->set_text_and_fit("Thinness:");

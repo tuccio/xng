@@ -12,11 +12,10 @@ include_directories(${XNG_INCLUDE_DIRS})
 add_library(xnggraphicsexp STATIC ${XNG_GRAPHICS_SOURCE_FILES} ${XNG_GRAPHICS_INCLUDE_FILES})
 add_library(xnggraphics STATIC ${XNG_GRAPHICS_SOURCE_FILES} ${XNG_GRAPHICS_INCLUDE_FILES})
 
-include_directories(${PNG_INCLUDE_DIRS})
-add_definitions(${PNG_DEFINITIONS})
+include_directories(${FreeImage_INCLUDE_DIRS})
 
-target_link_libraries(xnggraphicsexp ${PNG_LIBRARIES} ${ZLIB_LIBRARIES})
-target_link_libraries(xnggraphics ${PNG_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(xnggraphicsexp ${FreeImage_LIBRARIES})
+target_link_libraries(xnggraphics ${FreeImage_LIBRARIES})
 
 add_library(xngcpugraphics SHARED signed_distance_field.cpp)
 add_dependencies(xnggraphics xngcpugraphics)
