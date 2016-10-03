@@ -26,6 +26,16 @@ void scene_graph_geometry::set_static(bool s)
 	m_static = s;
 }
 
+material_ptr scene_graph_geometry::get_material(void) const
+{
+	return m_material;
+}
+
+void scene_graph_geometry::set_material(material_ptr material)
+{
+	m_material = material;
+}
+
 void scene_graph_geometry::update_impl(void)
 {
 }

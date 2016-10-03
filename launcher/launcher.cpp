@@ -20,13 +20,15 @@ int CALLBACK WinMain(
 
 	std::unique_ptr<xng::res::resource_factory> resourceFactory(xng_new xng::res::resource_factory);
 
-	std::unique_ptr<xng::graphics::mesh_manager>  meshManager(xng_new xng::graphics::mesh_manager);
-	std::unique_ptr<xng::graphics::image_manager> imageManager(xng_new xng::graphics::image_manager);
-	std::unique_ptr<xng::graphics::font_manager>  fontManager(xng_new xng::graphics::font_manager);
+	std::unique_ptr<xng::graphics::mesh_manager>     meshManager(xng_new xng::graphics::mesh_manager);
+	std::unique_ptr<xng::graphics::image_manager>    imageManager(xng_new xng::graphics::image_manager);
+	std::unique_ptr<xng::graphics::font_manager>     fontManager(xng_new xng::graphics::font_manager);
+	std::unique_ptr<xng::graphics::material_manager> materialManager(xng_new xng::graphics::material_manager);
 
 	resourceFactory->register_manager(meshManager.get());
 	resourceFactory->register_manager(imageManager.get());
 	resourceFactory->register_manager(fontManager.get());
+	resourceFactory->register_manager(materialManager.get());
 
 	// Load modules
 
@@ -64,10 +66,12 @@ int CALLBACK WinMain(
 
 	resourceFactory.reset();
 
+	materialManager->clear();
 	fontManager->clear();
 	meshManager->clear();
 	imageManager->clear();
 
+	materialManager->clear();
 	fontManager.reset();
 	meshManager.reset();
 	imageManager.reset();

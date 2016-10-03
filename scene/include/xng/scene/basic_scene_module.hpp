@@ -25,16 +25,17 @@ namespace xng
 			void shutdown(void) override;
 			bool is_initialized(void) const override;
 
-			graphics::scene * create_scene(const char * name) override;
-			graphics::scene * find_scene(const char * name) override;
+			graphics::scene_ptr create_scene(const char * name) override;
+			bool destroy_scene(const char * name) override;
+			graphics::scene_ptr find_scene(const char * name) override;
 
-			graphics::scene * get_active_scene(void) override;
-			void set_active_scene(graphics::scene * scene) override;
+			graphics::scene_ptr get_active_scene(void) override;
+			void set_active_scene(const graphics::scene_ptr & scene) override;
 
 		private:
 
-			std::unordered_map<std::string, std::unique_ptr<basic_scene>> m_scenes;
-			basic_scene * m_activeScene;
+			std::unordered_map<std::string, graphics::scene_ptr> m_scenes;
+			graphics::scene_ptr m_activeScene;
 			bool m_initialized;
 
 

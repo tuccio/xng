@@ -63,7 +63,7 @@ void text_control::fit(void)
 		uint32_t size = fnt->get_point_size();
 
 		uint32_t w = size * style->text.scale * m_text.length() + 2 * style->padding;
-		uint32_t h = size * 1.5f * style->text.scale + 2 * style->padding;
+		uint32_t h = size * 1.25f * style->text.scale + 2 * style->padding;
 
 		set_size(int2(w, h));
 	}

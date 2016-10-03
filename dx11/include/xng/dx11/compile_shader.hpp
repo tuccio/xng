@@ -27,7 +27,7 @@ namespace xng
 		}
 
 		template <typename ElementDescFunctor>
-		XNG_INLINE bool create_input_layout(ID3D11Device * device, ID3D11VertexShader * shader, ID3DBlob * code, ID3D11InputLayout ** inputLayout, ElementDescFunctor f)
+		XNG_INLINE bool create_input_layout(ID3D11Device * device, ID3D11VertexShader * shader, ID3DBlob * code, ID3D11InputLayout ** inputLayout, ElementDescFunctor && f)
 		{
 			com_ptr<ID3D11ShaderReflection> reflection;
 
@@ -102,7 +102,7 @@ namespace xng
 			const D3D_SHADER_MACRO * defines,
 			ID3D11VertexShader ** shader,
 			ID3D11InputLayout ** inputLayout,
-			ElementDescFunctor f)
+			ElementDescFunctor && f)
 		{
 			using namespace detail;
 
@@ -115,7 +115,7 @@ namespace xng
 			if (!XNG_HR_FAILED_BLOB(D3DCompile(source, strlen(source), sourceName, defines, D3D_COMPILE_STANDARD_FILE_INCLUDE, entryPoint, shader_helper<ID3D11VertexShader>::get_target(shaderModel), flags, 0, &code, &errors), errors) &&
 				!XNG_HR_FAILED(shader_helper<ID3D11VertexShader>::create_shader(device, code->GetBufferPointer(), code->GetBufferSize(), nullptr, shader)))
 			{
-				return create_input_layout(device, *shader, code.get(), inputLayout, f);
+				return create_input_layout(device, *shader, code.get(), inputLayout, std::forward<ElementDescFunctor>(f));
 			}
 
 			return false;

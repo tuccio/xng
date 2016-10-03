@@ -28,9 +28,6 @@ namespace xng
 		private:
 
 			std::unique_ptr<editor> m_editor;
-			std::unique_ptr<os::native_window_observer> m_observer;
-
-			fps_camera_controller m_cameraController;
 
 		};
 	}

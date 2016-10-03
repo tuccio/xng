@@ -1,0 +1,22 @@
+#ifndef LIGHTS_XHLSL
+#define LIGHTS_XHLSL
+
+#ifndef MAX_LIGHTS
+#define MAX_LIGHTS 32
+#endif
+
+// Struct is 16-byte aligned to be used efficiently with a StructuredBuffer
+
+struct Light
+{
+	float3 luminance;
+	int    type;
+	float3 ambient;
+	float  __fill0;
+	float3 position;
+	float  __fill1;
+	float3 direction;
+	float  cutoff;
+};
+
+#endif

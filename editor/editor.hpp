@@ -7,6 +7,8 @@
 
 #include <wx/aui/aui.h>
 
+#include "fps_camera_controller.hpp"
+
 namespace xng
 {
 	namespace editor
@@ -16,20 +18,31 @@ namespace xng
 
 		public:
 
-			editor(os::native_window * window_body);
+			editor(os::native_window * window);
 			~editor(void);
 
-			void update(void);
+			void update(float dt);
 
 			wxFrame * get_main_window(void);
+
+			bool load_scene(const char * name);
 
 		private:
 
 			void create_gui(void);
+			void create_menu(void);
 
-			wxFrame * m_editor;
+			os::native_window * m_window;
+			wxFrame           * m_editor;
+
 			std::unique_ptr<wxAuiManager> m_auiManager;
 
+			std::unique_ptr<os::native_window_observer> m_observer;
+
+			fps_camera_controller m_cameraController;
+
+			gui::window       * m_sunSettings;
+			gui::window       * m_cameraSettings;
 			gui::text_control * m_fpsText;
 
 		};

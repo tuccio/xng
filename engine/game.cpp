@@ -255,7 +255,7 @@ void game::game_loop(void)
 	const high_resolution_timestamp GameStart = timestamp();
 	uint64_t nextTick = GameStart;
 
-	scene * currentScene = nullptr;
+	scene_ptr currentScene;
 
 	init_fps_counter();
 

@@ -5,9 +5,10 @@
 #include <xng/graphics/shader_preprocessor.hpp>
 #include <xng/graphics/shader_types.hpp>
 
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <memory>
+#include <vector>
 
 namespace xng
 {
@@ -21,11 +22,12 @@ namespace xng
 			uber_shader(void);
 
 			void clear(void);
+			bool reload(void);
 
 			bool preprocess(const char * filename);
 			bool is_preprocessed(void) const;
 
-			shader_program compile(ID3D11Device * device, const char * name = "", std::initializer_list<graphics::shader_macro> macros = {});
+			shader_program compile(ID3D11Device * device, const char * name = "", const std::vector<graphics::shader_macro> & macros = {});
 			void free(const char * name);
 
 			XNG_INLINE void set_compile_flags(UINT flags)
@@ -36,14 +38,14 @@ namespace xng
 			template <typename F>
 			XNG_INLINE void set_ilv_functor(F f)
 			{
-				m_functor = f;
+				m_ilvFunctor = f;
 			}
 
 		private:
 
 			std::string m_filename;
 
-			std::unordered_map<const char *, shader_program> m_shaders;
+			std::unordered_map<std::string, shader_program> m_shaders;
 
 			UINT m_flags;
 			bool m_preprocessed;

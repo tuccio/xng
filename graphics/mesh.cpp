@@ -70,7 +70,7 @@ uint32_t mesh::get_parameters_storage_semantic_flags(void)
 
 	if (!normalsOpt || *normalsOpt) flags |= XNG_MESH_STORAGE_NORMALS;
 	if (!tangentsOpt || *tangentsOpt) flags |= XNG_MESH_STORAGE_TANGENTS;
-	if (!bitangentsOpt || *bitangentsOpt) flags |= XNG_MESH_STORAGE_TANGENTS;
+	if (!bitangentsOpt || *bitangentsOpt) flags |= XNG_MESH_STORAGE_BITANGENTS;
 	if (!texcoords0Opt || *texcoords0Opt) flags |= XNG_MESH_STORAGE_TEXCOORDS0;
 
 	/* Non default */

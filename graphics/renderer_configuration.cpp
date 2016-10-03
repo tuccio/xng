@@ -10,6 +10,13 @@ renderer_configuration::renderer_configuration(void)
 
 void renderer_configuration::get_render_variables(render_variables * vars, std::set<xng_render_variable> * updates)
 {
-	*vars    = m_vars;
-	*updates = std::move(m_updates);
+	if (vars)
+	{
+		*vars    = m_vars;
+	}
+
+	if (updates)
+	{
+		*updates = std::move(m_updates);
+	}
 }

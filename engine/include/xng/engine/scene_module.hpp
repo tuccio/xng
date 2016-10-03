@@ -17,11 +17,12 @@ namespace xng
 			virtual void shutdown(void) = 0;
 			virtual bool is_initialized(void) const = 0;
 
-			virtual graphics::scene * create_scene(const char * name) = 0;
-			virtual graphics::scene * find_scene(const char * name) = 0;
+			virtual graphics::scene_ptr create_scene(const char * name) = 0;
+			virtual bool destroy_scene(const char * name) = 0;
+			virtual graphics::scene_ptr find_scene(const char * name) = 0;
 
-			virtual graphics::scene * get_active_scene(void) = 0;
-			virtual void set_active_scene(graphics::scene * scene) = 0;
+			virtual graphics::scene_ptr get_active_scene(void) = 0;
+			virtual void set_active_scene(const graphics::scene_ptr & scene) = 0;
 
 		};
 	}

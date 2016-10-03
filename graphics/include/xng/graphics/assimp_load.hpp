@@ -1,15 +1,17 @@
 #pragma once
 
+#ifdef XNG_ASSIMP
+
 #include <xng/graphics/scene.hpp>
 #include <xng/os/path.hpp>
 
-#ifdef XNG_ASSIMP
+#include <assimp/postprocess.h>
 
 namespace xng
 {
 	namespace graphics
 	{
-		bool assimp_load(scene * scene, const os::path & filename);
+		bool assimp_load(scene * scene, const os::path & filename, int flags = aiProcessPreset_TargetRealtime_MaxQuality);
 	}
 }
 

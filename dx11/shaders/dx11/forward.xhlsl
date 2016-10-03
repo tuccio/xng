@@ -1,0 +1,116 @@
+struct VSInput
+{
+	float3 position  : POSITION;
+	float3 normal    : NORMAL;
+	float3 tangent   : TANGENT;
+	float3 bitangent : BITANGENT;
+	float2 texcoord0 : TEXCOORD0;
+};
+
+struct PSInput
+{
+	float4 position : SV_Position;
+	float3 normal    : NORMAL;
+	float3 tangent   : TANGENT;
+	float3 bitangent : BITANGENT;
+	float2 texcoord0 : TEXCOORD0;
+};
+
+cbuffer cbPerFrame : register(b0)
+{
+	uint numLights;
+};
+
+#xng section(vertex:main_vs)
+
+#ifdef DEPTH_PREPASS
+
+cbuffer cbPerObject : register(b1)
+{
+	float4x4 modelViewProjectionMatrix;
+};
+
+float4 main_vs(float3 position : POSITION) : SV_Position
+{
+	return mul(float4(position, 1), modelViewProjectionMatrix);
+}
+
+#else
+
+cbuffer cbPerObject : register(b1)
+{
+	float4x4 modelMatrix;
+	float4x4 modelViewMatrix;
+	float4x4 modelViewProjectionMatrix;
+};
+
+PSInput main_vs(VSInput input)
+{
+	float3x3 normalMatrix = (float3x3) modelMatrix;
+
+	PSInput output;
+	
+	output.position  = mul(float4(input.position, 1), modelViewProjectionMatrix);
+	
+	output.normal    = normalize(mul(input.normal, normalMatrix));
+	output.tangent   = normalize(mul(input.tangent, normalMatrix));
+	output.bitangent = normalize(mul(input.bitangent, normalMatrix));
+	
+	output.texcoord0 = input.texcoord0;
+	
+	return output;
+}
+
+#endif
+
+#xng section(pixel:main_ps)
+
+#xng include("lights.xhlsl")
+#xng include("normals.xhlsl")
+#xng include("samplers.xhlsl")
+
+StructuredBuffer<Light> lights : register(t8);
+
+#ifdef NORMAL_MAP
+Texture2D<float4> NormalMap   : register(t0);
+#endif
+
+#ifdef BASE_TEXTURE
+Texture2D<float4> BaseTexture : register(t1);
+#endif
+
+float4 main_ps(PSInput input) : SV_Target0
+{
+	float3 N;
+	float3 baseColor;
+	
+	N = normalize(input.normal);
+	
+#ifdef NORMAL_MAP
+	
+	NormalMapping(N, input.texcoord0, NormalMap, LinearWrap);
+	
+#endif
+
+#ifndef BASE_TEXTURE
+	baseColor = float3(1, 1, 1);
+#else
+	baseColor = BaseTexture.Sample(LinearWrap, input.texcoord0).rgb;
+#endif
+	
+	float3 radiance = 0;
+	
+	radiance = dot(N, -normalize(float3(1, -1, .15f))) * baseColor;
+	
+	for (int i = 0; i < numLights; ++i)
+	{
+		Light light = lights[i];
+		
+		float3 L   = -light.direction;
+		float3 lum = light.luminance / 100.f;
+		
+		radiance += dot(N, L) * baseColor * lum;
+	}
+	
+	return float4(radiance / (radiance + 1), 1);
+}

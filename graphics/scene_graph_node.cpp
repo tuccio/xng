@@ -8,6 +8,12 @@
 using namespace xng::graphics;
 using namespace xng::math;
 
+scene_graph_node::scene_graph_node(xng_scene_graph_node_type type, scene_graph_node * parent, scene_graph * graph) :
+	m_graph(graph),
+	m_type(type),
+	m_parent(parent),
+	m_id(graph->generate_id()) {}
+
 scene_graph_node::~scene_graph_node(void)
 {
 	for (auto child : m_children)
@@ -190,6 +196,11 @@ const char * scene_graph_node::get_name(void) const
 void scene_graph_node::set_name(const char * name)
 {
 	m_name = name;
+}
+
+uint32_t scene_graph_node::get_id(void) const
+{
+	return m_id;
 }
 
 xng_scene_graph_node_type scene_graph_node::get_type(void) const

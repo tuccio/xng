@@ -1,0 +1,18 @@
+#ifndef NORMALS_XHLSL
+#define NORMALS_XHLSL
+
+void NormalMapping(inout float3 N, in float2 uv, in Texture2D<float4> normalMap, in SamplerState s)
+{
+	float3 _N = N;
+	float3 _T = { N.x > .9f ? 0 : 1, N.x > .9f ? 1 : 0, 0 };
+	float3 _B = cross(_N, _T);
+	
+	_T = cross(_N, _B);
+		
+	float3x3 TBN = { _T, _B, _N };
+	float3 sampledNormal = normalMap.Sample(s, uv).xyz;
+	
+	N = mul(sampledNormal * 2.f  - 1.f, TBN);	
+}
+
+#endif

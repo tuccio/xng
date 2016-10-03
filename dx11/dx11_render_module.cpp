@@ -12,7 +12,21 @@ const char *          dx11_render_module::module_name        = "xngdx11";
 const char *          dx11_render_module::module_description = "XNG DirectX 11 Render Module";
 const xng_module_type dx11_render_module::module_type        = XNG_MODULE_TYPE_RENDER;
 
-bool dx11_render_module::init(native_window * window_body)
+static std::atomic<bool> g_reloadShaders;
+
+static struct shader_refresh_observer :
+	native_window_observer
+{
+	void on_keyboard_key_down(native_window * wnd, xng_keyboard_key key) override
+	{
+		if (key == XNG_KEYBOARD_F5)
+		{
+			g_reloadShaders = true;
+		}
+	}
+} g_shaderRefresher;
+
+bool dx11_render_module::init(native_window * wnd)
 {
 	bool debug = false;
 #ifdef XNG_DX11_DEBUG
@@ -23,31 +37,28 @@ bool dx11_render_module::init(native_window * window_body)
 	m_renderer    = std::make_unique<forward_renderer>();
 	m_guiRenderer = std::make_unique<dx11_gui_renderer>();
 
-	if (m_context->init(window_body->get_native_handle(), XNG_API_DIRECTX_11, debug) &&
+	render_variables rvars;
+	m_configuration.get_render_variables(&rvars, nullptr);
+
+	if (m_context->init(wnd->get_native_handle(), XNG_API_DIRECTX_11, debug) &&
 		m_guiRenderer->init(m_context.get()) &&
-		m_renderer->init(m_context.get()))
+		m_renderer->init(m_context.get(), rvars))
 	{
-		m_window         = window_body;
+		m_window         = wnd;
 		m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
-		window_body->add_observer(&m_windowObserver);
+
+		wnd->add_observer(&m_windowObserver);
+		wnd->add_observer(&g_shaderRefresher);
 
 		m_windowObserver.on_resize(m_window, m_window->get_window_size(), m_window->get_client_size());
 
-		auto clientSize = window_body->get_client_size();
+		auto clientSize = wnd->get_client_size();
 		m_context->on_resize(clientSize.x, clientSize.y);
 
 		resource_factory::get_singleton()->register_manager(xng_new gpu_mesh_manager());
 		resource_factory::get_singleton()->register_manager(xng_new texture_manager());
 		
-		if (m_samplers.init(m_context->get_device()))
-		{
-			ID3D11DeviceContext * immediateContext = m_context->get_immediate_context();
-			m_samplers.bind_vertex_shader(immediateContext);
-			m_samplers.bind_pixel_shader(immediateContext);
-			m_samplers.bind_compute_shader(immediateContext);
-		}
-
-		return true;
+		return m_samplers.init(m_context->get_device());
 	}
 	else
 	{
@@ -59,7 +70,9 @@ bool dx11_render_module::init(native_window * window_body)
 
 void dx11_render_module::shutdown(void)
 {
+	m_window->remove_observer(&g_shaderRefresher);
 	m_window->remove_observer(&m_windowObserver);
+
 	m_window = nullptr;
 
 	m_samplers.shutdown();
@@ -103,6 +116,14 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
 
 	m_context->frame_start();
 
+	bool expected = true;
+
+	if (g_reloadShaders.compare_exchange_weak(expected, false))
+	{
+		m_renderer->reload_shaders();
+		m_guiRenderer->reload_shaders();
+	}
+
 	// Grab the resources needed
 
 	ID3D11RenderTargetView * backBuffer = m_context->get_back_buffer_rtv();
@@ -113,12 +134,29 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
 
 	const render_resource * depthBuffer = depthBufferHandle->get_render_resource();
 
+	// Setup common samplers
+
+	ID3D11DeviceContext * immediateContext = m_context->get_immediate_context();
+
+	m_samplers.bind_vertex_shader(immediateContext);
+	m_samplers.bind_pixel_shader(immediateContext);
+	m_samplers.bind_compute_shader(immediateContext);
+
 	// Render
 
 	m_renderer->update_render_variables(rvars, updates);
 
-	m_renderer->render(m_context->get_immediate_context(), backBuffer, depthBuffer->get_depth_stencil_view(), extractedScene);
-	m_guiRenderer->render(m_context->get_immediate_context(), backBuffer, rvars.render_resolution, guiCommandList);
+	if (rvars.forward_depth_prepass)
+	{
+		m_renderer->depth_prepass(immediateContext, depthBuffer->get_depth_stencil_view(), extractedScene);
+		m_renderer->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), false, extractedScene);
+	}
+	else
+	{
+		m_renderer->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), true, extractedScene);
+	}
+	
+	m_guiRenderer->render(immediateContext, backBuffer, rvars.render_resolution, guiCommandList);
 	
 	m_context->frame_complete();
 }

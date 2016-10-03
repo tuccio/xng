@@ -4,7 +4,8 @@
 
 #include <xng/graphics/scene.hpp>
 #include <xng/graphics/mesh.hpp>
-#include <xng/res.hpp>
+#include <xng/graphics/material.hpp>
+
 #include <xng/os/path.hpp>
 
 #include <assimp/Importer.hpp>
@@ -21,13 +22,14 @@ namespace xng
 
 		public:
 
-			assimp_loader(const os::path & filename, unsigned int flags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_ConvertToLeftHanded);
+			assimp_loader(const os::path & filename, unsigned int flags = aiProcessPreset_TargetRealtime_MaxQuality);
 			~assimp_loader(void);
 
 			bool load(res::resource * r, const void * userdata) override;
 			void unload(res::resource * r) override;
 
-			mesh_ptr create_mesh(unsigned int meshIndex);
+			mesh_ptr     create_mesh(unsigned int meshIndex);
+			material_ptr create_material(unsigned int materialIndex);
 
 			const aiScene * get_scene(void) const;
 
@@ -42,6 +44,9 @@ namespace xng
 
 			bool load_mesh(mesh * m);
 			void unload_mesh(mesh * m);
+
+			bool load_material(material * m);
+			void unload_material(material * m);
 
 		};
 	}

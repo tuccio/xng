@@ -17,9 +17,9 @@ style xng::gui::make_default_style(void)
 	s.window.caption.text.origin             = uint2(8, 20);
 	s.window.caption.text.color              = float4(1);
 	s.window.caption.text.border_color       = float4(0, 0, 0, 1);
-	s.window.caption.text.border_size        = 0;
-	s.window.caption.text.thinness           = .49f;
-	s.window.caption.text.scale              = .25f;
+	s.window.caption.text.border_size        = 6;
+	s.window.caption.text.thinness           = .5f;
+	s.window.caption.text.scale              = .22f;
 
 	s.slider.size                            = uint2(14);
 	s.slider.color                           = float4(.45f, .847f, .0549f, 1.f);

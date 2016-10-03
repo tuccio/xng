@@ -27,7 +27,45 @@ struct wx_app :
 IMPLEMENT_APP_NO_MAIN(wx_app);
 IMPLEMENT_WX_THEME_SUPPORT;
 
-void create_menu(wxFrame * editor);
+struct editor_window_observer :
+	public native_window_observer
+{
+
+	editor_window_observer(fps_camera_controller * cameraController) : m_cameraController(cameraController) {}
+
+	void on_resize(native_window * wnd, const uint2 & windowSize, const uint2 & clientSize) override
+	{
+		float ratio = clientSize.x / (float)clientSize.y;
+
+		scene_module * sm = game::get_singleton()->get_scene_module();
+
+		if (sm)
+		{
+			scene * s = sm->get_active_scene().get();
+
+			if (s)
+			{
+				scene_graph_camera * cam = s->get_active_camera();
+
+				if (cam)
+				{
+					cam->get_camera()->set_aspect_ratio(ratio);
+					cam->set_parent(s->get_scene_graph()->get_root());
+				}
+			}
+		}
+
+		if (m_cameraController)
+		{
+			m_cameraController->set_screen_size((float2)clientSize);
+		}
+	}
+
+private:
+
+	fps_camera_controller * m_cameraController;
+
+};
 
 editor::editor(native_window * wnd)
 {
@@ -38,6 +76,7 @@ editor::editor(native_window * wnd)
 	{
 		wxTheApp->CallOnInit();
 
+		m_window = wnd;
 		wnd->show();
 
 		math::uint2 size = wnd->get_window_size();
@@ -58,7 +97,7 @@ editor::editor(native_window * wnd)
 
 		m_auiManager->Update();
 
-		create_menu(m_editor);
+		create_menu();
 		create_gui();
 
 		m_editor->SetSize(wxSize(size.x, size.y));
@@ -69,6 +108,34 @@ editor::editor(native_window * wnd)
 		});
 
 		wxTheApp->SetTopWindow(m_editor);
+
+		// Init default scene
+
+		module_factory * sceneFactory = module_manager::get_singleton()->
+			find_module_by_name("xngbasicscene");
+
+		if (sceneFactory)
+		{
+			game * instance = game::get_singleton();
+
+			native_window * wnd = instance->get_window();
+
+			scene_module * sceneModule = dynamic_cast<scene_module*>(sceneFactory->create());
+
+			if (sceneModule->init())
+			{
+				instance->set_scene_module(sceneModule);
+				load_scene("./scene/sponza.fbx");
+			}
+
+			m_observer = std::unique_ptr<native_window_observer>(xng_new editor_window_observer(&m_cameraController));
+			m_window->add_observer(m_observer.get());
+
+			m_observer->on_resize(m_window, m_window->get_window_size(), m_window->get_client_size());
+
+			instance->get_input_handler()->keyboard().add_observer(&m_cameraController);
+			instance->get_input_handler()->mouse().add_observer(&m_cameraController);
+		}
 	}
 	else
 	{
@@ -78,6 +145,15 @@ editor::editor(native_window * wnd)
 
 editor::~editor(void)
 {
+	m_window->remove_observer(m_observer.get());
+
+	game * instance = game::get_singleton();
+
+	instance->get_input_handler()->keyboard().remove_observer(&m_cameraController);
+	instance->get_input_handler()->mouse().remove_observer(&m_cameraController);
+
+	m_observer.reset();
+
 	m_auiManager->UnInit();
 	m_auiManager.reset();
 
@@ -86,7 +162,7 @@ editor::~editor(void)
 	wxEntryCleanup();
 }
 
-void editor::update(void)
+void editor::update(float dt)
 {
 	wxTheApp->ProcessIdle();
 
@@ -104,11 +180,60 @@ void editor::update(void)
 	}
 	
 	m_fpsText->set_text_and_fit(ss.str());
+	m_cameraController.on_update(dt);
 }
 
 wxFrame * editor::get_main_window(void)
 {
 	return m_editor;
+}
+
+bool editor::load_scene(const char * name)
+{
+	scene_module * sceneModule  = game::get_singleton()->get_scene_module();
+
+	sceneModule->destroy_scene("default_scene");
+	scene_ptr defaultScene = sceneModule->create_scene("default_scene");
+	
+	bool success = false;
+
+	int ppsteps =
+		aiProcess_CalcTangentSpace |
+		aiProcess_ValidateDataStructure |
+		aiProcess_ImproveCacheLocality |
+		aiProcess_RemoveRedundantMaterials |
+		aiProcess_FindDegenerates |
+		aiProcess_FindInvalidData |
+		aiProcess_OptimizeMeshes |
+		aiProcess_GenSmoothNormals |
+		aiProcess_Triangulate |
+		aiProcess_FlipUVs;
+
+	if (!assimp_load(defaultScene.get(), name, ppsteps))
+	{
+		XNG_LOG("xngeditor", "Failed to load scene.");
+	}
+	else
+	{
+		auto cameras = defaultScene->get_camera_nodes();
+
+		if (!cameras.empty())
+		{
+			defaultScene->set_active_camera(cameras[0]);
+			m_cameraController.set_camera(cameras[0]);
+		}
+
+		success = true;
+	}
+
+	sceneModule->set_active_scene(defaultScene);
+
+	if (m_observer)
+	{
+		m_observer->on_resize(m_window, m_window->get_window_size(), m_window->get_client_size());
+	}
+
+	return success;
 }
 
 struct render_module_dialog :
@@ -183,9 +308,10 @@ struct render_module_dialog :
 	module_factory * factory;
 };
 
-void create_menu(wxFrame * editor)
+void editor::create_menu(void)
 {
 	enum {
+		IDM_FILE_IMPORT,
 		IDM_FILE_EXIT,
 		IDM_RENDER_MODULE
 	};
@@ -198,6 +324,7 @@ void create_menu(wxFrame * editor)
 	menuBar->Append(fileMenu, "File");
 	menuBar->Append(renderMenu, "Render");
 
+	fileMenu->Append(IDM_FILE_IMPORT, "Import Scene", nullptr);
 	fileMenu->Append(IDM_FILE_EXIT, "Exit", nullptr);
 
 	renderMenu->Append(IDM_RENDER_MODULE, "Switch Module", nullptr);
@@ -206,6 +333,18 @@ void create_menu(wxFrame * editor)
 	{
 		switch (evt.GetId())
 		{
+
+		case IDM_FILE_IMPORT:
+		{
+			wxFileDialog * fileDlg = xng_new wxFileDialog(m_editor);
+
+			if (fileDlg->ShowModal() == wxID_OK &&
+			    !load_scene(fileDlg->GetPath().c_str()))
+			{
+				os::message_box("Error", "Failed to import scene", XNG_MESSAGE_BOX_ERROR, m_window);
+			}
+		}
+			break;
 
 		case IDM_FILE_EXIT:
 
@@ -245,43 +384,13 @@ void create_menu(wxFrame * editor)
 		}
 	});
 
-	editor->SetMenuBar(menuBar);
+	m_editor->SetMenuBar(menuBar);
 }
 
 void editor::create_gui(void)
 {
-	game * instance = game::get_singleton();
-	gui_manager * gui = instance->get_gui_manager();
-
-	window * captionTextStyle = xng_new window(gui, nullptr, int2(24, 96), int2(256));
-
-	vertical_layout * wndLayout = xng_new vertical_layout();
-
-	slider * borderSlider = xng_new slider(gui, captionTextStyle);
-	slider * widthSlider  = xng_new slider(gui, captionTextStyle);
-	slider * scaleSlider  = xng_new slider(gui, captionTextStyle);
-
-	text_control * borderText = xng_new text_control(gui, captionTextStyle);
-	text_control * widthText  = xng_new text_control(gui, captionTextStyle);
-	text_control * scaleText  = xng_new text_control(gui, captionTextStyle);
-
-	borderText->set_text_and_fit("Border:");
-	widthText->set_text_and_fit("Thinness:");
-	scaleText->set_text_and_fit("Scale:");
-
-	wndLayout->add(borderText, XNG_LAYOUT_EXPAND, 0, 4);
-	wndLayout->add(borderSlider, XNG_LAYOUT_EXPAND, 0, 4);
-	wndLayout->add(widthText, XNG_LAYOUT_EXPAND, 0, 4);
-	wndLayout->add(widthSlider, XNG_LAYOUT_EXPAND, 0, 4);
-	wndLayout->add(scaleText, XNG_LAYOUT_EXPAND, 0, 4);
-	wndLayout->add(scaleSlider, XNG_LAYOUT_EXPAND, 0, 4);
-
-	captionTextStyle->set_caption(L"FPS Text Style Test");
-
-	captionTextStyle->set_layout(wndLayout);
-	captionTextStyle->apply_layout();
-
-	captionTextStyle->show();
+	game        * instance = game::get_singleton();
+	gui_manager * gui      = instance->get_gui_manager();
 
 	// FPS text
 
@@ -304,30 +413,6 @@ void editor::create_gui(void)
 	fpsText->set_text_and_fit("");
 
 	transparentWindow->show();
-
-	text_control_style * fpsTextStyle2 = xng_new text_control_style(fpsTextStyle);
-
-	// Slider binds
-
-	borderSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		fpsTextStyle2->text.border_size = 20.f * x;
-		fpsText->set_text_control_style(*fpsTextStyle2);
-	});
-
-	widthSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		fpsTextStyle2->text.thinness = x;
-		fpsText->set_text_control_style(*fpsTextStyle2);
-	});
-
-	scaleSlider->bind<XNG_GUI_EVENT_SLIDER>([=](const widget * slider, float x)
-	{
-		fpsTextStyle2->text.scale = .01f + 10 * x;
-		fpsText->set_text_control_style(*fpsTextStyle2);
-	});
-
-	// Set member variables
 
 	m_fpsText = fpsText;
 }

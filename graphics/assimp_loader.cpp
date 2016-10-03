@@ -25,9 +25,7 @@ assimp_loader::assimp_loader(const path & filename, unsigned int flags) :
 {
 	auto fnString = filename.string();
 
-	m_scene = m_importer.ReadFile(fnString.c_str(), flags | aiProcess_Triangulate);
-
-	m_importer.SetPropertyFloat(AI_CONFIG_PP_GSN_MAX_SMOOTHING_ANGLE, 80.f);
+	m_scene = m_importer.ReadFile(fnString.c_str(), flags | aiProcess_Triangulate | aiProcess_FlipUVs);
 
 	if (!m_scene)
 	{
@@ -44,9 +42,13 @@ bool assimp_loader::load(resource * r, const void * userdata)
 {
 	const char * resourceType = r->get_owner()->get_type();
 
-	if (strcmp(resourceType, "mesh") == 0)
+	if (auto rMesh = dynamic_cast<mesh*>(r))
 	{
-		return load_mesh(static_cast<mesh*>(r));
+		return load_mesh(rMesh);
+	}
+	else if (auto rMaterial = dynamic_cast<material*>(r))
+	{
+		return load_material(rMaterial);
 	}
 
 	return false;
@@ -56,9 +58,13 @@ void assimp_loader::unload(resource * r)
 {
 	const char * resourceType = r->get_owner()->get_type();
 
-	if (strcmp(resourceType, "mesh") == 0)
+	if (auto rMesh = dynamic_cast<mesh*>(r))
 	{
-		unload_mesh(static_cast<mesh*>(r));
+		unload_mesh(rMesh);
+	}
+	else if (auto rMaterial = dynamic_cast<material*>(r))
+	{
+		unload_material(rMaterial);
 	}
 }
 
@@ -71,6 +77,12 @@ mesh_ptr assimp_loader::create_mesh(unsigned int meshIndex)
 {
 	std::string name = std::to_string(meshIndex) + "_assimp_mesh_" + m_filename.string();
 	return resource_factory::get_singleton()->create<mesh>(name.c_str(), default_parameters(), this);
+}
+
+material_ptr assimp_loader::create_material(unsigned int materialIndex)
+{
+	std::string name = std::to_string(materialIndex) + "_assimp_material_" + m_filename.string();
+	return resource_factory::get_singleton()->create<material>(name.c_str(), default_parameters(), this);
 }
 
 bool assimp_loader::load_mesh(mesh * m)
@@ -143,7 +155,12 @@ bool assimp_loader::load_mesh(mesh * m)
 			if (m->has_storage_semantic(static_cast<mesh_storage_semantic>(XNG_MESH_STORAGE_TEXCOORDS0 << i)) &&
 				pMesh->HasTextureCoords(i))
 			{
-				memcpy(m->get_texcoords(i), pMesh->mTextureCoords[i], pMesh->mNumVertices * sizeof(float) * 2);
+				std::transform(
+					pMesh->mTextureCoords[i], pMesh->mTextureCoords[i] + pMesh->mNumVertices, (float2*)m->get_texcoords(i),
+					[](const aiVector3D & aiTexcoords)
+				{
+					return float2(aiTexcoords.x, aiTexcoords.y);
+				});
 			}
 		}
 
@@ -158,6 +175,101 @@ bool assimp_loader::load_mesh(mesh * m)
 void assimp_loader::unload_mesh(mesh * m)
 {
 	m->clear();
+}
+
+bool assimp_loader::load_material(material * m)
+{
+	const char * name = m->get_name();
+
+	unsigned int id;
+	std::stringstream ss(name);
+	ss >> id;
+
+	// Look for the resource in the loaded scene
+
+	if (ss.fail() || id >= m_scene->mNumMeshes)
+	{
+		return false;
+	}
+
+	m->set_default();
+
+	aiMaterial * pMat = m_scene->mMaterials[id];
+
+	os::path sceneDir = m_filename;
+	sceneDir.remove_filename();
+
+	if (pMat->GetTextureCount(aiTextureType_DIFFUSE))
+	{
+		aiString path;
+		pMat->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+
+		os::path p = path.C_Str();
+
+		if (p.is_relative())
+		{
+			p = sceneDir / p;
+		}
+		
+		p.make_unix_like();
+
+		image_ptr texture = resource_factory::get_singleton()->create<image>(p.string().c_str());
+
+		m->set_base_texture(texture);
+	}
+
+	if (pMat->GetTextureCount(aiTextureType_SPECULAR))
+	{
+		aiString path;
+		pMat->GetTexture(aiTextureType_SPECULAR, 0, &path);
+
+		os::path p = path.C_Str();
+
+		if (p.is_relative())
+		{
+			p = sceneDir / p;
+		}
+
+		p.make_unix_like();
+
+		image_ptr texture = resource_factory::get_singleton()->create<image>(p.string().c_str());
+
+		m->set_specular_map(texture);
+	}
+
+	if (pMat->GetTextureCount(aiTextureType_NORMALS))
+	{
+		aiString path;
+		pMat->GetTexture(aiTextureType_NORMALS, 0, &path);
+
+		os::path p = path.C_Str();
+
+		if (p.is_relative())
+		{
+			p = sceneDir / p;
+		}
+
+		p.make_unix_like();
+
+		image_ptr texture = resource_factory::get_singleton()->create<image>(p.string().c_str());
+
+		m->set_normal_map(texture);
+	}
+
+	aiColor3D baseColor, emissive;
+
+	if (pMat->Get("$mat.baseColor", 0, 0, baseColor) == aiReturn_SUCCESS ||
+	    pMat->Get(AI_MATKEY_COLOR_DIFFUSE, baseColor) == aiReturn_SUCCESS)
+	{
+		m->set_base_color(reinterpret_cast<float3&>(baseColor));
+	}
+
+	return true;
+}
+
+void assimp_loader::unload_material(material * m)
+{
+	m->set_default();
 }
 
 #endif

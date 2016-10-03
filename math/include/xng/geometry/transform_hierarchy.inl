@@ -45,6 +45,13 @@ namespace xng
 		}
 
 		template <typename T>
+		XNG_INLINE void transform_hierarchy<T>::set_local_matrix(const float4x4 & m)
+		{
+			decompose_affine(m, &m_localScale, &m_localRotation, m_localTranslation);
+			notify_local_change();
+		}
+
+		template <typename T>
 		XNG_INLINE float3 transform_hierarchy<T>::get_local_translation(void) const
 		{
 			return m_localTranslation;
@@ -246,6 +253,38 @@ namespace xng
 		XNG_INLINE const float4x4 & transform_hierarchy<T>::get_local_translation_rotation_matrix_internal(void) const
 		{
 			return m_localTranslationRotationMatrix;
+		}
+
+		template <typename T>
+		XNG_INLINE void transform_hierarchy<T>::set_global_translation(const float3 & t)
+		{
+			transform_hierarchy<T> * parent = ((T*)this)->get_transform_hierarchy_parent();
+			float3 globalTranslation = parent ? parent->get_global_translation() : float3(0);
+			set_local_translation(t - globalTranslation);
+		}
+
+		template <typename T>
+		XNG_INLINE void transform_hierarchy<T>::set_global_rotation(const quaternion & r)
+		{
+			transform_hierarchy<T> * parent = ((T*)this)->get_transform_hierarchy_parent();
+			quaternion globalRotation = parent ? parent->get_global_rotation() : quaternion(1, 0, 0, 0);
+			set_local_rotation(r * inverse(globalRotation));
+		}
+
+		template <typename T>
+		XNG_INLINE void transform_hierarchy<T>::set_global_scale(const float3 & s)
+		{
+			transform_hierarchy<T> * parent = ((T*)this)->get_transform_hierarchy_parent();
+			float3 globalScale = parent ? parent->get_global_scale() : float3(1);
+			set_local_scale(s / globalScale);
+		}
+
+		template <typename T>
+		XNG_INLINE void transform_hierarchy<T>::set_global_matrix(const float4x4 & m)
+		{
+			transform_hierarchy<T> * parent = ((T*)this)->get_transform_hierarchy_parent();
+			const float4x4 & globalMatrix = parent ? get_global_matrix() : float4x4(1);
+			set_local_matrix(inverse(globalMatrix) * m);
 		}
 
 	}

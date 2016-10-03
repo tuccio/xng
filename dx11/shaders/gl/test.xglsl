@@ -1,0 +1,27 @@
+#version 450
+
+layout (binding = 0) buffer bPerObject
+{
+	mat4 viewMatrix;
+	mat4 viewProjectionMatrix;
+	vec4 color;
+}; 
+
+#xng section(vertex)
+
+layout(location = 0) in vec3 position;
+
+void main()
+{
+	gl_Position = viewProjectionMatrix * vec4(position, 1);
+}
+
+#xng section(fragment)
+
+out vec4 fragment;
+in vec3 x;
+
+void main()
+{
+	fragment = color;
+}

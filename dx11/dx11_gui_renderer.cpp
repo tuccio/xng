@@ -273,3 +273,8 @@ void dx11_gui_renderer::render(ID3D11DeviceContext * deviceContext, ID3D11Render
 
 	}
 }
+
+void dx11_gui_renderer::reload_shaders(void)
+{
+	m_program.reload();
+}

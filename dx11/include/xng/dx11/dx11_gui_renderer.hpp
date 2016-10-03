@@ -20,6 +20,8 @@ namespace xng
 
 			void render(ID3D11DeviceContext * deviceContext, ID3D11RenderTargetView * rtv, const math::uint2 & size, const gui::gui_command_list & commandList);
 
+			void reload_shaders(void);
+
 		private:
 
 			void render_filled_rectangle(ID3D11DeviceContext * deviceContext, const gui::rectangle & rect, const math::float4 & color);

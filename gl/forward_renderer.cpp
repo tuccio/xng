@@ -52,7 +52,7 @@ void forward_renderer::render(const extracted_scene & scene)
 	};
 
 	auto camera = scene.get_active_camera();
-	auto geometry = scene.frustum_culling_dynamic();
+	auto geometry = scene.get_frustum_culling_dynamic();
 
 	const float4x4 & viewMatrix = camera->get_gl_view_matrix();
 	const float4x4 & projectionMatrix = camera->get_gl_projection_matrix();
@@ -61,10 +61,12 @@ void forward_renderer::render(const extracted_scene & scene)
 
 	int ColorIndex = 0;
 
+	auto & renderables = scene.get_renderables();
+
 	for (auto renderableIndex : geometry)
 	{
-		auto renderable = scene.get_renderable(renderableIndex);
-		gpu_mesh_ptr m = make_gpu_mesh(renderable->mesh);
+		auto & renderable = renderables[renderableIndex];
+		gpu_mesh_ptr m = make_gpu_mesh(renderable.mesh);
 
 		if (m && m->load())
 		{
@@ -78,7 +80,7 @@ void forward_renderer::render(const extracted_scene & scene)
 			GLuint bPerObjectOffset, bPerObjectSize;
 			void * buffer = m_bPerObject.allocate_buffer(sizeof(__bufferPerObject), &bPerObjectOffset, &bPerObjectSize);
 
-			const float4x4 & modelMatrix = renderable->world;
+			const float4x4 & modelMatrix = renderable.world;
 
 			__bufferPerObject bufferPerObjectData = {
 				transpose(viewMatrix * modelMatrix),

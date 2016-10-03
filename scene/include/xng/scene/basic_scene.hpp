@@ -15,11 +15,12 @@ namespace xng
 
 			graphics::scene_graph * get_scene_graph(void) override;
 
-			geometry_vector frustum_culling_static(const graphics::camera * cam) override;
-			geometry_vector frustum_culling_dynamic(const graphics::camera * cam) override;
+			geometry_vector get_frustum_culling_static(const graphics::camera * cam) override;
+			geometry_vector get_frustum_culling_dynamic(const graphics::camera * cam) override;
 
 			geometry_vector get_geometry_nodes(void) override;
 			camera_vector get_camera_nodes(void) override;
+			light_vector get_light_nodes(void) override;
 
 			graphics::scene_graph_camera * get_active_camera(void) override;
 			void set_active_camera(graphics::scene_graph_camera * camera) override;

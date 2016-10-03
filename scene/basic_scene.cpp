@@ -11,7 +11,7 @@ scene_graph * basic_scene::get_scene_graph(void)
 	return &m_sceneGraph;
 }
 
-scene::geometry_vector basic_scene::frustum_culling_static(const camera * cam)
+scene::geometry_vector basic_scene::get_frustum_culling_static(const camera * cam)
 {
 	geometry_vector v;
 
@@ -31,7 +31,7 @@ scene::geometry_vector basic_scene::frustum_culling_static(const camera * cam)
 	return v;
 }
 
-scene::geometry_vector basic_scene::frustum_culling_dynamic(const camera * cam)
+scene::geometry_vector basic_scene::get_frustum_culling_dynamic(const camera * cam)
 {
 	geometry_vector v;
 
@@ -91,6 +91,22 @@ scene::camera_vector basic_scene::get_camera_nodes(void)
 		if (node->get_type() == XNG_SCENE_GRAPH_CAMERA)
 		{
 			scene_graph_camera * cnode = static_cast<scene_graph_camera*>(node);
+			v.push_back(cnode);
+		}
+	});
+
+	return v;
+}
+
+scene::light_vector basic_scene::get_light_nodes(void)
+{
+	light_vector v;
+
+	m_sceneGraph.visit([&](scene_graph_node * node)
+	{
+		if (node->get_type() == XNG_SCENE_GRAPH_LIGHT)
+		{
+			scene_graph_light * cnode = static_cast<scene_graph_light*>(node);
 			v.push_back(cnode);
 		}
 	});

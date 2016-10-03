@@ -57,7 +57,14 @@ namespace xng
 		private:
 
 			std::unique_ptr<scene_graph_node> m_root;
+			uint32_t                          m_nextID;
 
+			friend class scene_graph_node;
+
+			XNG_INLINE uint32_t generate_id(void)
+			{
+				return m_nextID++;
+			}
 		};
 	}
 }

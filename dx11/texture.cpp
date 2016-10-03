@@ -1,6 +1,8 @@
 #include <xng/dx11/texture.hpp>
 #include <xng/dx11/dxgi_formats.hpp>
 
+#include <algorithm>
+
 using namespace xng::dx11;
 using namespace xng::res;
 using namespace xng::graphics;
@@ -27,12 +29,44 @@ bool texture::create(
 
 	if (image && image->load())
 	{
+		std::unique_ptr<uint8_t[]> tempBuffer;
+
 		m_format = get_dxgi_format(image->get_format());
 
 		D3D11_SUBRESOURCE_DATA data = {};
 
-		data.pSysMem     = image->data();
-		data.SysMemPitch = image->get_scan_width();
+		if (m_format != DXGI_FORMAT_UNKNOWN)
+		{
+			data.pSysMem     = image->data();
+			data.SysMemPitch = image->get_scan_width();
+		}
+		else
+		{
+			if (image->get_format() == XNG_IMAGE_FORMAT_R8G8B8_UINT)
+			{
+				// Convert 24 to 32 bits
+
+				uint32_t scanWidth = image->get_width() * 4;
+
+				tempBuffer = std::unique_ptr<uint8_t[]>(new uint8_t[scanWidth * image->get_height()]);
+
+				struct _24bpp { uint8_t r, g, b; };
+				struct _32bpp { uint8_t r, g, b, a; };
+
+				std::transform(
+					(const _24bpp*)image->data(), ((const _24bpp*)image->data()) + image->get_width() * image->get_height(),
+					(_32bpp*) tempBuffer.get(),
+					[](const _24bpp & pixel)
+				{
+					return _32bpp{ pixel.r, pixel.g, pixel.b, 0xFF };
+				});
+
+				data.pSysMem     = tempBuffer.get();
+				data.SysMemPitch = scanWidth;
+
+				m_format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+			}
+		}
 
 		if (!generateMipmaps)
 		{

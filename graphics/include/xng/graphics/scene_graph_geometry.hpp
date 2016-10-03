@@ -1,5 +1,6 @@
 #include <xng/graphics/scene_graph_node.hpp>
 #include <xng/graphics/mesh.hpp>
+#include <xng/graphics/material.hpp>
 
 namespace xng
 {
@@ -17,6 +18,9 @@ namespace xng
 			mesh_ptr get_mesh(void) const;
 			void set_mesh(mesh_ptr mesh);
 
+			material_ptr get_material(void) const;
+			void set_material(material_ptr material);
+
 			bool is_static(void) const;
 			void set_static(bool s);
 
@@ -26,8 +30,9 @@ namespace xng
 
 		private:
 
-			mesh_ptr m_mesh;
-			bool     m_static;
+			mesh_ptr     m_mesh;
+			material_ptr m_material;
+			bool         m_static;
 
 		};
 	}

@@ -140,6 +140,16 @@ bool path::has_extension(void) const
 	return *p == L'.' && (*(p + 1) != L'\0');
 }
 
+bool path::is_absolute(void) const
+{
+	return !is_relative();
+}
+
+bool path::is_relative(void) const
+{
+	return PathIsRelativeW(m_path.c_str());
+}
+
 std::locale path::imbue(const std::locale & loc)
 {
 	std::locale old = s_locale;

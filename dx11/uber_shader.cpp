@@ -1,21 +1,23 @@
 #include <xng/dx11/uber_shader.hpp>
 #include <xng/dx11/compile_shader.hpp>
 
+#ifdef XNG_DX11_DEBUG
+#define XNG_SHADER_OUTPUT_DEBUG(Source) { std::ofstream f("shader_fail.xhlsl"); f << (Source); }
+#else
+#define XNG_SHADER_OUTPUT_DEBUG(Source)
+#endif
+
 using namespace xng::dx11;
 using namespace xng::graphics;
 
 uber_shader::uber_shader(void) :
 	m_preprocessed(false),
-	m_flags(0) {}
+	m_flags(0),
+	m_ilvFunctor([](D3D11_INPUT_ELEMENT_DESC*) {}) {}
 
 bool uber_shader::preprocess(const char * filename)
 {
-	if (is_preprocessed())
-	{
-		return false;
-	}
-
-	clear();
+	m_shaders.clear();
 
 	m_filename = filename;
 	std::vector<std::string> errors;
@@ -68,7 +70,7 @@ void uber_shader::clear(void)
 	m_preprocessedShader = decltype(m_preprocessedShader){};
 }
 
-shader_program uber_shader::compile(ID3D11Device * device, const char * name, std::initializer_list<shader_macro> macros)
+shader_program uber_shader::compile(ID3D11Device * device, const char * name, const std::vector<shader_macro> & macros)
 {
 	auto shaderIt = m_shaders.find(name);
 
@@ -100,13 +102,14 @@ shader_program uber_shader::compile(ID3D11Device * device, const char * name, st
 			(const D3D_SHADER_MACRO *)&macrosVector[0],
 			&shader,
 			&inputLayout,
-			m_ilvFunctor ? m_ilvFunctor : decltype(m_ilvFunctor)([](const D3D11_INPUT_ELEMENT_DESC *) {})))
+			m_ilvFunctor))
 		{
 			program.set_vertex_shader(shader.get());
 			program.set_input_layout(inputLayout.get());
 		}
 		else
 		{
+			XNG_SHADER_OUTPUT_DEBUG(source);
 			XNG_DEBUGBREAK();
 			return shader_program();
 		}
@@ -133,6 +136,7 @@ shader_program uber_shader::compile(ID3D11Device * device, const char * name, st
 		}
 		else
 		{
+			XNG_SHADER_OUTPUT_DEBUG(source);
 			XNG_DEBUGBREAK();
 			return shader_program();
 		}
@@ -151,4 +155,10 @@ void uber_shader::free(const char * name)
 	{
 		m_shaders.erase(it);
 	}
+}
+
+bool uber_shader::reload(void)
+{
+	m_shaders.clear();
+	return preprocess(m_filename.c_str());
 }

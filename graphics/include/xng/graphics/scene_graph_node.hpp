@@ -77,6 +77,8 @@ namespace xng
 			const char * get_name(void) const;
 			void set_name(const char * name);
 
+			uint32_t get_id(void) const;
+
 			xng_scene_graph_node_type get_type(void) const;
 
 			bool is_ancestor(scene_graph_node * node) const;
@@ -84,10 +86,7 @@ namespace xng
 
 		protected:
 
-			scene_graph_node(xng_scene_graph_node_type type, scene_graph_node * parent, scene_graph * graph) :
-				m_graph(graph),
-				m_type(type),
-				m_parent(parent) {}
+			scene_graph_node(xng_scene_graph_node_type type, scene_graph_node * parent, scene_graph * graph);
 
 			void on_parent_destruction(void);
 			void on_child_destruction(scene_graph_node * child);
@@ -99,6 +98,7 @@ namespace xng
 
 			scene_graph_node * m_parent;
 			scene_graph      * m_graph;
+			uint32_t           m_id;
 
 			std::vector<scene_graph_node*> m_children;
 			std::string m_name;

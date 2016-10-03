@@ -103,8 +103,6 @@ bool freeimage_read_file(const path & filename, std::vector<uint8_t> & data, uin
 
 		int bpp = FreeImage_GetBPP(bitmap);
 
-		data.resize(height * scanWidth);
-
 		format = XNG_IMAGE_FORMAT_UNKNOWN;
 
 		FREE_IMAGE_TYPE imageType = FreeImage_GetImageType(bitmap);
@@ -127,6 +125,12 @@ bool freeimage_read_file(const path & filename, std::vector<uint8_t> & data, uin
 			break;
 		}
 
+		data.resize(height * scanWidth);
+
+		bool bgr = false;
+
+		bgr = FIF_TARGA;
+
 		FreeImage_ConvertToRawBits(
 			&data[0],
 			bitmap, scanWidth, bpp,
@@ -134,6 +138,24 @@ bool freeimage_read_file(const path & filename, std::vector<uint8_t> & data, uin
 			TRUE);
 
 		FreeImage_Unload(bitmap);
+
+		if (bpp == 24 && bgr)
+		{
+			struct _24bppRGB { uint8_t r, g, b; };
+			struct _24bppBGR { uint8_t b, g, r; };
+
+			std::transform((const _24bppBGR *)&data.front(), (const _24bppBGR *)(&data.front() + data.size()), (_24bppRGB *)&data.front(),
+				[](const _24bppBGR & pixel)
+			{
+				_24bppRGB out;
+
+				out.r = pixel.r;
+				out.g = pixel.g;
+				out.b = pixel.b;
+
+				return out;
+			});
+		}
 
 		success = true;
 	}

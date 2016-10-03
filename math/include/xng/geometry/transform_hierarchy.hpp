@@ -39,6 +39,8 @@ namespace xng
 			XNG_INLINE void set_local_rotation(const quaternion & q);
 			XNG_INLINE void set_local_scale(const float3 & s);
 
+			XNG_INLINE void set_local_matrix(const float4x4 & m);
+
 			XNG_INLINE float3     get_local_translation(void) const;
 			XNG_INLINE quaternion get_local_rotation(void) const;
 			XNG_INLINE float3     get_local_scale(void) const;
@@ -46,6 +48,12 @@ namespace xng
 			XNG_INLINE float3     get_global_translation(void);
 			XNG_INLINE quaternion get_global_rotation(void);
 			XNG_INLINE float3     get_global_scale(void);
+
+			XNG_INLINE void set_global_translation(const float3 & t);
+			XNG_INLINE void set_global_rotation(const quaternion & r);
+			XNG_INLINE void set_global_scale(const float3 & s);
+
+			XNG_INLINE void set_global_matrix(const float4x4 & m);
 
 		protected:
 
