@@ -73,6 +73,16 @@ void gpu_profile_buffer::clear(void)
 	m_data.shrink_to_fit();
 }
 
+void gpu_profile_buffer::reset(void)
+{
+	m_started = false;
+}
+
+bool gpu_profile_buffer::was_started(void) const
+{
+	return m_started;
+}
+
 bool gpu_profile_buffer::is_ready(void) const
 {
 	return m_used == m_data.size();
@@ -104,6 +114,7 @@ float gpu_profile_buffer::get_moving_average(void) const
 
 void gpu_profile_buffer::begin(ID3D11DeviceContext * context)
 {
+	m_started = true;
 	m_data[m_next].begin(context);
 }
 
@@ -214,11 +225,12 @@ profiler_data gpu_profiler::collect_data(ID3D11DeviceContext * context)
 			
 			for (auto & p : m_queries)
 			{
-				if (p.second.is_ready())
+				if (p.second.was_started() && p.second.is_ready())
 				{
 					p.second.update_moving_average(context, invFreq);
 					float dt = p.second.get_moving_average();
 					data.push_back(profiler_entry{ p.first, dt });
+					p.second.reset();
 				}
 			}
 		}		

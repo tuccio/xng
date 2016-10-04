@@ -100,12 +100,11 @@ float4 main_ps(PSInput input) : SV_Target0
 	
 	float3 radiance = 0;
 	
-	radiance = dot(N, -normalize(float3(1, -1, .15f))) * baseColor;
-	
 	for (int i = 0; i < numLights; ++i)
 	{
 		Light light = lights[i];
 		
+		// TODO: Proper lighting
 		float3 L   = -light.direction;
 		float3 lum = light.luminance / 100.f;
 		

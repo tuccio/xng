@@ -95,8 +95,6 @@ editor::editor(native_window * wnd)
 
 		m_auiManager->GetPane(renderPanel).name = "render_panel";
 
-		m_auiManager->Update();
-
 		create_menu();
 		create_gui();
 
@@ -136,6 +134,30 @@ editor::editor(native_window * wnd)
 			instance->get_input_handler()->keyboard().add_observer(&m_cameraController);
 			instance->get_input_handler()->mouse().add_observer(&m_cameraController);
 		}
+
+		wxAuiNotebook * renderingNotebook = xng_new wxAuiNotebook(m_editor, wxID_ANY);
+		wxAuiNotebook * sceneNotebook     = xng_new wxAuiNotebook(m_editor, wxID_ANY);
+
+		renderingNotebook->Freeze();
+		sceneNotebook->Freeze();
+
+		if (m_auiManager->AddPane(renderingNotebook, wxLEFT, _("")) &&
+		    m_auiManager->AddPane(sceneNotebook, wxRIGHT, _("")))
+		{
+			m_auiManager->GetPane(sceneNotebook).MinSize(wxSize(200, 250)).Name("scene_panel");
+			m_auiManager->GetPane(renderingNotebook).MinSize(wxSize(200, 250)).Name("rendering_settings_panel");
+
+			m_sceneGraphPage        = xng_new scene_graph_page(game::get_singleton()->get_scene_module()->get_active_scene()->get_scene_graph(), m_editor);
+			m_renderingSettingsPage = xng_new rendering_settings_page(m_editor);
+
+			sceneNotebook->AddPage(m_sceneGraphPage, _("Scene Graph"));
+			renderingNotebook->AddPage(m_renderingSettingsPage, _("Rendering Settings"));
+
+			sceneNotebook->Thaw();
+			renderingNotebook->Thaw();
+		}
+
+		m_auiManager->Update();
 	}
 	else
 	{
@@ -164,6 +186,7 @@ editor::~editor(void)
 
 void editor::update(float dt)
 {
+	wxTheApp->ProcessPendingEvents();
 	wxTheApp->ProcessIdle();
 
 	std::ostringstream ss;

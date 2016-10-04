@@ -165,7 +165,7 @@ void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext, ID3D11
 	auto & dynamicGeometry = scene.get_frustum_culling_dynamic();
 	auto & staticGeometry  = scene.get_frustum_culling_static();
 
-	deviceContext->VSSetConstantBuffers(1, 1, &m_cbPerObject);
+	deviceContext->VSSetConstantBuffers(1, 1, &m_cbPerObjectDepth);
 
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

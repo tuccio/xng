@@ -81,6 +81,7 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 			}
 
 			gNode->set_material(nodeMaterial);
+			gNode->set_name((node->mName.C_Str() + ("_mesh" + std::to_string(i))).c_str());
 		}
 
 		if (aiLight = find_light(assimpScene, node))
@@ -109,6 +110,8 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 			lNode->set_position(reinterpret_cast<const float3&>(aiLight->mPosition));
 			lNode->set_direction(direction);
 			lNode->set_cutoff_angle(aiLight->mAngleInnerCone);
+
+			lNode->set_name((node->mName.C_Str() + std::string("_light0")).c_str());
 
 			switch (aiLight->mType)
 			{
@@ -143,6 +146,8 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 
 			cNode->set_local_rotation(cam->get_orientation());
 			cNode->set_local_translation(cam->get_position());
+
+			cNode->set_name((node->mName.C_Str() + std::string("_cam0")).c_str());
 		}
 
 		for (int i = 0; i < node->mNumChildren; ++i)

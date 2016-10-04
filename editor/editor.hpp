@@ -8,6 +8,8 @@
 #include <wx/aui/aui.h>
 
 #include "fps_camera_controller.hpp"
+#include "scene_graph_page.hpp"
+#include "rendering_settings_page.hpp"
 
 namespace xng
 {
@@ -44,6 +46,9 @@ namespace xng
 			gui::window       * m_sunSettings;
 			gui::window       * m_cameraSettings;
 			gui::text_control * m_fpsText;
+
+			scene_graph_page        * m_sceneGraphPage;
+			rendering_settings_page * m_renderingSettingsPage;
 
 		};
 	}

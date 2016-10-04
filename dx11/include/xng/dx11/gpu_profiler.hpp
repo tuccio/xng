@@ -44,7 +44,10 @@ namespace xng
 			bool init(ID3D11Device * device, uint32_t buffers, uint32_t samples);
 			void clear(void);
 
+			bool was_started(void) const;
 			bool is_ready(void) const;
+
+			void reset(void);
 
 			UINT64 get_time_delta(ID3D11DeviceContext * context) const;
 
@@ -63,6 +66,7 @@ namespace xng
 
 			uint32_t m_used;
 			uint32_t m_next;
+			bool     m_started;
 
 			float    m_samplesSum;
 			uint32_t m_numSamples;

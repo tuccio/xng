@@ -55,7 +55,7 @@ bool native_window::create(void)
 	if (m_hWnd)
 	{
 		RAWINPUTDEVICE devices[] = {
-			{ 0x01, 0x06, RIDEV_NOLEGACY, m_hWnd }
+			{ 0x01, 0x06, 0, m_hWnd }
 			//{ 0x01, 0x02, RIDEV_NOLEGACY, m_hWnd }
 		};
 

@@ -5,7 +5,8 @@
 
 using namespace xng::graphics;
 
-scene_graph::scene_graph(void)
+scene_graph::scene_graph(void) :
+	m_nextID(0)
 {
 	m_root = std::make_unique<scene_graph_group>(this);
 }
