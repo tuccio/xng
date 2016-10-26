@@ -1,5 +1,6 @@
 #include "editor.hpp"
 #include "render_panel.hpp"
+#include "camera_page.hpp"
 
 #include <wx/listctrl.h>
 
@@ -50,7 +51,6 @@ struct editor_window_observer :
 				if (cam)
 				{
 					cam->get_camera()->set_aspect_ratio(ratio);
-					cam->set_parent(s->get_scene_graph()->get_root());
 				}
 			}
 		}
@@ -67,7 +67,8 @@ private:
 
 };
 
-editor::editor(native_window * wnd)
+editor::editor(native_window * wnd) :
+	m_selectedObjectPage(nullptr)
 {
 	static int argc = 1;
 	static char * argv[] = { "xngeditor", nullptr };
@@ -150,8 +151,13 @@ editor::editor(native_window * wnd)
 			m_sceneGraphPage        = xng_new scene_graph_page(game::get_singleton()->get_scene_module()->get_active_scene()->get_scene_graph(), m_editor);
 			m_renderingSettingsPage = xng_new rendering_settings_page(m_editor);
 
+			m_sceneGraphPage->add_observer(this);
+
 			sceneNotebook->AddPage(m_sceneGraphPage, _("Scene Graph"));
 			renderingNotebook->AddPage(m_renderingSettingsPage, _("Rendering Settings"));
+
+			m_sceneNotebook     = sceneNotebook;
+			m_renderingNotebook = renderingNotebook;
 
 			sceneNotebook->Thaw();
 			renderingNotebook->Thaw();
@@ -167,6 +173,7 @@ editor::editor(native_window * wnd)
 
 editor::~editor(void)
 {
+	m_sceneGraphPage->remove_observer(this);
 	m_window->remove_observer(m_observer.get());
 
 	game * instance = game::get_singleton();
@@ -438,4 +445,40 @@ void editor::create_gui(void)
 	transparentWindow->show();
 
 	m_fpsText = fpsText;
+}
+
+void editor::on_node_select(scene_graph * sg, scene_graph_node * node)
+{
+	if (m_selectedObjectPage)
+	{
+		m_sceneNotebook->Freeze();
+
+		size_t page = m_sceneNotebook->GetPageIndex(m_selectedObjectPage);
+
+		if (page != wxNOT_FOUND)
+		{
+			m_sceneNotebook->DeletePage(page);
+		}
+
+		m_sceneNotebook->Thaw();
+
+		m_selectedObjectPage = nullptr;
+	}
+
+	switch (node->get_type())
+	{
+	case XNG_SCENE_GRAPH_CAMERA:	
+
+		m_selectedObjectPage = xng_new camera_page(static_cast<scene_graph_camera*>(node), m_editor);
+
+		m_sceneNotebook->Freeze();
+
+		m_sceneNotebook->AddPage(
+			m_selectedObjectPage,
+			"Camera");
+
+		m_sceneNotebook->Thaw();
+
+		break;
+	}
 }

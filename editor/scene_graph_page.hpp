@@ -22,9 +22,15 @@ namespace xng
 {
 	namespace editor
 	{
+		struct scene_graph_page_observer
+		{
+			virtual void on_node_select(graphics::scene_graph * sg, graphics::scene_graph_node * node) {}
+		};
+
 		class scene_graph_page :
 			public wxWindow,
-			public graphics::scene_graph_observer
+			public graphics::scene_graph_observer,
+			public core::observable<scene_graph_page_observer>
 		{
 
 		public:

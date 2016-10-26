@@ -97,9 +97,9 @@ void fps_camera_controller::on_update(float dt)
 {
 	if (m_camera)
 	{
-		const float3 f = m_camera->get_camera()->forward();
-		const float3 r = m_camera->get_camera()->right();
-		const float3 u = m_camera->get_camera()->up();
+		const float3 f = transform(float3(0, 0, -1), m_camera->get_local_rotation());
+		const float3 r = transform(float3(1, 0, 0), m_camera->get_local_rotation());
+		const float3 u = transform(float3(0, 1, 0), m_camera->get_local_rotation());
 
 		if (m_strafingForward)
 		{

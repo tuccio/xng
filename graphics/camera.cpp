@@ -188,7 +188,7 @@ const float4x4 & camera::get_directx_projection_matrix(void) const
 	if (m_projectionMatrixDirty || m_coordSystem != XNG_COORDINATE_SYSTEM_DIRECTX)
 	{
 		directx_projection_matrix(m_projectionMatrix, m_fovy, m_ratio, m_znear, m_zfar);
-		m_coordSystem = XNG_COORDINATE_SYSTEM_DIRECTX;
+		m_coordSystem           = XNG_COORDINATE_SYSTEM_DIRECTX;
 		m_projectionMatrixDirty = false;
 	}
 	return m_projectionMatrix;

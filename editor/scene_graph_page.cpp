@@ -23,14 +23,14 @@ scene_graph_page::scene_graph_page(scene_graph * g, wxWindow * parent) :
 
 	wxBoxSizer * sizer = xng_new wxBoxSizer(wxVERTICAL);
 
-	wxStaticBoxSizer * localTranslationBox = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Local translation"));
+	wxStaticBoxSizer * localTranslationBox    = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Local translation"));
 	wxBoxSizer       * localTranslationFields = xng_new wxBoxSizer(wxHORIZONTAL);
 
-	wxStaticBoxSizer * localScaleBox = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Local scale"));
-	wxBoxSizer       * localScaleFields = xng_new wxBoxSizer(wxHORIZONTAL);
+	wxStaticBoxSizer * localScaleBox          = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Local scale"));
+	wxBoxSizer       * localScaleFields       = xng_new wxBoxSizer(wxHORIZONTAL);
 
-	wxStaticBoxSizer * localRotationBox = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Local rotation"));
-	wxBoxSizer       * localRotationFields = xng_new wxBoxSizer(wxHORIZONTAL);
+	wxStaticBoxSizer * localRotationBox       = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Local rotation"));
+	wxBoxSizer       * localRotationFields    = xng_new wxBoxSizer(wxHORIZONTAL);
 
 	m_sgTree     = xng_new wxTreeCtrl(this);
 	m_sceneGraph = g;
@@ -314,8 +314,7 @@ scene_graph_page::scene_graph_page(scene_graph * g, wxWindow * parent) :
 		[&] (wxTreeEvent & event)
 	{
 		wxTreeItemId item = event.GetItem();
-		m_selectedNode = m_itemNodeMap[item];
-		update_selected_object();
+		set_selected_node(m_itemNodeMap[item]);
 	});
 
 	m_sgTree->Bind(XNG_EDITOR_EVENT_REFRESH,
@@ -357,6 +356,15 @@ scene_graph_node * scene_graph_page::get_selected_node(void) const
 void scene_graph_page::set_selected_node(scene_graph_node * node)
 {
 	auto it = m_nodeItemMap.find(node);
+
+	if (it != m_nodeItemMap.end())
+	{
+		m_sgTree->SelectItem(it->second);
+		notify(&scene_graph_page_observer::on_node_select, m_sceneGraph, node);
+
+		m_selectedNode = node;
+		update_selected_object();
+	}
 }
 
 void scene_graph_page::on_create(scene_graph * sg, scene_graph_node * node)

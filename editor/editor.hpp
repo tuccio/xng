@@ -15,7 +15,8 @@ namespace xng
 {
 	namespace editor
 	{
-		class editor
+		class editor :
+			public scene_graph_page_observer
 		{
 
 		public:
@@ -29,6 +30,8 @@ namespace xng
 
 			bool load_scene(const char * name);
 
+			void on_node_select(graphics::scene_graph * sg, graphics::scene_graph_node * node) override;
+
 		private:
 
 			void create_gui(void);
@@ -38,6 +41,9 @@ namespace xng
 			wxFrame           * m_editor;
 
 			std::unique_ptr<wxAuiManager> m_auiManager;
+
+			wxAuiNotebook * m_renderingNotebook;
+			wxAuiNotebook * m_sceneNotebook;
 
 			std::unique_ptr<os::native_window_observer> m_observer;
 
@@ -49,6 +55,8 @@ namespace xng
 
 			scene_graph_page        * m_sceneGraphPage;
 			rendering_settings_page * m_renderingSettingsPage;
+
+			wxWindow * m_selectedObjectPage;
 
 		};
 	}

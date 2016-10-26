@@ -23,7 +23,7 @@ LRESULT CALLBACK native_window::wndproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		native_window * wnd = get_window_object(hWnd);
 		wnd->notify(&os::native_window_observer::on_resize, wnd, wnd->get_window_size(), wnd->get_client_size());
-		break;
+		return 0;
 	}
 
 	case WM_SETFOCUS:

@@ -322,7 +322,7 @@ void forward_renderer::render(
 
 	// Setup lights
 
-	auto & extractedLights = scene.get_lights();;
+	auto & extractedLights = scene.get_lights();
 	uint32_t numLights = extractedLights.size();
 
 	if (numLights > m_maxLights)
