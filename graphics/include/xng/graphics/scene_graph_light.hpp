@@ -26,23 +26,30 @@ namespace xng
 			bool is_shadow_caster(void) const;
 			void set_shadow_caster(bool shadowCaster);
 
-			const math::float3 & get_position(void) const;
+			math::float3 get_position(void);
 			void set_position(const math::float3 & position);
 
-			const math::float3 & get_direction(void) const;
+			math::float3 get_direction(void);
 			void set_direction(const math::float3 & direction);
 
 			xng_light_type get_light_type(void) const;
 			void set_light_type(xng_light_type type);
 
-			const math::float3 & get_color(void) const;
-			void set_color(const math::float3 & color);
+			const math::ubyte3 & get_color(void) const;
+			void set_color(const math::ubyte3 & color);
 
 			float get_intensity(void) const;
 			void set_intensity(float intensity);
 
-			const math::float3 & get_ambient(void) const;
-			void set_ambient(const math::float3 & ambient);
+			math::float3 get_luminance(void) const;
+
+			const math::ubyte3 & get_ambient_color(void) const;
+			void set_ambient_color(const math::ubyte3 & ambient);
+
+			math::float3 get_ambient_luminance(void) const;
+
+			float get_ambient_intensity(void) const;
+			void set_ambient_intensity(float intensity);
 
 			float get_cutoff_angle(void) const;
 			void set_cutoff_angle(float angle);
@@ -53,11 +60,10 @@ namespace xng
 			bool           m_static;
 			xng_light_type m_type;
 
-			math::float3   m_position;
-			math::float3   m_direction;
-			math::float3   m_color;
-			math::float3   m_ambient;
+			math::ubyte3   m_color;
+			math::ubyte3   m_ambient;
 			float          m_intensity;
+			float          m_ambientIntensity;
 			float          m_cutoff;
 
 		};

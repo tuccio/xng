@@ -4,7 +4,12 @@ using namespace xng::graphics;
 using namespace xng::math;
 
 scene_graph_light::scene_graph_light(scene_graph_node * parent) :
-	scene_graph_node(XNG_SCENE_GRAPH_LIGHT, parent, parent->get_scene_graph()) {}
+	scene_graph_node(XNG_SCENE_GRAPH_LIGHT, parent, parent->get_scene_graph()),
+	m_color(0),
+	m_ambient(0),
+	m_intensity(0),
+	m_ambientIntensity(0),
+	m_cutoff(XNG_PI / 4) {}
 
 bool scene_graph_light::is_static(void) const
 {
@@ -26,24 +31,33 @@ void scene_graph_light::set_shadow_caster(bool shadowCaster)
 	m_shadowCaster = shadowCaster;
 }
 
-const float3 & scene_graph_light::get_position(void) const
+float3 scene_graph_light::get_position(void)
 {
-	return m_position;
+	return get_global_translation();
 }
 
 void scene_graph_light::set_position(const float3 & position)
 {
-	m_position = position;
+	set_global_translation(position);
 }
 
-const float3 & scene_graph_light::get_direction(void) const
+float3 scene_graph_light::get_direction(void)
 {
-	return m_direction;
+	return get_global_rotation() * float3(0, 0, 1);
 }
 
 void scene_graph_light::set_direction(const float3 & direction)
 {
-	m_direction = direction;
+	const float3 forward = float3(0, 0, 1);
+
+	float  cosAngle = dot(forward, direction);
+	float3 rotAxis  = cross(forward, direction);
+
+	float angle = std::acos(cosAngle);
+
+	quaternion q(rotAxis, angle);
+
+	set_global_rotation(q);
 }
 
 xng_light_type scene_graph_light::get_light_type(void) const
@@ -56,12 +70,12 @@ void scene_graph_light::set_light_type(xng_light_type type)
 	m_type = type;
 }
 
-const float3 & scene_graph_light::get_color(void) const
+const ubyte3 & scene_graph_light::get_color(void) const
 {
 	return m_color;
 }
 
-void scene_graph_light::set_color(const float3 & color)
+void scene_graph_light::set_color(const ubyte3 & color)
 {
 	m_color = color;
 }
@@ -76,14 +90,34 @@ void scene_graph_light::set_intensity(float intensity)
 	m_intensity = intensity;
 }
 
-const float3 & scene_graph_light::get_ambient(void) const
+float3 scene_graph_light::get_luminance(void) const
+{
+	return (float3)m_color * (m_intensity / 255.f);
+}
+
+const ubyte3 & scene_graph_light::get_ambient_color(void) const
 {
 	return m_ambient;
 }
 
-void scene_graph_light::set_ambient(const float3 & ambient)
+void scene_graph_light::set_ambient_color(const ubyte3 & ambient)
 {
 	m_ambient = ambient;
+}
+
+float scene_graph_light::get_ambient_intensity(void) const
+{
+	return m_ambientIntensity;
+}
+
+void scene_graph_light::set_ambient_intensity(float intensity)
+{
+	m_ambientIntensity = intensity;
+}
+
+float3 scene_graph_light::get_ambient_luminance(void) const
+{
+	return (float3)m_ambient * (m_ambientIntensity / 255.f);
 }
 
 float scene_graph_light::get_cutoff_angle(void) const

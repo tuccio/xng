@@ -26,6 +26,14 @@ namespace xng
 		typedef matrix<unsigned int, 1, 3> uint3row;
 		typedef matrix<unsigned int, 1, 4> uint4row;
 
+		typedef matrix<char, 1, 2> byte2row;
+		typedef matrix<char, 1, 3> byte3row;
+		typedef matrix<char, 1, 4> byte4row;
+
+		typedef matrix<unsigned char, 1, 2> ubyte2row;
+		typedef matrix<unsigned char, 1, 3> ubyte3row;
+		typedef matrix<unsigned char, 1, 4> ubyte4row;
+
 		typedef matrix<float, 2, 1> float2col;
 		typedef matrix<float, 3, 1> float3col;
 		typedef matrix<float, 4, 1> float4col;
@@ -42,6 +50,14 @@ namespace xng
 		typedef matrix<unsigned int, 3, 1> uint3col;
 		typedef matrix<unsigned int, 4, 1> uint4col;
 
+		typedef matrix<char, 2, 1> byte2col;
+		typedef matrix<char, 3, 1> byte3col;
+		typedef matrix<char, 4, 1> byte4col;
+
+		typedef matrix<unsigned char, 2, 1> ubyte2col;
+		typedef matrix<unsigned char, 3, 1> ubyte3col;
+		typedef matrix<unsigned char, 4, 1> ubyte4col;
+
 		typedef float2col float2;
 		typedef float3col float3;
 		typedef float4col float4;
@@ -57,5 +73,13 @@ namespace xng
 		typedef uint2col uint2;
 		typedef uint3col uint3;
 		typedef uint4col uint4;
+
+		typedef byte2col byte2;
+		typedef byte3col byte3;
+		typedef byte4col byte4;
+
+		typedef ubyte2col ubyte2;
+		typedef ubyte3col ubyte3;
+		typedef ubyte4col ubyte4;
 	}
 }

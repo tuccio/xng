@@ -1,6 +1,7 @@
 #include "editor.hpp"
 #include "render_panel.hpp"
 #include "camera_page.hpp"
+#include "light_page.hpp"
 
 #include <wx/listctrl.h>
 
@@ -393,6 +394,7 @@ void editor::create_menu(void)
 				render_module * oldModule = instance->get_render_module();
 
 				instance->stop_rendering();
+				instance->pause();
 
 				if (oldModule)
 				{
@@ -405,6 +407,7 @@ void editor::create_menu(void)
 					instance->set_render_module(newModule);
 				}
 				
+				instance->unpause();
 				instance->start_rendering();
 			}
 
@@ -476,6 +479,20 @@ void editor::on_node_select(scene_graph * sg, scene_graph_node * node)
 		m_sceneNotebook->AddPage(
 			m_selectedObjectPage,
 			"Camera");
+
+		m_sceneNotebook->Thaw();
+
+		break;
+
+	case XNG_SCENE_GRAPH_LIGHT:
+
+		m_selectedObjectPage = xng_new light_page(static_cast<scene_graph_light*>(node), m_editor);
+
+		m_sceneNotebook->Freeze();
+
+		m_sceneNotebook->AddPage(
+			m_selectedObjectPage,
+			"Light");
 
 		m_sceneNotebook->Thaw();
 

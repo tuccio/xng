@@ -268,7 +268,7 @@ namespace xng
 		{
 			transform_hierarchy<T> * parent = ((T*)this)->get_transform_hierarchy_parent();
 			quaternion globalRotation = parent ? parent->get_global_rotation() : quaternion(1, 0, 0, 0);
-			set_local_rotation(r * inverse(globalRotation));
+			set_local_rotation(inverse(globalRotation) * r);
 		}
 
 		template <typename T>

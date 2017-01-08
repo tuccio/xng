@@ -246,55 +246,49 @@ namespace xng
 
 		};
 
-		/*class wx_color_picker :
+		class wx_color_picker :
 			public wxColourPickerCtrl
 		{
 
 		public:
 
 			template <typename Functor>
-			wx_color_picker(Functor cb, wxWindow * parent, int id, const float4 & color)
+			wx_color_picker(Functor cb, wxWindow * parent, int id, const xng::math::ubyte4 & color)
 			{
-				wxColour wx(
-					static_cast<unsigned char>(color.x * 255.f),
-					static_cast<unsigned char>(color.y * 255.f),
-					static_cast<unsigned char>(color.z * 255.f),
-					static_cast<unsigned char>(color.w * 255.f));
+				wxColour wx = wxColour(color.x, color.y, color.z, color.w);
 
 				Create(parent, id, wx);
 
 				Bind(wxEVT_COLOURPICKER_CHANGED, [=](wxColourPickerEvent & event)
 				{
 					wxColour value = event.GetColour();
-					cb(float4(
-						value.Red() / 255.f,
-						value.Green() / 255.f,
-						value.Blue() / 255.f,
-						value.Alpha() / 255.f));
+
+					cb(ubyte4(
+						value.Red(),
+						value.Green(),
+						value.Blue(),
+						value.Alpha()));
 				});
 			}
 
 			template <typename Functor>
-			wx_color_picker(Functor cb, wxWindow * parent, int id, const xng::math::float3 & color)
+			wx_color_picker(Functor cb, wxWindow * parent, int id, const xng::math::ubyte3 & color)
 			{
-				wxColour wx(
-					static_cast<unsigned char>(color.x * 255.f),
-					static_cast<unsigned char>(color.y * 255.f),
-					static_cast<unsigned char>(color.z * 255.f),
-					255);
+				wxColour wx = wxColour(color.x, color.y, color.z, 255);
 
 				Create(parent, id, wx);
 
 				Bind(wxEVT_COLOURPICKER_CHANGED, [=](wxColourPickerEvent & event)
 				{
 					wxColour value = event.GetColour();
-					cb(xng::math::float3(
-						value.Red() / 255.f,
-						value.Green() / 255.f,
-						value.Blue() / 255.f));
+
+					cb(xng::math::ubyte3(
+						value.Red(),
+						value.Green(),
+						value.Blue()));
 				});
 			}
 
-		};*/
+		};
 	}
 }

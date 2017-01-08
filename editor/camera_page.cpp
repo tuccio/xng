@@ -10,8 +10,6 @@ using namespace xng::math;
 camera_page::camera_page(scene_graph_camera * cam, wxWindow * parent) :
 	wxWindow(parent, wxID_ANY)
 {
-	m_camera = cam;
-
 	wxBoxSizer * box = xng_new wxBoxSizer(wxVERTICAL);
 
 	wxStaticBoxSizer * nearBox = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Near plane"));

@@ -61,9 +61,9 @@ extracted_scene scene::extract(void)
 			extracted_light extractedLight;
 
 			extractedLight.id            = l->get_id();
-			extractedLight.ambient       = l->get_ambient();
-			extractedLight.luminance     = l->get_color() * l->get_intensity();
-			extractedLight.direction     = l->get_global_rotation() * l->get_direction();
+			extractedLight.ambient       = l->get_ambient_luminance();
+			extractedLight.luminance     = l->get_luminance();
+			extractedLight.direction     = l->get_direction();
 			extractedLight.position      = l->get_position();
 			extractedLight.cutoff        = l->get_cutoff_angle();
 			extractedLight.shadowCasting = l->is_shadow_caster();

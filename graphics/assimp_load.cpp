@@ -103,10 +103,16 @@ void create_scene_graph_assimp(assimp_loader * loader, aiNode * node, scene * sc
 
 			float3 luminance = reinterpret_cast<const float3&>(aiLight->mColorDiffuse);
 			float  intensity = max(0.f, max(max(luminance.x, luminance.y), luminance.z));
+			float3 color     = intensity > 0.1f ? luminance / intensity : float3(0);
 
-			lNode->set_color(intensity > 0.1f ? luminance / intensity : float3(0));
+			float3 ambientLuminance = reinterpret_cast<const float3&>(aiLight->mColorAmbient);
+			float  ambientIntensity = max(0.f, max(max(ambientLuminance.x, ambientLuminance.y), ambientLuminance.z));
+			float3 ambientColor     = ambientIntensity > 0.1f ? ambientLuminance / ambientIntensity : float3(0);
+
+			lNode->set_color((ubyte3)(color * 255.f));
 			lNode->set_intensity(intensity);
-			lNode->set_ambient(reinterpret_cast<const float3&>(aiLight->mColorAmbient));
+			lNode->set_ambient_color((ubyte3)(ambientColor * 255.f));
+			lNode->set_ambient_intensity(ambientIntensity);
 			lNode->set_position(reinterpret_cast<const float3&>(aiLight->mPosition));
 			lNode->set_direction(direction);
 			lNode->set_cutoff_angle(aiLight->mAngleInnerCone);

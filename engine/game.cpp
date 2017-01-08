@@ -259,6 +259,8 @@ void game::game_loop(void)
 
 	init_fps_counter();
 
+	m_paused = false;
+
 	while (m_running)
 	{
 		bool gameLogicUpdated = false;
@@ -267,28 +269,35 @@ void game::game_loop(void)
 			timestamp() > nextTick && loops < MaxFrameSkip;
 			++loops)
 		{
-			gameLogicUpdated = true;
-
-			m_inputHandler.dispatch(nextTick);
-
-			if (m_runtime)
+			if (!m_paused)
 			{
-				m_runtime->update(TickSeconds);
-			}
+				gameLogicUpdated = true;
 
-			if (m_scene)
-			{
-				currentScene = m_scene->get_active_scene();
+				m_inputHandler.dispatch(nextTick);
 
-				if (currentScene)
+				if (m_runtime)
 				{
-					currentScene->update();
+					m_runtime->update(TickSeconds);
 				}
+
+				if (m_scene)
+				{
+					currentScene = m_scene->get_active_scene();
+
+					if (currentScene)
+					{
+						currentScene->update();
+					}
+				}
+
+				//XNG_LOG("Update", XNG_LOG_STREAM() << "Game time " << nextTick << ", current time " << timestamp() << ", difference " << to_seconds<float>(timestamp() - nextTick));
+
+				nextTick += SkipTicks;
 			}
-
-			//XNG_LOG("Update", XNG_LOG_STREAM() << "Game time " << nextTick << ", current time " << timestamp() << ", difference " << to_seconds<float>(timestamp() - nextTick));
-
-			nextTick += SkipTicks;
+			else
+			{
+				// TODO: Shift time time, so that it doesn't need to catch up after unpausing
+			}
 		}
 
 		// Feed the rendering thread a new scene (TODO: interpolation)
@@ -344,6 +353,16 @@ void game::quit(void)
 {
 	m_mainLoop->quit();
 	m_running = false;
+}
+
+void game::pause(void)
+{
+	m_paused = true;
+}
+
+void game::unpause(void)
+{
+	m_paused = false;
 }
 
 scene_module * game::get_scene_module(void) const

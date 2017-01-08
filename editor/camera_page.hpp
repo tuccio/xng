@@ -16,10 +16,6 @@ namespace xng
 
 			camera_page(graphics::scene_graph_camera * camera, wxWindow * parent);
 
-		private:
-
-			graphics::scene_graph_camera * m_camera;
-
 		};
 	}
 }

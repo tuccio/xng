@@ -49,8 +49,6 @@ namespace xng
 
 			fps_camera_controller m_cameraController;
 
-			gui::window       * m_sunSettings;
-			gui::window       * m_cameraSettings;
 			gui::text_control * m_fpsText;
 
 			scene_graph_page        * m_sceneGraphPage;

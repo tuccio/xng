@@ -98,18 +98,21 @@ float4 main_ps(PSInput input) : SV_Target0
 	baseColor = BaseTexture.Sample(LinearWrap, input.texcoord0).rgb;
 #endif
 	
-	float3 radiance = 0;
+	float3 reflectance = 0;
+	float3 ambient     = 0;
 	
 	for (int i = 0; i < numLights; ++i)
 	{
 		Light light = lights[i];
 		
 		// TODO: Proper lighting
-		float3 L   = -light.direction;
-		float3 lum = light.luminance / 100.f;
+		float3 L = -light.direction;
 		
-		radiance += dot(N, L) * baseColor * lum;
+		reflectance += dot(N, L) * light.luminance;
+		ambient     += light.ambient;
 	}
+	
+	float3 radiance = baseColor * reflectance + ambient;
 	
 	return float4(radiance / (radiance + 1), 1);
 }

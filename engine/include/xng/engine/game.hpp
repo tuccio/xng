@@ -36,6 +36,9 @@ namespace xng
 			bool is_running(void) const;
 			void quit(void);
 
+			void pause(void);
+			void unpause(void);
+
 			scene_module * get_scene_module(void) const;
 			void set_scene_module(scene_module * scene);
 
@@ -78,13 +81,14 @@ namespace xng
 
 			uint32_t m_ticksPerSecond;
 
+			std::atomic<bool> m_paused;
 			std::atomic<bool> m_running;
 			std::atomic<bool> m_rendering;
 
-			std::unique_ptr<os::main_loop>    m_mainLoop;
-			bool                              m_renderReady;
-			graphics::extracted_scene         m_extractedScene;
-			gui::gui_command_list             m_guiCommandList;
+			std::unique_ptr<os::main_loop> m_mainLoop;
+			bool                           m_renderReady;
+			graphics::extracted_scene      m_extractedScene;
+			gui::gui_command_list          m_guiCommandList;
 
 			std::unique_ptr<os::native_window_observer> m_quitOnClose;
 
