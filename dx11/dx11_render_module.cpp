@@ -148,12 +148,25 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
 
 	if (rvars.forward_depth_prepass)
 	{
-		m_renderer->depth_prepass(immediateContext, depthBuffer->get_depth_stencil_view(), extractedScene);
-		m_renderer->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), false, extractedScene);
+		m_renderer->depth_prepass(immediateContext,
+		                          depthBuffer->get_depth_stencil_view(),
+		                          extractedScene);
+
+		m_renderer->render(immediateContext,
+		                   backBuffer,
+		                   depthBuffer->get_depth_stencil_view(),
+		                   false,
+		                   extractedScene,
+		                   rvars.debug_normals);
 	}
 	else
 	{
-		m_renderer->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), true, extractedScene);
+		m_renderer->render(immediateContext,
+		                   backBuffer,
+		                   depthBuffer->get_depth_stencil_view(),
+		                   true,
+		                   extractedScene,
+		                   rvars.debug_normals);
 	}
 	
 	m_guiRenderer->render(immediateContext, backBuffer, rvars.render_resolution, guiCommandList);

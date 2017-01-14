@@ -15,9 +15,10 @@ using namespace xng::graphics;
 using namespace xng::res;
 using namespace xng::math;
 
-#define NORMAL_MAP   1
-#define BASE_TEXTURE 2
-#define SPECULAR_MAP 4
+#define NORMAL_MAP    (1)
+#define BASE_TEXTURE  (1 << 1)
+#define SPECULAR_MAP  (1 << 2)
+#define DEBUG_NORMALS (1 << 10)
 
 struct alignas(16) __cbPerObject
 {
@@ -124,6 +125,11 @@ void make_shader_permutation_macros(std::vector<shader_macro> & macros, uint32_t
 {
 	macros.clear();
 
+	if (shaderPermutationKey & DEBUG_NORMALS)
+	{
+		macros.push_back(shader_macro{ "DEBUG_NORMALS", "" });
+	}
+
 	if (shaderPermutationKey & NORMAL_MAP)
 	{
 		macros.push_back(shader_macro{ "NORMAL_MAP", "" });
@@ -140,7 +146,9 @@ void make_shader_permutation_macros(std::vector<shader_macro> & macros, uint32_t
 	}
 }
 
-void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext, ID3D11DepthStencilView * dsv, const extracted_scene & scene)
+void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
+                                     ID3D11DepthStencilView * dsv,
+                                     const extracted_scene & scene)
 {
 	ID3D11Device * device = m_apiContext->get_device();
 
@@ -210,12 +218,12 @@ void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext, ID3D11
 	program.dispose(deviceContext);
 }
 
-void forward_renderer::render(
-	ID3D11DeviceContext * deviceContext,
-	ID3D11RenderTargetView * rtv,
-	ID3D11DepthStencilView * dsv,
-	bool renderDepth,
-	const extracted_scene & scene)
+void forward_renderer::render(ID3D11DeviceContext * deviceContext,
+                              ID3D11RenderTargetView * rtv,
+                              ID3D11DepthStencilView * dsv,
+                              bool renderDepth,
+                              const extracted_scene & scene,
+                              bool debugNormals)
 {
 	ID3D11Device * device = m_apiContext->get_device();
 
@@ -319,7 +327,6 @@ void forward_renderer::render(
 		return lhs.key < rhs.key;
 	});
 
-
 	// Setup lights
 
 	auto & extractedLights = scene.get_lights();
@@ -384,6 +391,11 @@ void forward_renderer::render(
 		    mesh && mesh->load(&meshLoadData))
 		{
 			make_shader_permutation(shaderPermutationKey, material);
+
+			if (debugNormals)
+			{
+				shaderPermutationKey |= DEBUG_NORMALS;
+			}
 			
 			if (currentShader != shaderPermutationKey)
 			{

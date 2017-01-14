@@ -92,6 +92,10 @@ float4 main_ps(PSInput input) : SV_Target0
 	
 #endif
 
+#ifdef DEBUG_NORMALS
+	return float4((N * .5f) + .5f, 1);
+#endif
+
 #ifndef BASE_TEXTURE
 	baseColor = float3(1, 1, 1);
 #else

@@ -20,8 +20,16 @@ namespace xng
 
 			void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);
 
-			void depth_prepass(ID3D11DeviceContext * deviceContext, ID3D11DepthStencilView * dsv, const graphics::extracted_scene & extractedScene);
-			void render(ID3D11DeviceContext * deviceContext, ID3D11RenderTargetView * rtv, ID3D11DepthStencilView * dsv, bool renderDepth, const graphics::extracted_scene & extractedScene);
+			void depth_prepass(ID3D11DeviceContext * deviceContext,
+			                   ID3D11DepthStencilView * dsv,
+			                   const graphics::extracted_scene & extractedScene);
+
+			void render(ID3D11DeviceContext * deviceContext,
+			            ID3D11RenderTargetView * rtv,
+			            ID3D11DepthStencilView * dsv,
+			            bool renderDepth,
+			            const graphics::extracted_scene & extractedScene,
+			            bool debugNormals);
 
 			void reload_shaders(void);
 
@@ -43,7 +51,7 @@ namespace xng
 			uint32_t                          m_maxLights;
 
 			vertex_buffers_factory m_vbFactory;
-			uber_shader m_program;
+			uber_shader            m_program;
 
 		};
 	}

@@ -57,9 +57,10 @@ enum xng_culling_mode
 // Definition
 
 XNG_GRAPHICS_RENDER_VARIABLES(
-	(xng::math::uint2, render_resolution, XNG_RV_RENDER_RESOLUTION, xng::math::uint2(1280, 720))
-	(float, shadow_map_bias, XNG_RV_SHADOW_MAP_BIAS, 0.f)
-	(xng_culling_mode, culling_mode, XNG_RV_CULLING_MODE, XNG_CULLING_MODE_BACK)
+	(xng::math::uint2, render_resolution,       XNG_RV_RENDER_RESOLUTION,       xng::math::uint2(1280, 720))
+	(float,            shadow_map_bias,         XNG_RV_SHADOW_MAP_BIAS,         0.f)
+	(xng_culling_mode, culling_mode,            XNG_RV_CULLING_MODE,            XNG_CULLING_MODE_BACK)
 	(xng_culling_mode, shadow_map_culling_mode, XNG_RV_SHADOW_MAP_CULLING_MODE, XNG_CULLING_MODE_FRONT)
-	(bool, forward_depth_prepass, XNG_RV_FORWARD_DEPTH_PREPASS, false)
+	(bool,             forward_depth_prepass,   XNG_RV_FORWARD_DEPTH_PREPASS,   false)
+	(bool,             debug_normals,           XNG_RV_DEBUG_NORMALS,           false)
 )
