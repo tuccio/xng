@@ -56,7 +56,7 @@ scene_graph_node * scene_graph_node::find_child_by_type(xng_scene_graph_node_typ
 {
 	auto it = std::find_if(m_children.begin(), m_children.end(), [=](scene_graph_node * n)
 	{
-		return (n->get_type() == type);
+		return (n->get_node_type() == type);
 	});
 
 	return it == m_children.end() ? nullptr : *it;
@@ -82,7 +82,7 @@ std::vector<scene_graph_node*> scene_graph_node::find_children_by_type(xng_scene
 	std::copy_if(m_children.begin(), m_children.end(), std::back_inserter(v),
 		[=](scene_graph_node * n)
 	{
-		return (n->get_type() == type);
+		return (n->get_node_type() == type);
 	});
 
 	return v;
@@ -203,7 +203,7 @@ uint32_t scene_graph_node::get_id(void) const
 	return m_id;
 }
 
-xng_scene_graph_node_type scene_graph_node::get_type(void) const
+xng_scene_graph_node_type scene_graph_node::get_node_type(void) const
 {
 	return m_type;
 }

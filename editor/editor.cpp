@@ -470,7 +470,7 @@ void editor::on_node_select(scene_graph * sg, scene_graph_node * node)
 		m_selectedObjectPage = nullptr;
 	}
 
-	switch (node->get_type())
+	switch (node->get_node_type())
 	{
 	case XNG_SCENE_GRAPH_CAMERA:	
 

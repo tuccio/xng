@@ -79,7 +79,7 @@ namespace xng
 
 			uint32_t get_id(void) const;
 
-			xng_scene_graph_node_type get_type(void) const;
+			xng_scene_graph_node_type get_node_type(void) const;
 
 			bool is_ancestor(scene_graph_node * node) const;
 			bool is_descendant(scene_graph_node * node) const;
