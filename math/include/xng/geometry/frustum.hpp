@@ -27,6 +27,12 @@ enum xng_frustum_planes
 	XNG_FRUSTUM_PLANE_RIGHT
 };
 
+enum xng_coordinate_system
+{
+	XNG_COORDINATE_SYSTEM_OPENGL,
+	XNG_COORDINATE_SYSTEM_DIRECTX
+};
+
 namespace xng
 {
 	namespace math
@@ -37,7 +43,7 @@ namespace xng
 			frustum(const frustum &) = default;
 			frustum(frustum &&) = default;
 
-			frustum(const float4x4 & viewProjection);
+			frustum(const float4x4 & viewProjection, xng_coordinate_system cs);
 
 			frustum & operator= (const frustum &) = default;
 			frustum & operator= (frustum &&) = default;

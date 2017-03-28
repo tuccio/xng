@@ -3,14 +3,27 @@
 
 using namespace xng::math;
 
-frustum::frustum(const float4x4 & viewProjection)
+frustum::frustum(const float4x4 & viewProjection, xng_coordinate_system cs)
 {
-	planes[XNG_FRUSTUM_PLANE_NEAR]   = flip(normalize(plane(transpose(viewProjection.r[2]))));
-	planes[XNG_FRUSTUM_PLANE_FAR]    = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[2]))));
-	planes[XNG_FRUSTUM_PLANE_TOP]    = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[1]))));
-	planes[XNG_FRUSTUM_PLANE_BOTTOM] = flip(normalize(plane(transpose(viewProjection.r[3] + viewProjection.r[1]))));
-	planes[XNG_FRUSTUM_PLANE_LEFT]   = flip(normalize(plane(transpose(viewProjection.r[3] + viewProjection.r[0]))));
-	planes[XNG_FRUSTUM_PLANE_RIGHT]  = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[0]))));
+	if (cs == XNG_COORDINATE_SYSTEM_DIRECTX)
+	{
+		planes[XNG_FRUSTUM_PLANE_NEAR]   = flip(normalize(plane(transpose(viewProjection.r[2]))));
+		planes[XNG_FRUSTUM_PLANE_FAR]    = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[2]))));
+		planes[XNG_FRUSTUM_PLANE_TOP]    = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[1]))));
+		planes[XNG_FRUSTUM_PLANE_BOTTOM] = flip(normalize(plane(transpose(viewProjection.r[3] + viewProjection.r[1]))));
+		planes[XNG_FRUSTUM_PLANE_LEFT]   = flip(normalize(plane(transpose(viewProjection.r[3] + viewProjection.r[0]))));
+		planes[XNG_FRUSTUM_PLANE_RIGHT]  = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[0]))));
+	}
+	else
+	{
+		// TODO
+		planes[XNG_FRUSTUM_PLANE_NEAR]   = flip(normalize(plane(transpose(viewProjection.r[2]))));
+		planes[XNG_FRUSTUM_PLANE_FAR]    = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[2]))));
+		planes[XNG_FRUSTUM_PLANE_TOP]    = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[1]))));
+		planes[XNG_FRUSTUM_PLANE_BOTTOM] = flip(normalize(plane(transpose(viewProjection.r[3] + viewProjection.r[1]))));
+		planes[XNG_FRUSTUM_PLANE_LEFT]   = flip(normalize(plane(transpose(viewProjection.r[3] + viewProjection.r[0]))));
+		planes[XNG_FRUSTUM_PLANE_RIGHT]  = flip(normalize(plane(transpose(viewProjection.r[3] - viewProjection.r[0]))));
+	}
 }
 
 static XNG_INLINE float3 plane_intersection(const plane & p1, const plane & p2, const plane & p3)

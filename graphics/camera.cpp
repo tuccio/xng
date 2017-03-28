@@ -7,7 +7,7 @@ using namespace xng::math;
 camera::camera(void) :
 	m_position(0),
 	m_orientation(1, 0, 0, 0),
-	m_fovy(XNG_PI),
+	m_fovy(to_radians(75.f)),
 	m_ratio(1.f),
 	m_znear(0.1f),
 	m_zfar(1000.f),
@@ -120,6 +120,34 @@ XNG_INLINE void directx_view_matrix(float4x4 & viewMatrix, const float3 & positi
 	viewMatrix._23 = -dot(to_float3(viewMatrix.r[2]), position);
 }
 
+const math::float4x4 & camera::get_view_matrix(void) const
+{
+	switch (m_coordSystem)
+	{
+	case XNG_COORDINATE_SYSTEM_DIRECTX:
+		return get_directx_view_matrix();
+
+	case XNG_COORDINATE_SYSTEM_OPENGL:
+		return get_gl_view_matrix();
+	}
+
+	return m_viewMatrix;
+}
+
+const math::float4x4 & camera::get_projection_matrix(void) const
+{
+	switch (m_coordSystem)
+	{
+	case XNG_COORDINATE_SYSTEM_DIRECTX:
+		return get_directx_projection_matrix();
+
+	case XNG_COORDINATE_SYSTEM_OPENGL:
+		return get_gl_projection_matrix();
+	}
+
+	return m_projectionMatrix;
+}
+
 const float4x4 & camera::get_gl_view_matrix(void) const
 {
 	if (m_viewMatrixDirty || m_coordSystem != XNG_COORDINATE_SYSTEM_OPENGL)
@@ -146,7 +174,7 @@ const float4x4 & camera::get_directx_view_matrix(void) const
 
 XNG_INLINE void gl_projection_matrix(float4x4 & projectionMatrix, float fovy, float ratio, float znear, float zfar)
 {
-	float h = std::atan(fovy * .5f);
+	float h = 1.f / std::tan(fovy * .5f);
 	float w = h / ratio;
 	float invFmN = 1.f / (zfar - znear);
 
@@ -160,14 +188,15 @@ XNG_INLINE void gl_projection_matrix(float4x4 & projectionMatrix, float fovy, fl
 
 XNG_INLINE void directx_projection_matrix(float4x4 & projectionMatrix, float fovy, float ratio, float znear, float zfar)
 {
-	float h = std::atan(fovy * .5f);
+	float h = 1.f / std::tan(fovy * .5f);
 	float w = h / ratio;
 	float invNmF = 1.f / (znear - zfar);
+	float Q = zfar * invNmF;
 
 	projectionMatrix = float4x4{
 		w, 0.f, 0.f, 0.f,
 		0.f, h, 0.f, 0.f,
-		0.f, 0.f, zfar * invNmF, znear * zfar * invNmF,
+		0.f, 0.f, Q, Q * znear,
 		0.f, 0.f, -1.f, 0.f
 	};
 }
@@ -222,4 +251,9 @@ const float3 camera::up(void)
 const float3 camera::down(void)
 {
 	return transform(float3(0, -1, 0), m_orientation);
+}
+
+frustum camera::get_frustum(void) const
+{
+	return frustum(get_directx_projection_matrix() * get_directx_view_matrix(), m_coordSystem);
 }

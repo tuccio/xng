@@ -9,7 +9,7 @@ scene_graph_light::scene_graph_light(scene_graph_node * parent) :
 	m_ambient(0),
 	m_intensity(0),
 	m_ambientIntensity(0),
-	m_cutoff(XNG_PI / 4) {}
+	m_cutoff(pi() / 4) {}
 
 bool scene_graph_light::is_static(void) const
 {

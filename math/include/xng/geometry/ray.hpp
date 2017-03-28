@@ -1,6 +1,5 @@
 #pragma once
 
-#include <xng/core.hpp>
 #include <xng/math.hpp>
 
 namespace xng

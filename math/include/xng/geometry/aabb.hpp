@@ -1,8 +1,8 @@
 #pragma once
 
-#include <xng/core.hpp>
 #include <xng/math.hpp>
 
+#include <algorithm>
 #include <array>
 
 #define XNG_MAKE_AABB_CORNER(Z, Y, X) ((X) | (Y << 1) | (Z << 2))
@@ -66,5 +66,16 @@ namespace xng
 
 		aabb operator+ (const aabb & a, const aabb & b);
 		aabb operator^ (const aabb & a, const aabb & b);
+
+		template <typename Iterator>
+		inline aabb make_aabb(Iterator begin, Iterator end)
+		{
+			auto mMx = std::minmax_element(begin, end, [](const float3 & lhs, const float3 & rhs) { return lhs.x < rhs.x; });
+			auto mMy = std::minmax_element(begin, end, [](const float3 & lhs, const float3 & rhs) { return lhs.y < rhs.y; });
+			auto mMz = std::minmax_element(begin, end, [](const float3 & lhs, const float3 & rhs) { return lhs.z < rhs.z; });
+
+			return aabb::from_min_max(float3{ mMx.first->x, mMy.first->y, mMz.first->z },
+									  float3{ mMx.second->x, mMy.second->y, mMz.second->z });
+		}
 	}
 }

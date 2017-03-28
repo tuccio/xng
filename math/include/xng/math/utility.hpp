@@ -20,7 +20,7 @@ namespace xng
 			};
 
 			template <int N>
-			XNG_INLINE typename sequence_factory<N>::type make_sequence(void)
+			constexpr typename sequence_factory<N>::type make_sequence(void)
 			{
 				return sequence_factory<N>::type();
 			}

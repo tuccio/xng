@@ -4,12 +4,6 @@
 #include <xng/math.hpp>
 #include <xng/geometry.hpp>
 
-enum xng_coordinate_system
-{
-	XNG_COORDINATE_SYSTEM_OPENGL,
-	XNG_COORDINATE_SYSTEM_DIRECTX
-};
-
 namespace xng
 {
 	namespace graphics
@@ -51,6 +45,8 @@ namespace xng
 			float get_zfar(void) const;
 			void set_zfar(float zfar);
 
+			const math::float4x4 & get_view_matrix(void) const;
+			const math::float4x4 & get_projection_matrix(void) const;
 			const math::float4x4 & get_gl_view_matrix(void) const;
 			const math::float4x4 & get_directx_view_matrix(void) const;
 			const math::float4x4 & get_gl_projection_matrix(void) const;
@@ -62,6 +58,8 @@ namespace xng
 			const math::float3 right(void);
 			const math::float3 up(void);
 			const math::float3 down(void);
+
+			math::frustum get_frustum(void) const;
 
 		private:
 
