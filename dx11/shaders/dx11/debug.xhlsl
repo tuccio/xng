@@ -1,0 +1,35 @@
+struct VSInput
+{
+	float3 position : POSITION;
+	float4 color    : COLOR;
+};
+
+struct PSInput
+{
+	float4 position  : SV_Position;
+	float4 color     : COLOR;
+};
+
+#xng section(vertex:main_vs)
+
+cbuffer cbPerObject : register(b0)
+{
+	float4x4 viewProjectionMatrix;
+};
+
+PSInput main_vs(VSInput input)
+{
+	PSInput output;
+	
+	output.position  = mul(float4(input.position, 1), viewProjectionMatrix);
+	output.color     = input.color;
+	
+	return output;
+}
+
+#xng section(pixel:main_ps)
+
+float4 main_ps(PSInput input) : SV_Target0
+{
+	return input.color;
+}
