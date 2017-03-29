@@ -28,15 +28,14 @@ frustum::frustum(const float4x4 & viewProjection, xng_coordinate_system cs)
 
 static XNG_INLINE float3 plane_intersection(const plane & p1, const plane & p2, const plane & p3)
 {
-	float3x3 A, At;
+	float3x3 A;
 	float3 b;
 
-	At.r[0] = transpose(to_float3(p1.v));
-	At.r[1] = transpose(to_float3(p2.v));
-	At.r[2] = transpose(to_float3(p3.v));
+	A.r[0] = transpose(to_float3(p1.v));
+	A.r[1] = transpose(to_float3(p2.v));
+	A.r[2] = transpose(to_float3(p3.v));
 
-	A = transpose(At);
-	b = float3(p1.v.w, p2.v.w, p3.v.w);
+	b = float3(-p1.v.w, -p2.v.w, -p3.v.w);
 
 	return cramer3(A, b);
 }
