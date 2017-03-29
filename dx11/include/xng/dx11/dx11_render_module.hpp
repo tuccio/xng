@@ -2,6 +2,7 @@
 
 #include <xng/dx11/dx11_api_context.hpp>
 #include <xng/dx11/forward_renderer.hpp>
+#include <xng/dx11/visual_debugger.hpp>
 #include <xng/dx11/dx11_gui_renderer.hpp>
 #include <xng/dx11/default_samplers.hpp>
 #include <xng/dx11/render_resource_manager.hpp>
@@ -34,6 +35,7 @@ namespace xng
 			std::unique_ptr<dx11_api_context>  m_context;
 			std::unique_ptr<forward_renderer>  m_renderer;
 			std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
+			std::unique_ptr<visual_debugger>   m_visualDebugger;
 
 			render_resource_manager m_renderResourceManager;
 

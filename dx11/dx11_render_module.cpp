@@ -1,4 +1,4 @@
-#include <xng/dx11/dx11_render_module.hpp>
+ #include <xng/dx11/dx11_render_module.hpp>
 #include <xng/dx11/gpu_mesh.hpp>
 #include <xng/dx11/texture.hpp>
 
@@ -7,6 +7,7 @@ using namespace xng::graphics;
 using namespace xng::os;
 using namespace xng::res;
 using namespace xng::gui;
+using namespace xng::math;
 
 const char *          dx11_render_module::module_name        = "xngdx11";
 const char *          dx11_render_module::module_description = "XNG DirectX 11 Render Module";
@@ -33,16 +34,18 @@ bool dx11_render_module::init(native_window * wnd)
 	debug = true;
 #endif
 
-	m_context     = std::make_unique<dx11_api_context>();
-	m_renderer    = std::make_unique<forward_renderer>();
-	m_guiRenderer = std::make_unique<dx11_gui_renderer>();
+	m_context        = std::make_unique<dx11_api_context>();
+	m_renderer       = std::make_unique<forward_renderer>();
+	m_guiRenderer    = std::make_unique<dx11_gui_renderer>();
+	m_visualDebugger = std::make_unique<visual_debugger>();
 
 	render_variables rvars;
 	m_configuration.get_render_variables(&rvars, nullptr);
 
 	if (m_context->init(wnd->get_native_handle(), XNG_API_DIRECTX_11, debug) &&
 		m_guiRenderer->init(m_context.get()) &&
-		m_renderer->init(m_context.get(), rvars))
+		m_renderer->init(m_context.get(), rvars) &&
+		m_visualDebugger->init(m_context.get(), rvars))
 	{
 		m_window         = wnd;
 		m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
@@ -109,10 +112,30 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
 
 	m_windowObserver.update(&rvars, &updates);
 
-	if (updates.find(XNG_RV_RENDER_RESOLUTION) != updates.end())
+	std::for_each(updates.begin(), updates.end(),
+		[&](xng_render_variable rvar)
 	{
-		m_renderResourceManager.clear();
-	}
+		switch (rvar)
+		{
+		case XNG_RV_RENDER_RESOLUTION:
+			m_renderResourceManager.clear();
+			break;
+
+		case XNG_RV_DEBUG_CAMERA_FRUSTUM:
+			if (rvars.debug_camera_frustum)
+			{
+				m_visualDebugger->add_persistent("debug_camera_frustum", extractedScene.get_active_camera()->get_frustum(), float4(0, 1, 0, 1));
+			}
+			else
+			{
+				m_visualDebugger->remove_persistent("debug_camera_frustum");
+			}
+			break;
+
+		default:
+			break;
+		}
+	});
 
 	m_context->frame_start();
 
@@ -170,6 +193,7 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
 	}
 	
 	m_guiRenderer->render(immediateContext, backBuffer, rvars.render_resolution, guiCommandList);
+	m_visualDebugger->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), extractedScene.get_active_camera());
 	
 	m_context->frame_complete();
 }

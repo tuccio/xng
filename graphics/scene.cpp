@@ -14,15 +14,15 @@ extracted_scene scene::extract(void)
 
 	if (cam)
 	{
-		auto frustumCullingDynamic = get_frustum_culling_dynamic(cam->get_camera());
-		auto frustumCullingStatic  = get_frustum_culling_static(cam->get_camera());
+		auto frustumCullingDynamic = get_frustum_culling_dynamic(cam->get_camera()->get_frustum());
+		auto frustumCullingStatic  = get_frustum_culling_static(cam->get_camera()->get_frustum());
 
 		auto lights = get_light_nodes();;
 
 		std::unordered_map<scene_graph_geometry*, uint32_t> geometryIndex;
 
 		auto add_geometry =
-			[&](std::vector<uint32_t> & v, scene_graph_geometry * g)
+			[&](renderable_index_vector & v, scene_graph_geometry * g)
 		{
 			uint32_t index;
 
@@ -52,6 +52,8 @@ extracted_scene scene::extract(void)
 
 		std::for_each(frustumCullingDynamic.begin(), frustumCullingDynamic.end(), std::bind(add_geometry, std::ref(xscene.m_visibleDynamicObjects), std::placeholders::_1));
 		std::for_each(frustumCullingStatic.begin(), frustumCullingStatic.end(), std::bind(add_geometry, std::ref(xscene.m_visibleStaticObjects), std::placeholders::_1));
+
+		// Add lights
 		
 		xscene.m_lights.reserve(lights.size());
 
@@ -71,6 +73,26 @@ extracted_scene scene::extract(void)
 
 			return extractedLight;
 		});
+
+		// Add shadow casters
+
+		for (auto & light : lights)
+		{
+			switch (light->get_light_type())
+			{
+
+			case XNG_LIGHT_DIRECTIONAL:
+
+				break;
+
+			case XNG_LIGHT_SPOT:
+				break;
+
+			case XNG_LIGHT_POINT:
+				break;
+
+			}
+		}
 	}
 
 	return xscene;

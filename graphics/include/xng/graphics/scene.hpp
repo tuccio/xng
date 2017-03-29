@@ -27,8 +27,8 @@ namespace xng
 
 			virtual scene_graph * get_scene_graph(void) = 0;
 
-			virtual geometry_vector get_frustum_culling_static(const camera * cam) = 0;
-			virtual geometry_vector get_frustum_culling_dynamic(const camera * cam) = 0;
+			virtual geometry_vector get_frustum_culling_static(const math::frustum & f) = 0;
+			virtual geometry_vector get_frustum_culling_dynamic(const math::frustum & f) = 0;
 
 			virtual geometry_vector get_geometry_nodes(void) = 0;
 			virtual camera_vector   get_camera_nodes(void) = 0;

@@ -102,6 +102,7 @@ void dx11_api_context::on_resize(uint32_t width, uint32_t height)
 	if (m_device)
 	{
 		m_backBufferRTV.reset();
+
 		if (!XNG_HR_FAILED(m_swapChain->ResizeBuffers(1, width, height, m_backBufferFormat, 0)))
 		{
 			create_back_buffer_view();

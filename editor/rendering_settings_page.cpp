@@ -25,6 +25,13 @@ rendering_settings_page::rendering_settings_page(wxWindow * parent) :
 	},
 		debugBox->GetStaticBox(), wxID_ANY, _("Show normals"), game::get_singleton()->get_render_module()->configuration().get_debug_normals()), 0, wxEXPAND | wxALL, padding);
 
+	debugBox->Add(xng_new wx_checkbox(
+		[&](bool value)
+	{
+		game::get_singleton()->get_render_module()->configuration().set_debug_camera_frustum(value);
+	},
+		debugBox->GetStaticBox(), wxID_ANY, _("Show current camera frustum"), game::get_singleton()->get_render_module()->configuration().get_debug_camera_frustum()), 0, wxEXPAND | wxALL, padding);
+
 	wxStaticBoxSizer * forwardBox = xng_new wxStaticBoxSizer(wxVERTICAL, this, _("Forward Rendering"));
 
 	forwardBox->Add(xng_new wx_checkbox(

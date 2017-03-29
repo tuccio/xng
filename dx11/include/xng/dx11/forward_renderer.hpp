@@ -15,7 +15,6 @@ namespace xng
 		public:
 
 			bool init(dx11_api_context * context, const graphics::render_variables & rvars);
-
 			void shutdown(void);
 
 			void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);

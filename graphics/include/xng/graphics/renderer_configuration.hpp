@@ -63,4 +63,5 @@ XNG_GRAPHICS_RENDER_VARIABLES(
 	(xng_culling_mode, shadow_map_culling_mode, XNG_RV_SHADOW_MAP_CULLING_MODE, XNG_CULLING_MODE_FRONT)
 	(bool,             forward_depth_prepass,   XNG_RV_FORWARD_DEPTH_PREPASS,   false)
 	(bool,             debug_normals,           XNG_RV_DEBUG_NORMALS,           false)
+	(bool,             debug_camera_frustum,    XNG_RV_DEBUG_CAMERA_FRUSTUM,    false)
 )
