@@ -10,32 +10,32 @@
 
 namespace xng
 {
-	namespace gl
-	{		
-		class uber_shader
-		{
+    namespace gl
+    {        
+        class uber_shader
+        {
 
-		public:
+        public:
 
-			uber_shader(void);
+            uber_shader(void);
 
-			void clear(void);
+            void clear(void);
 
-			bool preprocess(const char * filename);
-			bool is_preprocessed(void) const;
+            bool preprocess(const char * filename);
+            bool is_preprocessed(void) const;
 
-			const shader_program * compile(const char * name = "", std::initializer_list<graphics::shader_macro> macros = {});
-			void free(const char * name);
+            const shader_program * compile(const char * name = "", std::initializer_list<graphics::shader_macro> macros = {});
+            void free(const char * name);
 
-		private:
+        private:
 
-			std::string m_filename;
+            std::string m_filename;
 
-			std::unordered_map<const char *, std::unique_ptr<shader_program>> m_shaders;
+            std::unordered_map<const char *, std::unique_ptr<shader_program>> m_shaders;
 
-			graphics::shader_preprocessor::output_type m_preprocessedShader;
-			bool m_preprocessed;
+            graphics::shader_preprocessor::output_type m_preprocessedShader;
+            bool m_preprocessed;
 
-		};
-	}
+        };
+    }
 }

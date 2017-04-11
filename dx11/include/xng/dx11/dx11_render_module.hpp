@@ -11,40 +11,40 @@
 
 namespace xng
 {
-	namespace dx11
-	{
-		class dx11_render_module :
-			public engine::render_module
-		{
+    namespace dx11
+    {
+        class dx11_render_module :
+            public engine::render_module
+        {
 
-		public:
+        public:
 
-			static const char *          module_name;
-			static const char *          module_description;
-			static const xng_module_type module_type;
+            static const char *          module_name;
+            static const char *          module_description;
+            static const xng_module_type module_type;
 
-			bool init(os::native_window * window_body) override;
-			void shutdown(void) override;
-			bool is_initialized(void) const override;
+            bool init(os::native_window * window_body) override;
+            void shutdown(void) override;
+            bool is_initialized(void) const override;
 
-			void render(const graphics::extracted_scene & extractedScene, const gui::gui_command_list & guiCommandList) override;
-			graphics::api_context * get_api_context(void) override;
+            void render(const graphics::extracted_scene & extractedScene, const gui::gui_command_list & guiCommandList) override;
+            graphics::api_context * get_api_context(void) override;
 
-		private:
+        private:
 
-			std::unique_ptr<dx11_api_context>  m_context;
-			std::unique_ptr<forward_renderer>  m_renderer;
-			std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
-			std::unique_ptr<visual_debugger>   m_visualDebugger;
+            std::unique_ptr<dx11_api_context>  m_context;
+            std::unique_ptr<forward_renderer>  m_renderer;
+            std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
+            std::unique_ptr<visual_debugger>   m_visualDebugger;
 
-			render_resource_manager m_renderResourceManager;
+            render_resource_manager m_renderResourceManager;
 
-			native_window * m_window;
+            native_window * m_window;
 
-			graphics::realtime_window_observer m_windowObserver;
+            graphics::realtime_window_observer m_windowObserver;
 
-			default_samplers m_samplers;
+            default_samplers m_samplers;
 
-		};
-	}
+        };
+    }
 }

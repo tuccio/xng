@@ -13,81 +13,81 @@
 
 namespace xng
 {
-	namespace core
-	{
-		template <typename T, size_t Alignment = std::alignment_of<T>::value>
-		struct aligned_allocator :
-			allocator_base<T>
-		{
+    namespace core
+    {
+        template <typename T, size_t Alignment = std::alignment_of<T>::value>
+        struct aligned_allocator :
+            allocator_base<T>
+        {
 
-			template <class U> struct rebind { typedef aligned_allocator<U, Alignment> other; };
+            template <class U> struct rebind { typedef aligned_allocator<U, Alignment> other; };
 
-			aligned_allocator(void) = default;
-			aligned_allocator(const aligned_allocator &) = default;
-			aligned_allocator(aligned_allocator &&) = default;
+            aligned_allocator(void) = default;
+            aligned_allocator(const aligned_allocator &) = default;
+            aligned_allocator(aligned_allocator &&) = default;
 
-			template <typename U>
-			aligned_allocator(const aligned_allocator<U> &) {}
+            template <typename U>
+            aligned_allocator(const aligned_allocator<U> &) {}
 
-			inline void * allocate_generic(size_type n, const void * hint = 0)
-			{
-				void * p = allocate_no_throw_generic(n, hint);
+            inline void * allocate_generic(size_type n, const void * hint = 0)
+            {
+                void * p = allocate_no_throw_generic(n, hint);
 
-				if (!p)
-				{
-					throw std::bad_alloc();
-				}
+                if (!p)
+                {
+                    throw std::bad_alloc();
+                }
 
-				return p;
-			}
+                return p;
+            }
 
-			inline pointer allocate(size_type n, const void * hint = 0)
-			{
-				return static_cast<pointer>(allocate_generic(n, hint));
-			}
+            inline pointer allocate(size_type n, const void * hint = 0)
+            {
+                return static_cast<pointer>(allocate_generic(n, hint));
+            }
 
-			inline void * allocate_no_throw_generic(size_type n, const void * hint = 0)
-			{
-				void * ptr = nullptr;
-				XNG_ALIGNED_ALLOC(ptr, n * sizeof(T), Alignment);
-				return ptr;
-			}
+            inline void * allocate_no_throw_generic(size_type n, const void * hint = 0)
+            {
+                void * ptr = nullptr;
+                XNG_ALIGNED_ALLOC(ptr, n * sizeof(T), Alignment);
+                return ptr;
+            }
 
-			inline pointer allocate_no_throw(size_type n, const void * hint = 0)
-			{
-				return static_cast<pointer>(allocate_no_throw_generic(n, hint));
-			}
+            inline pointer allocate_no_throw(size_type n, const void * hint = 0)
+            {
+                return static_cast<pointer>(allocate_no_throw_generic(n, hint));
+            }
 
-			inline void deallocate(pointer p, size_type n = 1)
-			{
-				deallocate_generic(static_cast<pointer>(p), n);
-			}
+            inline void deallocate(pointer p, size_type n = 1)
+            {
+                deallocate_generic(static_cast<pointer>(p), n);
+            }
 
-			inline void deallocate_generic(void * p, size_type n)
-			{
-				XNG_ALIGNED_FREE(p);
-			}
+            inline void deallocate_generic(void * p, size_type n)
+            {
+                XNG_ALIGNED_FREE(p);
+            }
 
-			template<class U>
-			inline aligned_allocator<T, Alignment> & operator= (const aligned_allocator<U, Alignment> &)
-			{
-				return (*this);
-			}
+            template<class U>
+            inline aligned_allocator<T, Alignment> & operator= (const aligned_allocator<U, Alignment> &)
+            {
+                return (*this);
+            }
 
-			template <typename U, size_t OtherAlignment>
-			inline bool operator== (const aligned_allocator<U, OtherAlignment> &)
-			{
-				return OtherAlignment == Alignment;
-			}
+            template <typename U, size_t OtherAlignment>
+            inline bool operator== (const aligned_allocator<U, OtherAlignment> &)
+            {
+                return OtherAlignment == Alignment;
+            }
 
-			template <typename U, size_t OtherAlignment>
-			inline bool operator!= (const aligned_allocator<U, OtherAlignment> &)
-			{
-				return OtherAlignment != Alignment;
-			}
+            template <typename U, size_t OtherAlignment>
+            inline bool operator!= (const aligned_allocator<U, OtherAlignment> &)
+            {
+                return OtherAlignment != Alignment;
+            }
 
-		};
-	}
+        };
+    }
 }
 
 #define XNG_ALIGNED_ALLOCATOR(Type, Alignment)         xng::core::aligned_allocator<Type, Alignment>

@@ -8,28 +8,28 @@
 
 namespace xng
 {
-	namespace gl
-	{
-		class forward_renderer
-		{
+    namespace gl
+    {
+        class forward_renderer
+        {
 
-		public:
+        public:
 
-			bool init(gl_api_context * context);
-			void shutdown(void);
+            bool init(gl_api_context * context);
+            void shutdown(void);
 
-			void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);
-			void render(const graphics::extracted_scene & scene);
+            void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & update);
+            void render(const graphics::extracted_scene & scene);
 
-		private:
+        private:
 
-			gl_api_context * m_context;
+            gl_api_context * m_context;
 
-			graphics::render_variables m_rvars;
+            graphics::render_variables m_rvars;
 
-			uber_shader m_program;
-			ring_buffer m_bPerObject;
+            uber_shader m_program;
+            ring_buffer m_bPerObject;
 
-		};
-	}
+        };
+    }
 }

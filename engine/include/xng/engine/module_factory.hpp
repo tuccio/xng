@@ -4,63 +4,63 @@
 
 enum xng_module_type
 {
-	XNG_MODULE_TYPE_INPUT,
-	XNG_MODULE_TYPE_RUNTIME,
-	XNG_MODULE_TYPE_SCRIPT,
-	XNG_MODULE_TYPE_PHYSICS,
-	XNG_MODULE_TYPE_SCENE,
-	XNG_MODULE_TYPE_ANIMATION,
-	XNG_MODULE_TYPE_AUDIO,
-	XNG_MODULE_TYPE_RENDER
+    XNG_MODULE_TYPE_INPUT,
+    XNG_MODULE_TYPE_RUNTIME,
+    XNG_MODULE_TYPE_SCRIPT,
+    XNG_MODULE_TYPE_PHYSICS,
+    XNG_MODULE_TYPE_SCENE,
+    XNG_MODULE_TYPE_ANIMATION,
+    XNG_MODULE_TYPE_AUDIO,
+    XNG_MODULE_TYPE_RENDER
 };
 
 namespace xng
 {
-	namespace engine
-	{
-		struct module_factory
-		{
-			virtual ~module_factory(void);
+    namespace engine
+    {
+        struct module_factory
+        {
+            virtual ~module_factory(void);
 
-			virtual module * create(void) const = 0;
-			virtual void destroy(module * module) const = 0;
+            virtual module * create(void) const = 0;
+            virtual void destroy(module * module) const = 0;
 
-			virtual const char * name(void) const = 0;
-			virtual const char * description(void) const = 0;
-			virtual xng_module_type type(void) const = 0;			
-		};
+            virtual const char * name(void) const = 0;
+            virtual const char * description(void) const = 0;
+            virtual xng_module_type type(void) const = 0;            
+        };
 
-		template <typename Module>
-		struct basic_module_factory :
-			public module_factory
-		{
-			module * create(void) const override
-			{
-				return xng_new Module;
-			}
+        template <typename Module>
+        struct basic_module_factory :
+            public module_factory
+        {
+            module * create(void) const override
+            {
+                return xng_new Module;
+            }
 
-			void destroy(module * module) const override
-			{
-				xng_delete module;
-			}
+            void destroy(module * module) const override
+            {
+                xng_delete module;
+            }
 
-			const char * name(void) const override
-			{
-				return Module::module_name;
-			}
+            const char * name(void) const override
+            {
+                return Module::module_name;
+            }
 
-			const char * description(void) const override
-			{
-				return Module::module_description;
-			}
+            const char * description(void) const override
+            {
+                return Module::module_description;
+            }
 
-			xng_module_type type(void) const override
-			{
-				return Module::module_type;
-			}
-		};
+            xng_module_type type(void) const override
+            {
+                return Module::module_type;
+            }
+        };
 
-	}
+    }
 }
 
 #include <boost/preprocessor.hpp>

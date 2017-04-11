@@ -8,42 +8,42 @@
 
 namespace xng
 {
-	namespace gl
-	{
-		class gl_api_context :
-			public graphics::api_context
-		{
+    namespace gl
+    {
+        class gl_api_context :
+            public graphics::api_context
+        {
 
-		public:
+        public:
 
-			gl_api_context(void);
+            gl_api_context(void);
 
-			virtual bool is_supported(const char * extension) = 0;
+            virtual bool is_supported(const char * extension) = 0;
 
-			void frame_start(void) override;
+            void frame_start(void) override;
 
-			bool wait_for_frame(uint64_t frameIndex);
+            bool wait_for_frame(uint64_t frameIndex);
 
-			XNG_INLINE uint64_t get_frame_index(void) const
-			{
-				return m_frameIndex;
-			}
+            XNG_INLINE uint64_t get_frame_index(void) const
+            {
+                return m_frameIndex;
+            }
 
-		protected:
+        protected:
 
-			void on_init(void);
-			void increase_frame_index(void);
+            void on_init(void);
+            void increase_frame_index(void);
 
-		private:
+        private:
 
-			uint64_t       m_frameIndex;
-			counting_fence m_fence;
+            uint64_t       m_frameIndex;
+            counting_fence m_fence;
 
-			GLint    m_majorVersion;
-			GLint    m_minorVersion;
+            GLint    m_majorVersion;
+            GLint    m_minorVersion;
 
-			bool     m_syncObjects;
+            bool     m_syncObjects;
 
-		};
-	}
+        };
+    }
 }

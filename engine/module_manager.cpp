@@ -6,106 +6,106 @@ using namespace xng::os;
 
 module_manager::~module_manager(void)
 {
-	clear();
+    clear();
 }
 
 void module_manager::clear(void)
 {
-	for (auto & p : m_libraries)
-	{
-		cleanup_modules_t cleanup_modules = (cleanup_modules_t)p.second->get_symbol_address(XNG_CLEANUP_MODULES_FNAME);
-		cleanup_modules();
-		xng_delete p.second;
-	}
+    for (auto & p : m_libraries)
+    {
+        cleanup_modules_t cleanup_modules = (cleanup_modules_t)p.second->get_symbol_address(XNG_CLEANUP_MODULES_FNAME);
+        cleanup_modules();
+        xng_delete p.second;
+    }
 
-	m_libraries.clear();
-	m_modules.clear();
+    m_libraries.clear();
+    m_modules.clear();
 }
 
 std::vector<module_factory*> module_manager::get_modules(void) const
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	return m_modules;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_modules;
 }
 
 module_factory * module_manager::find_module_by_name(const char * name)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	auto it = std::find_if(m_modules.begin(), m_modules.end(), [=](module_factory * f)
-	{
-		return strcmp(name, f->name()) == 0;
-	});
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto it = std::find_if(m_modules.begin(), m_modules.end(), [=](module_factory * f)
+    {
+        return strcmp(name, f->name()) == 0;
+    });
 
-	return it == m_modules.end() ? nullptr : *it;
+    return it == m_modules.end() ? nullptr : *it;
 }
 
 module_factory * module_manager::find_module_by_type(xng_module_type type)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	auto it = std::find_if(m_modules.begin(), m_modules.end(), [=](module_factory * f)
-	{
-		return type == f->type();
-	});
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto it = std::find_if(m_modules.begin(), m_modules.end(), [=](module_factory * f)
+    {
+        return type == f->type();
+    });
 
-	return it == m_modules.end() ? nullptr : *it;
+    return it == m_modules.end() ? nullptr : *it;
 }
 
 void module_manager::register_module(module_factory * factory)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	m_modules.push_back(factory);
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_modules.push_back(factory);
 }
 
 void module_manager::unregister_module(module_factory * factory)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	auto it = std::find(m_modules.begin(), m_modules.end(), factory);
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto it = std::find(m_modules.begin(), m_modules.end(), factory);
 
-	if (it != m_modules.end())
-	{
-		auto it2 = m_libraries.find(*it);
+    if (it != m_modules.end())
+    {
+        auto it2 = m_libraries.find(*it);
 
-		if (it2 != m_libraries.end())
-		{
-			m_libraries.erase(it2);
-		}
+        if (it2 != m_libraries.end())
+        {
+            m_libraries.erase(it2);
+        }
 
-		m_modules.erase(it);
-	}
+        m_modules.erase(it);
+    }
 }
 
 bool module_manager::register_shared_library(const path & path)
 {
-	shared_library library;
+    shared_library library;
 
-	if (library.load(path))
-	{
-		export_modules_t get_exported_modules = (export_modules_t)library.get_symbol_address(XNG_EXPORT_MODULES_FNAME);
+    if (library.load(path))
+    {
+        export_modules_t get_exported_modules = (export_modules_t)library.get_symbol_address(XNG_EXPORT_MODULES_FNAME);
 
-		module_factory ** factories = get_exported_modules();
+        module_factory ** factories = get_exported_modules();
 
-		if (factories)
-		{
-			std::lock_guard<std::mutex> lock(m_mutex);
+        if (factories)
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
 
-			XNG_LOG("Loading dynamic module", path.c_str());
-			shared_library * persistentLibrary = xng_new shared_library(std::move(library));
+            XNG_LOG("Loading dynamic module", path.c_str());
+            shared_library * persistentLibrary = xng_new shared_library(std::move(library));
 
-			for (module_factory ** factory = factories; *factory != nullptr; ++factory)
-			{
-				m_modules.push_back(*factory);
-				m_libraries.emplace(*factory, persistentLibrary);
-				XNG_LOG("Module loaded", XNG_LOG_STREAM() << (*factory)->name() << " (" << (*factory)->description() << ").");
-			}
+            for (module_factory ** factory = factories; *factory != nullptr; ++factory)
+            {
+                m_modules.push_back(*factory);
+                m_libraries.emplace(*factory, persistentLibrary);
+                XNG_LOG("Module loaded", XNG_LOG_STREAM() << (*factory)->name() << " (" << (*factory)->description() << ").");
+            }
 
-			return true;
-		}
-	}
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 void module_manager::unregister_shared_library(const path & path)
 {
-	// TODO
+    // TODO
 }

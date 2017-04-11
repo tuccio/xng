@@ -5,16 +5,16 @@
 
 namespace xng
 {
-	namespace editor
-	{
-		class rendering_settings_page :
-			public wxWindow
-		{
+    namespace editor
+    {
+        class rendering_settings_page :
+            public wxWindow
+        {
 
-		public:
+        public:
 
-			rendering_settings_page(wxWindow * parent);
+            rendering_settings_page(wxWindow * parent);
 
-		};
-	}
+        };
+    }
 }

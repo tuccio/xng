@@ -6,16 +6,16 @@
 
 namespace xng
 {
-	namespace editor
-	{
-		class camera_page :
-			public wxWindow
-		{
+    namespace editor
+    {
+        class camera_page :
+            public wxWindow
+        {
 
-		public:
+        public:
 
-			camera_page(graphics::scene_graph_camera * camera, wxWindow * parent);
+            camera_page(graphics::scene_graph_camera * camera, wxWindow * parent);
 
-		};
-	}
+        };
+    }
 }

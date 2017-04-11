@@ -16,65 +16,65 @@
 
 namespace xng
 {
-	namespace gl
-	{
+    namespace gl
+    {
 
-		class attributes_enabler
-		{
+        class attributes_enabler
+        {
 
-		public:
+        public:
 
-			attributes_enabler(const graphics::mesh_ptr & m)
-			{
-				create_attributes_vector(m->get_storage_semantic_flags());
-				enable_attributes();
-			}
+            attributes_enabler(const graphics::mesh_ptr & m)
+            {
+                create_attributes_vector(m->get_storage_semantic_flags());
+                enable_attributes();
+            }
 
-			attributes_enabler(uint32_t flags)
-			{
-				create_attributes_vector(flags);
-				enable_attributes();
-			}
+            attributes_enabler(uint32_t flags)
+            {
+                create_attributes_vector(flags);
+                enable_attributes();
+            }
 
-			~attributes_enabler(void)
-			{
-				disable_attributes();
-			}
-			
-		private:
+            ~attributes_enabler(void)
+            {
+                disable_attributes();
+            }
+            
+        private:
 
-			void create_attributes_vector(uint32_t flags)
-			{
-				uint32_t i = 0;
+            void create_attributes_vector(uint32_t flags)
+            {
+                uint32_t i = 0;
 
-				m_attributes[i++] = XNG_GL_ATTRIBUTE_POSITION;
-				
-				if (flags & XNG_MESH_STORAGE_NORMALS)
-				{
-					m_attributes[i++] = XNG_GL_ATTRIBUTE_NORMAL;
-				}
+                m_attributes[i++] = XNG_GL_ATTRIBUTE_POSITION;
+                
+                if (flags & XNG_MESH_STORAGE_NORMALS)
+                {
+                    m_attributes[i++] = XNG_GL_ATTRIBUTE_NORMAL;
+                }
 
-				while (i < XNG_GL_ATTRIBUTE_MAX) m_attributes[i++] = XNG_GL_ATTRIBUTE_SENTINEL;
-			}
+                while (i < XNG_GL_ATTRIBUTE_MAX) m_attributes[i++] = XNG_GL_ATTRIBUTE_SENTINEL;
+            }
 
-			void enable_attributes(void)
-			{
-				for (int i = 0; m_attributes[i] != XNG_GL_ATTRIBUTE_SENTINEL; ++i)
-				{
-					XNG_GL_CHECK(glEnableVertexAttribArray(m_attributes[i]));
-				}
-			}
+            void enable_attributes(void)
+            {
+                for (int i = 0; m_attributes[i] != XNG_GL_ATTRIBUTE_SENTINEL; ++i)
+                {
+                    XNG_GL_CHECK(glEnableVertexAttribArray(m_attributes[i]));
+                }
+            }
 
-			void disable_attributes(void)
-			{
-				for (int i = 0; m_attributes[i] != XNG_GL_ATTRIBUTE_SENTINEL; ++i)
-				{
-					XNG_GL_CHECK(glDisableVertexAttribArray(m_attributes[i]));
-				}
-			}
+            void disable_attributes(void)
+            {
+                for (int i = 0; m_attributes[i] != XNG_GL_ATTRIBUTE_SENTINEL; ++i)
+                {
+                    XNG_GL_CHECK(glDisableVertexAttribArray(m_attributes[i]));
+                }
+            }
 
-			GLuint m_attributes[XNG_GL_ATTRIBUTE_MAX];
+            GLuint m_attributes[XNG_GL_ATTRIBUTE_MAX];
 
-		};
-	}
+        };
+    }
 }

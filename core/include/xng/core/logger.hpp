@@ -18,34 +18,34 @@
 
 namespace xng
 {
-	namespace core
-	{
-		class logger :
-		public singleton<logger>
-		{
-	
-		public:
-	
-			logger(std::basic_ostream<char> * stream) : m_logStream(stream) {}
+    namespace core
+    {
+        class logger :
+        public singleton<logger>
+        {
+    
+        public:
+    
+            logger(std::basic_ostream<char> * stream) : m_logStream(stream) {}
 
-			void log(const char * label, const char * message) const;
-			void log(const char * label, const decltype(XNG_LOG_STREAM()) & stream) const;
-			void log(const char * label, const std::basic_ostream<char> & stream) const;
-	
-			template <typename SourceLabel, typename SourceMessage>
-			void log(const SourceLabel & label, const SourceMessage & message) const
-			{
-				std::string labelStr, messageStr;
-				string_convert(label, labelStr);
-				string_convert(message, messageStr);
-				log(labelStr.c_str(), messageStr.c_str());
-			}
+            void log(const char * label, const char * message) const;
+            void log(const char * label, const decltype(XNG_LOG_STREAM()) & stream) const;
+            void log(const char * label, const std::basic_ostream<char> & stream) const;
+    
+            template <typename SourceLabel, typename SourceMessage>
+            void log(const SourceLabel & label, const SourceMessage & message) const
+            {
+                std::string labelStr, messageStr;
+                string_convert(label, labelStr);
+                string_convert(message, messageStr);
+                log(labelStr.c_str(), messageStr.c_str());
+            }
 
-		private:
-	
-			std::basic_ostream<char> * m_logStream;
-			mutable std::mutex m_mutex;
-	
-		};		
-	}
+        private:
+    
+            std::basic_ostream<char> * m_logStream;
+            mutable std::mutex m_mutex;
+    
+        };        
+    }
 }

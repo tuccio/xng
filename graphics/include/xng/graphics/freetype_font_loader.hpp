@@ -8,19 +8,19 @@
 
 namespace xng
 {
-	namespace graphics
-	{
-		class freetype_font_loader :
-			public res::resource_loader
-		{
+    namespace graphics
+    {
+        class freetype_font_loader :
+            public res::resource_loader
+        {
 
-		public:
+        public:
 
-			bool load(res::resource * r, const void * userdata) override;
-			void unload(res::resource * r) override;
+            bool load(res::resource * r, const void * userdata) override;
+            void unload(res::resource * r) override;
 
-		};
-	}
+        };
+    }
 }
 
 #endif

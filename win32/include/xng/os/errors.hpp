@@ -4,8 +4,8 @@
 
 namespace xng
 {
-	namespace os
-	{
-		std::string get_last_error(void);
-	}
+    namespace os
+    {
+        std::string get_last_error(void);
+    }
 }

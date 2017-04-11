@@ -11,40 +11,40 @@
 
 namespace xng
 {
-	namespace engine
-	{
+    namespace engine
+    {
 
-		typedef module_factory ** (*export_modules_t) (void);
-		typedef void (*cleanup_modules_t) (void);
+        typedef module_factory ** (*export_modules_t) (void);
+        typedef void (*cleanup_modules_t) (void);
 
-		class module_manager :
-			public core::singleton<module_manager>
-		{
-			
-		public:
+        class module_manager :
+            public core::singleton<module_manager>
+        {
+            
+        public:
 
-			~module_manager(void);
+            ~module_manager(void);
 
-			void clear(void);
+            void clear(void);
 
-			std::vector<module_factory*> get_modules(void) const;
+            std::vector<module_factory*> get_modules(void) const;
 
-			module_factory * find_module_by_name(const char * name);
-			module_factory * find_module_by_type(xng_module_type type);
+            module_factory * find_module_by_name(const char * name);
+            module_factory * find_module_by_type(xng_module_type type);
 
-			bool register_shared_library(const os::path & path);
-			void unregister_shared_library(const os::path & path);
+            bool register_shared_library(const os::path & path);
+            void unregister_shared_library(const os::path & path);
 
-		private:
+        private:
 
-			std::vector<module_factory*> m_modules;
-			std::unordered_map<module_factory*, os::shared_library*> m_libraries;
+            std::vector<module_factory*> m_modules;
+            std::unordered_map<module_factory*, os::shared_library*> m_libraries;
 
-			mutable std::mutex m_mutex;
+            mutable std::mutex m_mutex;
 
-			void register_module(module_factory * factory);
-			void unregister_module(module_factory * factory);
+            void register_module(module_factory * factory);
+            void unregister_module(module_factory * factory);
 
-		};
-	}
+        };
+    }
 }

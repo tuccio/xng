@@ -9,10 +9,10 @@
 
 namespace xng
 {
-	namespace graphics
-	{
-		bool assimp_load(scene * scene, const os::path & filename, int flags = aiProcessPreset_TargetRealtime_MaxQuality);
-	}
+    namespace graphics
+    {
+        bool assimp_load(scene * scene, const os::path & filename, int flags = aiProcessPreset_TargetRealtime_MaxQuality);
+    }
 }
 
 

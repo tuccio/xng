@@ -2,17 +2,17 @@
 
 namespace xng
 {
-	namespace engine
-	{
-		struct module_factory;
+    namespace engine
+    {
+        struct module_factory;
 
-		class module
-		{
+        class module
+        {
 
-		public:
+        public:
 
-			virtual ~module(void);
+            virtual ~module(void);
 
-		};
-	}
+        };
+    }
 }

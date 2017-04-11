@@ -5,39 +5,39 @@
 
 namespace xng
 {
-	namespace math
-	{
-		template <typename T>
-		struct matrix<T, 2, 1> :
-			matrix_traits<T, 2, 1>
-		{
+    namespace math
+    {
+        template <typename T>
+        struct matrix<T, 2, 1> :
+            matrix_traits<T, 2, 1>
+        {
 
-			matrix(void) = default;
-			matrix(const matrix &) = default;
+            matrix(void) = default;
+            matrix(const matrix &) = default;
 
-			matrix(scalar value) :
-				x(value), y(value) {}
+            matrix(scalar value) :
+                x(value), y(value) {}
 
-			matrix(scalar x, scalar y) :
-				x(x), y(y) {}
+            matrix(scalar x, scalar y) :
+                x(x), y(y) {}
 
-			union
-			{
-				struct
-				{
-					scalar x;
-					scalar y;
-				};
+            union
+            {
+                struct
+                {
+                    scalar x;
+                    scalar y;
+                };
 
-				scalar m[2];
-			};
+                scalar m[2];
+            };
 
-			template <typename S>
-			XNG_INLINE explicit operator matrix<S, 2, 1>() const
-			{
-				return matrix<S, 2, 1>((S)x, (S)y);
-			}
+            template <typename S>
+            XNG_INLINE explicit operator matrix<S, 2, 1>() const
+            {
+                return matrix<S, 2, 1>((S)x, (S)y);
+            }
 
-		};
-	}
+        };
+    }
 }

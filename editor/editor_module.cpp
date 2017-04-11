@@ -17,21 +17,21 @@ const xng_module_type editor_module::module_type        = XNG_MODULE_TYPE_RUNTIM
 
 bool editor_module::init(void)
 {
-	m_editor = std::make_unique<editor>(game::get_singleton()->get_window());
-	return true;
+    m_editor = std::make_unique<editor>(game::get_singleton()->get_window());
+    return true;
 }
 
 void editor_module::shutdown(void)
 {
-	m_editor.reset();
+    m_editor.reset();
 }
 
 bool editor_module::is_initialized(void) const
 {
-	return (bool) m_editor;
+    return (bool) m_editor;
 }
 
 void editor_module::update(float dt)
 {
-	m_editor->update(dt);
+    m_editor->update(dt);
 }

@@ -9,51 +9,51 @@ main_loop::main_loop(void) : m_running(false) {}
 
 void main_loop::set_idle_callback(std::function<void()> idle)
 {
-	m_idleCB = idle;
+    m_idleCB = idle;
 }
 
 void main_loop::run(void)
 {
-	if (m_idleCB)
-	{
-		MSG msg;
+    if (m_idleCB)
+    {
+        MSG msg;
 
-		m_running = true;
+        m_running = true;
 
-		while (m_running)
-		{
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
+        while (m_running)
+        {
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
 
-			m_idleCB();
-		}
-	}
-	else
-	{
-		MSG msg;
+            m_idleCB();
+        }
+    }
+    else
+    {
+        MSG msg;
 
-		m_running = true;
+        m_running = true;
 
-		while (m_running)
-		{
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
-	}
+        while (m_running)
+        {
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+    }
 }
 
 bool main_loop::is_running(void) const
 {
-	return m_running;
+    return m_running;
 }
 
 void main_loop::quit(void)
 {
-	m_running = false;
+    m_running = false;
 }

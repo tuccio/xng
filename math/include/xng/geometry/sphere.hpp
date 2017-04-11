@@ -6,22 +6,22 @@
 
 namespace xng
 {
-	namespace math
-	{
-		struct sphere
-		{
-			sphere(void) = default;
-			sphere(const sphere &) = default;
-			sphere(sphere &&) = default;
+    namespace math
+    {
+        struct sphere
+        {
+            sphere(void) = default;
+            sphere(const sphere &) = default;
+            sphere(sphere &&) = default;
 
-			sphere(const float3 & center, float radius) :
-				center(center), radius(radius) {}
+            sphere(const float3 & center, float radius) :
+                center(center), radius(radius) {}
 
-			sphere & operator= (const sphere &) = default;
-			sphere & operator= (sphere &&) = default;
+            sphere & operator= (const sphere &) = default;
+            sphere & operator= (sphere &&) = default;
 
-			float3 center;
-			float  radius;
-		};
-	}
+            float3 center;
+            float  radius;
+        };
+    }
 }

@@ -13,58 +13,58 @@
 
 namespace xng
 {
-	namespace graphics
-	{
-		class scene_graph;
+    namespace graphics
+    {
+        class scene_graph;
 
-		struct scene_graph_observer
-		{
-			virtual void on_create(scene_graph * sg, scene_graph_node * node) {}
-			virtual void on_destroy(scene_graph * sg, scene_graph_node * node) {}
-			virtual void on_move(scene_graph * sg, scene_graph_node * node, const math::float4x4 & lastTransform, const math::float4x4 & newTransform) {}
-		};
+        struct scene_graph_observer
+        {
+            virtual void on_create(scene_graph * sg, scene_graph_node * node) {}
+            virtual void on_destroy(scene_graph * sg, scene_graph_node * node) {}
+            virtual void on_move(scene_graph * sg, scene_graph_node * node, const math::float4x4 & lastTransform, const math::float4x4 & newTransform) {}
+        };
 
-		class scene_graph :
-			public core::observable<scene_graph_observer>
-		{
+        class scene_graph :
+            public core::observable<scene_graph_observer>
+        {
 
-		public:
+        public:
 
-			scene_graph(void);
-			scene_graph(scene_graph &&);
+            scene_graph(void);
+            scene_graph(scene_graph &&);
 
-			scene_graph_node * get_root(void);
+            scene_graph_node * get_root(void);
 
-			template <typename Visitor>
-			void visit(Visitor v)
-			{
-				visit_impl(m_root.get(), v);
-			}
+            template <typename Visitor>
+            void visit(Visitor v)
+            {
+                visit_impl(m_root.get(), v);
+            }
 
-		private:
+        private:
 
-			template <typename Visitor>
-			void visit_impl(scene_graph_node * n, Visitor v)
-			{
-				v(n);
+            template <typename Visitor>
+            void visit_impl(scene_graph_node * n, Visitor v)
+            {
+                v(n);
 
-				for (scene_graph_node * c : *n)
-				{
-					visit_impl(c, v);
-				}
-			}
+                for (scene_graph_node * c : *n)
+                {
+                    visit_impl(c, v);
+                }
+            }
 
-		private:
+        private:
 
-			std::unique_ptr<scene_graph_node> m_root;
-			uint32_t                          m_nextID;
+            std::unique_ptr<scene_graph_node> m_root;
+            uint32_t                          m_nextID;
 
-			friend class scene_graph_node;
+            friend class scene_graph_node;
 
-			XNG_INLINE uint32_t generate_id(void)
-			{
-				return m_nextID++;
-			}
-		};
-	}
+            XNG_INLINE uint32_t generate_id(void)
+            {
+                return m_nextID++;
+            }
+        };
+    }
 }

@@ -3,34 +3,34 @@
 
 namespace xng
 {
-	namespace graphics
-	{
-		class scene_graph_camera :
-			public scene_graph_node
-		{
+    namespace graphics
+    {
+        class scene_graph_camera :
+            public scene_graph_node
+        {
 
-		public:
+        public:
 
-			scene_graph_camera(scene_graph_node * parent);
+            scene_graph_camera(scene_graph_node * parent);
 
-			XNG_INLINE camera * get_camera(void)
-			{
-				return &m_camera;
-			}
+            XNG_INLINE camera * get_camera(void)
+            {
+                return &m_camera;
+            }
 
-			XNG_INLINE const camera * get_camera(void) const
-			{
-				return &m_camera;
-			}
+            XNG_INLINE const camera * get_camera(void) const
+            {
+                return &m_camera;
+            }
 
-		protected:
+        protected:
 
-			void update_impl(void) override;
+            void update_impl(void) override;
 
-		private:
+        private:
 
-			camera m_camera;
+            camera m_camera;
 
-		};
-	}
+        };
+    }
 }

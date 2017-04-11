@@ -14,42 +14,42 @@
 
 namespace xng
 {
-	namespace graphics
-	{
-		class assimp_loader :
-			public res::resource_loader
-		{
+    namespace graphics
+    {
+        class assimp_loader :
+            public res::resource_loader
+        {
 
-		public:
+        public:
 
-			assimp_loader(const os::path & filename, unsigned int flags = aiProcessPreset_TargetRealtime_MaxQuality);
-			~assimp_loader(void);
+            assimp_loader(const os::path & filename, unsigned int flags = aiProcessPreset_TargetRealtime_MaxQuality);
+            ~assimp_loader(void);
 
-			bool load(res::resource * r, const void * userdata) override;
-			void unload(res::resource * r) override;
+            bool load(res::resource * r, const void * userdata) override;
+            void unload(res::resource * r) override;
 
-			mesh_ptr     create_mesh(unsigned int meshIndex);
-			material_ptr create_material(unsigned int materialIndex);
+            mesh_ptr     create_mesh(unsigned int meshIndex);
+            material_ptr create_material(unsigned int materialIndex);
 
-			const aiScene * get_scene(void) const;
+            const aiScene * get_scene(void) const;
 
-			inline bool is_loaded(void) const { return m_scene != nullptr; }
-			inline const char * get_error_string(void) const { return m_importer.GetErrorString(); }
+            inline bool is_loaded(void) const { return m_scene != nullptr; }
+            inline const char * get_error_string(void) const { return m_importer.GetErrorString(); }
 
-		private:
+        private:
 
-			os::path           m_filename;
-			const aiScene    * m_scene;
-			Assimp::Importer   m_importer;
+            os::path           m_filename;
+            const aiScene    * m_scene;
+            Assimp::Importer   m_importer;
 
-			bool load_mesh(mesh * m);
-			void unload_mesh(mesh * m);
+            bool load_mesh(mesh * m);
+            void unload_mesh(mesh * m);
 
-			bool load_material(material * m);
-			void unload_material(material * m);
+            bool load_material(material * m);
+            void unload_material(material * m);
 
-		};
-	}
+        };
+    }
 }
 
 #endif

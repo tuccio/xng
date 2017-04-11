@@ -5,8 +5,8 @@
 
 namespace xng
 {
-	namespace os
-	{
-		void translate_keyboard_key(const RAWKEYBOARD & rawKeyboard, xng_keyboard_key & xngKey, bool & keyUp);
-	}
+    namespace os
+    {
+        void translate_keyboard_key(const RAWKEYBOARD & rawKeyboard, xng_keyboard_key & xngKey, bool & keyUp);
+    }
 }

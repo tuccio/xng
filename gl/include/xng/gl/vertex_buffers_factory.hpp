@@ -7,27 +7,27 @@
 
 namespace xng
 {
-	namespace gl
-	{
-		class vertex_buffers_factory
-		{
+    namespace gl
+    {
+        class vertex_buffers_factory
+        {
 
-		public:
+        public:
 
-			struct buffers
-			{
-				GLuint vao;
-				GLuint positions;
-				GLuint normals;
-				GLuint indices;
-			};
+            struct buffers
+            {
+                GLuint vao;
+                GLuint positions;
+                GLuint normals;
+                GLuint indices;
+            };
 
-			buffers create(graphics::mesh_ptr m);
+            buffers create(graphics::mesh_ptr m);
 
-		private:
+        private:
 
-			std::unordered_map<res::resource_id, buffers> m_buffers;
+            std::unordered_map<res::resource_id, buffers> m_buffers;
 
-		};
-	}
+        };
+    }
 }

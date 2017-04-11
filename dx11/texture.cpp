@@ -10,136 +10,136 @@ using namespace xng::graphics;
 const char * texture::resource_type = "dx11texture";
 
 texture::texture(const char * name, const resource_parameters & params, resource_loader_ptr loader, resource_manager * owner) :
-	resource(name, params, loader, owner)
+    resource(name, params, loader, owner)
 {
-	m_width  = 0;
-	m_height = 0;
-	m_format = DXGI_FORMAT_UNKNOWN;
+    m_width  = 0;
+    m_height = 0;
+    m_format = DXGI_FORMAT_UNKNOWN;
 }
 
 bool texture::create(
-	ID3D11Device * device,
-	ID3D11DeviceContext * context,
-	image_ptr image,
-	D3D11_USAGE usage,
-	UINT mipmaps,
-	bool generateMipmaps)
+    ID3D11Device * device,
+    ID3D11DeviceContext * context,
+    image_ptr image,
+    D3D11_USAGE usage,
+    UINT mipmaps,
+    bool generateMipmaps)
 {
-	clear();
+    clear();
 
-	if (image && image->load())
-	{
-		std::unique_ptr<uint8_t[]> tempBuffer;
+    if (image && image->load())
+    {
+        std::unique_ptr<uint8_t[]> tempBuffer;
 
-		m_format = get_dxgi_format(image->get_format());
+        m_format = get_dxgi_format(image->get_format());
 
-		D3D11_SUBRESOURCE_DATA data = {};
+        D3D11_SUBRESOURCE_DATA data = {};
 
-		if (m_format != DXGI_FORMAT_UNKNOWN)
-		{
-			data.pSysMem     = image->data();
-			data.SysMemPitch = image->get_scan_width();
-		}
-		else
-		{
-			if (image->get_format() == XNG_IMAGE_FORMAT_R8G8B8_UINT)
-			{
-				// Convert 24 to 32 bits
+        if (m_format != DXGI_FORMAT_UNKNOWN)
+        {
+            data.pSysMem     = image->data();
+            data.SysMemPitch = image->get_scan_width();
+        }
+        else
+        {
+            if (image->get_format() == XNG_IMAGE_FORMAT_R8G8B8_UINT)
+            {
+                // Convert 24 to 32 bits
 
-				uint32_t scanWidth = image->get_width() * 4;
+                uint32_t scanWidth = image->get_width() * 4;
 
-				tempBuffer = std::unique_ptr<uint8_t[]>(new uint8_t[scanWidth * image->get_height()]);
+                tempBuffer = std::unique_ptr<uint8_t[]>(new uint8_t[scanWidth * image->get_height()]);
 
-				struct _24bpp { uint8_t r, g, b; };
-				struct _32bpp { uint8_t r, g, b, a; };
+                struct _24bpp { uint8_t r, g, b; };
+                struct _32bpp { uint8_t r, g, b, a; };
 
-				std::transform(
-					(const _24bpp*)image->data(), ((const _24bpp*)image->data()) + image->get_width() * image->get_height(),
-					(_32bpp*) tempBuffer.get(),
-					[](const _24bpp & pixel)
-				{
-					return _32bpp{ pixel.r, pixel.g, pixel.b, 0xFF };
-				});
+                std::transform(
+                    (const _24bpp*)image->data(), ((const _24bpp*)image->data()) + image->get_width() * image->get_height(),
+                    (_32bpp*) tempBuffer.get(),
+                    [](const _24bpp & pixel)
+                {
+                    return _32bpp{ pixel.r, pixel.g, pixel.b, 0xFF };
+                });
 
-				data.pSysMem     = tempBuffer.get();
-				data.SysMemPitch = scanWidth;
+                data.pSysMem     = tempBuffer.get();
+                data.SysMemPitch = scanWidth;
 
-				m_format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-			}
-		}
+                m_format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            }
+        }
 
-		if (!generateMipmaps)
-		{
-			return !XNG_HR_FAILED(device->CreateTexture2D(
-				&CD3D11_TEXTURE2D_DESC(m_format, image->get_width(), image->get_height(), 1, mipmaps, D3D11_BIND_SHADER_RESOURCE, usage),
-				&data,
-				m_texture.reset_and_get_address())) &&
-				!XNG_HR_FAILED(device->CreateShaderResourceView(m_texture.get(), nullptr, m_srv.reset_and_get_address()));
-		}
-		else if(!XNG_HR_FAILED(device->CreateTexture2D(
-			&CD3D11_TEXTURE2D_DESC(m_format,
-				image->get_width(), image->get_height(),
-				1, mipmaps,
-				D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
-				usage, 0, 1, 0, D3D11_RESOURCE_MISC_GENERATE_MIPS),
-			nullptr,
-			m_texture.reset_and_get_address())))
-		{
-			context->UpdateSubresource(m_texture.get(), 0, nullptr, data.pSysMem, data.SysMemPitch, 0);
+        if (!generateMipmaps)
+        {
+            return !XNG_HR_FAILED(device->CreateTexture2D(
+                &CD3D11_TEXTURE2D_DESC(m_format, image->get_width(), image->get_height(), 1, mipmaps, D3D11_BIND_SHADER_RESOURCE, usage),
+                &data,
+                m_texture.reset_and_get_address())) &&
+                !XNG_HR_FAILED(device->CreateShaderResourceView(m_texture.get(), nullptr, m_srv.reset_and_get_address()));
+        }
+        else if(!XNG_HR_FAILED(device->CreateTexture2D(
+            &CD3D11_TEXTURE2D_DESC(m_format,
+                image->get_width(), image->get_height(),
+                1, mipmaps,
+                D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+                usage, 0, 1, 0, D3D11_RESOURCE_MISC_GENERATE_MIPS),
+            nullptr,
+            m_texture.reset_and_get_address())))
+        {
+            context->UpdateSubresource(m_texture.get(), 0, nullptr, data.pSysMem, data.SysMemPitch, 0);
 
-			if (!XNG_HR_FAILED(device->CreateShaderResourceView(m_texture.get(), nullptr, m_srv.reset_and_get_address())))
-			{
-				context->GenerateMips(m_srv.get());
-				return true;
-			}
-		}
-		
-	}
+            if (!XNG_HR_FAILED(device->CreateShaderResourceView(m_texture.get(), nullptr, m_srv.reset_and_get_address())))
+            {
+                context->GenerateMips(m_srv.get());
+                return true;
+            }
+        }
+        
+    }
 
-	return false;
+    return false;
 }
 
 void texture::clear(void)
 {
-	m_texture.reset();
-	m_srv.reset();
+    m_texture.reset();
+    m_srv.reset();
 }
 
 bool texture::load_impl(const void * userdata)
 {
-	image_ptr img;
-	
-	if (!get_dependency() || !(img = dynamic_cast<image*>(get_dependency())))
-	{
-		img = resource_factory::get_singleton()->create<image>(get_name());
-	}
+    image_ptr img;
+    
+    if (!get_dependency() || !(img = dynamic_cast<image*>(get_dependency())))
+    {
+        img = resource_factory::get_singleton()->create<image>(get_name());
+    }
 
-	if (img)
-	{
-		const resource_parameters & params = get_parameters();
+    if (img)
+    {
+        const resource_parameters & params = get_parameters();
 
-		auto optMips    = params.get_optional<uint32_t>("mipmaps");
-		auto optGenMips = params.get_optional<bool>("generate_mipmaps");
+        auto optMips    = params.get_optional<uint32_t>("mipmaps");
+        auto optGenMips = params.get_optional<bool>("generate_mipmaps");
 
-		bool        genMips = optGenMips ? *optGenMips : false;
-		UINT        mips    = optMips ? *optMips : (genMips ? 0 : 1);
-		D3D11_USAGE usage   = genMips ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
+        bool        genMips = optGenMips ? *optGenMips : false;
+        UINT        mips    = optMips ? *optMips : (genMips ? 0 : 1);
+        D3D11_USAGE usage   = genMips ? D3D11_USAGE_DEFAULT : D3D11_USAGE_IMMUTABLE;
 
-		const load_data * data = static_cast<const load_data*>(userdata);
+        const load_data * data = static_cast<const load_data*>(userdata);
 
-		return create(data->device, data->context, img, usage, mips, genMips);
-	}
+        return create(data->device, data->context, img, usage, mips, genMips);
+    }
 
-	return false;
+    return false;
 }
 
 void texture::unload_impl(void)
 {
-	clear();
+    clear();
 }
 
 size_t texture::calculate_size_impl(void)
 {
-	// TODO: Consider mipmaps
-	return get_dxgi_format_byte_size(m_format) * m_width * m_height;
+    // TODO: Consider mipmaps
+    return get_dxgi_format_byte_size(m_format) * m_width * m_height;
 }

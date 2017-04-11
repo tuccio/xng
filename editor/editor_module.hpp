@@ -5,30 +5,30 @@
 
 namespace xng
 {
-	namespace editor
-	{
-		class editor_module :
-			public engine::runtime_module
-		{
+    namespace editor
+    {
+        class editor_module :
+            public engine::runtime_module
+        {
 
-		public:
+        public:
 
-			static const char *          module_name;
-			static const char *          module_description;
-			static const xng_module_type module_type;
+            static const char *          module_name;
+            static const char *          module_description;
+            static const xng_module_type module_type;
 
-			editor_module(void) = default;
+            editor_module(void) = default;
 
-			bool init(void) override;
-			void shutdown(void) override;
-			bool is_initialized(void) const override;
+            bool init(void) override;
+            void shutdown(void) override;
+            bool is_initialized(void) const override;
 
-			void update(float dt) override;
+            void update(float dt) override;
 
-		private:
+        private:
 
-			std::unique_ptr<editor> m_editor;
+            std::unique_ptr<editor> m_editor;
 
-		};
-	}
+        };
+    }
 }

@@ -6,20 +6,20 @@
 
 namespace xng
 {
-	namespace editor
-	{
-		class light_page :
-			public wxWindow
-		{
+    namespace editor
+    {
+        class light_page :
+            public wxWindow
+        {
 
-		public:
+        public:
 
-			light_page(graphics::scene_graph_light * light, wxWindow * parent);
+            light_page(graphics::scene_graph_light * light, wxWindow * parent);
 
-		private:
+        private:
 
-			graphics::scene_graph_camera * m_camera;
+            graphics::scene_graph_camera * m_camera;
 
-		};
-	}
+        };
+    }
 }

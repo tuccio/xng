@@ -5,68 +5,68 @@
 
 namespace xng
 {
-	namespace os
-	{
-		bool exists(const path & p)
-		{
-			WIN32_FIND_DATAW ffd;
-			HANDLE hFind = FindFirstFileW(p.c_str(), &ffd);
+    namespace os
+    {
+        bool exists(const path & p)
+        {
+            WIN32_FIND_DATAW ffd;
+            HANDLE hFind = FindFirstFileW(p.c_str(), &ffd);
 
-			bool exists = hFind != INVALID_HANDLE_VALUE;
+            bool exists = hFind != INVALID_HANDLE_VALUE;
 
-			if (exists)
-			{
-				FindClose(hFind);
-			}
+            if (exists)
+            {
+                FindClose(hFind);
+            }
 
-			return exists;
-		}
+            return exists;
+        }
 
-		bool is_directory(const path & p)
-		{
-			WIN32_FIND_DATAW ffd;
-			HANDLE hFind = FindFirstFileW(p.c_str(), &ffd);
+        bool is_directory(const path & p)
+        {
+            WIN32_FIND_DATAW ffd;
+            HANDLE hFind = FindFirstFileW(p.c_str(), &ffd);
 
-			bool exists = hFind != INVALID_HANDLE_VALUE;
-			bool isDir  = false;
+            bool exists = hFind != INVALID_HANDLE_VALUE;
+            bool isDir  = false;
 
-			if (exists)
-			{
-				isDir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-				FindClose(hFind);
-			}
+            if (exists)
+            {
+                isDir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+                FindClose(hFind);
+            }
 
-			return exists;
-		}
+            return exists;
+        }
 
-		bool is_regular_file(const path & p)
-		{
-			WIN32_FIND_DATAW ffd;
-			HANDLE hFind = FindFirstFileW(p.c_str(), &ffd);
+        bool is_regular_file(const path & p)
+        {
+            WIN32_FIND_DATAW ffd;
+            HANDLE hFind = FindFirstFileW(p.c_str(), &ffd);
 
-			bool exists = hFind != INVALID_HANDLE_VALUE;
-			bool isFile = false;
+            bool exists = hFind != INVALID_HANDLE_VALUE;
+            bool isFile = false;
 
-			if (exists)
-			{
-				isFile = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
-				FindClose(hFind);
-			}
+            if (exists)
+            {
+                isFile = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+                FindClose(hFind);
+            }
 
-			return exists;
-		}
+            return exists;
+        }
 
-		path current_directory(void)
-		{
-			DWORD size = GetCurrentDirectoryW(0, nullptr);
-			std::wstring buffer(size, 0);
-			GetCurrentDirectoryW(buffer.size(), &buffer[0]);
-			return path(buffer);
-		}
+        path current_directory(void)
+        {
+            DWORD size = GetCurrentDirectoryW(0, nullptr);
+            std::wstring buffer(size, 0);
+            GetCurrentDirectoryW(buffer.size(), &buffer[0]);
+            return path(buffer);
+        }
 
-		void change_current_directory(const path & p)
-		{
-			SetCurrentDirectoryW(p.c_str());
-		}
-	}
+        void change_current_directory(const path & p)
+        {
+            SetCurrentDirectoryW(p.c_str());
+        }
+    }
 }

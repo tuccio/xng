@@ -4,51 +4,51 @@
 
 namespace xng
 {
-	namespace gui
-	{
-		class text_control :
-			public widget
-		{
+    namespace gui
+    {
+        class text_control :
+            public widget
+        {
 
-		public:
+        public:
 
-			text_control(gui_manager * manager, widget * parent, const math::int2 & position = math::int2(0), const math::int2 & size = math::int2(0));
+            text_control(gui_manager * manager, widget * parent, const math::int2 & position = math::int2(0), const math::int2 & size = math::int2(0));
 
-			void extract(gui_command_list_inserter & inserter, const style & style) const override;
+            void extract(gui_command_list_inserter & inserter, const style & style) const override;
 
-			template <typename String>
-			void set_text(const String & str)
-			{
-				core::string_convert(str, m_text);
-			}
+            template <typename String>
+            void set_text(const String & str)
+            {
+                core::string_convert(str, m_text);
+            }
 
-			template <typename String>
-			void set_text_and_fit(const String & str)
-			{
-				core::string_convert(str, m_text);
-				fit();
-			}
+            template <typename String>
+            void set_text_and_fit(const String & str)
+            {
+                core::string_convert(str, m_text);
+                fit();
+            }
 
-			const wchar_t * get_text(void) const;
+            const wchar_t * get_text(void) const;
 
-			bool is_editable(void) const;
-			void set_editable(bool editable);
+            bool is_editable(void) const;
+            void set_editable(bool editable);
 
-			void fit(void);
+            void fit(void);
 
-			void set_text_control_style(const text_control_style & style);
+            void set_text_control_style(const text_control_style & style);
 
-		protected:
+        protected:
 
-			const text_control_style * get_text_control_style(void) const;
+            const text_control_style * get_text_control_style(void) const;
 
-		private:
+        private:
 
-			std::wstring m_text;
-			bool         m_editable;
+            std::wstring m_text;
+            bool         m_editable;
 
-			std::unique_ptr<text_control_style> m_style;
+            std::unique_ptr<text_control_style> m_style;
 
-		};
-	}
+        };
+    }
 }

@@ -4,20 +4,20 @@
 
 namespace xng
 {
-	namespace engine
-	{
-		class runtime_module :
-			public module
-		{
+    namespace engine
+    {
+        class runtime_module :
+            public module
+        {
 
-		public:
+        public:
 
-			virtual bool init(void) = 0;
-			virtual void shutdown(void) = 0;
-			virtual bool is_initialized(void) const = 0;
+            virtual bool init(void) = 0;
+            virtual void shutdown(void) = 0;
+            virtual bool is_initialized(void) const = 0;
 
-			virtual void update(float dt) = 0;
+            virtual void update(float dt) = 0;
 
-		};
-	}
+        };
+    }
 }

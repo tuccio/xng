@@ -5,22 +5,22 @@
 
 namespace xng
 {
-	namespace graphics
-	{
-		class acceleration_library :
-			public core::singleton<acceleration_library>
-		{
+    namespace graphics
+    {
+        class acceleration_library :
+            public core::singleton<acceleration_library>
+        {
 
-		public:
+        public:
 
-			acceleration_library(void);
+            acceleration_library(void);
 
-			os::shared_library::native_symbol_handle get_symbol_address(const char * name);
+            os::shared_library::native_symbol_handle get_symbol_address(const char * name);
 
-		private:
+        private:
 
-			os::shared_library m_library;
+            os::shared_library m_library;
 
-		};
-	}
+        };
+    }
 }

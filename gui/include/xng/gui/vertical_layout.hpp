@@ -5,37 +5,37 @@
 
 namespace xng
 {
-	namespace gui
-	{
-		class vertical_layout :
-			public layout
-		{
+    namespace gui
+    {
+        class vertical_layout :
+            public layout
+        {
 
-		public:
+        public:
 
-			vertical_layout(void);
+            vertical_layout(void);
 
-			void add(widget * widget, uint32_t flags, uint32_t proportion = 0, uint32_t padding = 0);
+            void add(widget * widget, uint32_t flags, uint32_t proportion = 0, uint32_t padding = 0);
 
-		protected:
+        protected:
 
-			virtual void apply(void) override;
+            virtual void apply(void) override;
 
-		private:
+        private:
 
-			struct layout_entry
-			{
-				widget * widget;
-				uint32_t flags;
-				uint32_t proportion;
-				uint32_t padding;
-			};
+            struct layout_entry
+            {
+                widget * widget;
+                uint32_t flags;
+                uint32_t proportion;
+                uint32_t padding;
+            };
 
-			typedef std::vector<layout_entry> entry_vector;
+            typedef std::vector<layout_entry> entry_vector;
 
-			entry_vector m_entries;
-			uint32_t     m_weightSum;
+            entry_vector m_entries;
+            uint32_t     m_weightSum;
 
-		};
-	}
+        };
+    }
 }

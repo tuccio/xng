@@ -4,19 +4,19 @@
 
 #define XNG_DEBUG_LOG(Message) OutputDebugStringA(Message)
 #define XNG_HR_LOG(HR)\
-		{\
-			LPSTR output;\
-			FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,\
-			nullptr,\
-			HR,\
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),\
-			(LPSTR) &output,\
-			0x0,\
-			nullptr);\
-			XNG_DEBUG_LOG(output);\
-			LocalFree((HLOCAL) output);\
-			XNG_DEBUGBREAK();\
-		}
+        {\
+            LPSTR output;\
+            FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,\
+            nullptr,\
+            HR,\
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),\
+            (LPSTR) &output,\
+            0x0,\
+            nullptr);\
+            XNG_DEBUG_LOG(output);\
+            LocalFree((HLOCAL) output);\
+            XNG_DEBUGBREAK();\
+        }
 
 #define XNG_HR_CHECK(HR)  { HRESULT hr = HR; if (FAILED(hr)) XNG_HR_LOG(hr); }
 #define XNG_HR_FAILED(HR) ([] (HRESULT hr) { if (FAILED(hr)) { XNG_HR_LOG(hr); return true; } return false; } (HR))

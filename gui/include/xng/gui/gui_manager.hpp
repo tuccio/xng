@@ -13,70 +13,70 @@
 
 namespace xng
 {
-	namespace gui
-	{
-		
-		class gui_manager :
-			public input::mouse_observer
-		{
+    namespace gui
+    {
+        
+        class gui_manager :
+            public input::mouse_observer
+        {
 
-		public:
+        public:
 
-			gui_manager(void);
+            gui_manager(void);
 
-			~gui_manager(void);
+            ~gui_manager(void);
 
-			void set_style(const style & style);
-			const style & get_style(void) const;
-			style & style(void);
+            void set_style(const style & style);
+            const style & get_style(void) const;
+            style & style(void);
 
-			void update(float dt);
+            void update(float dt);
 
-			bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
-			bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
-			bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
-			bool on_mouse_move(const input::mouse * mouse, const math::uint2 & position) override;
+            bool on_mouse_key_down(const input::mouse * mouse, xng_mouse_key key) override;
+            bool on_mouse_key_up(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
+            bool on_mouse_key_hold(const input::mouse * mouse, xng_mouse_key key, uint32_t) override;
+            bool on_mouse_move(const input::mouse * mouse, const math::uint2 & position) override;
 
-			gui_command_list extract(void) const;
+            gui_command_list extract(void) const;
 
-		private:
+        private:
 
-			typedef core::event_handler<const widget, xng_gui_events> gui_event_handler;
+            typedef core::event_handler<const widget, xng_gui_events> gui_event_handler;
 
-			xng::gui::style     m_style;
+            xng::gui::style     m_style;
 
-			widget            * m_focus;
-			widget            * m_hover;
-			gui_event_handler * m_eventHandler;
+            widget            * m_focus;
+            widget            * m_hover;
+            gui_event_handler * m_eventHandler;
 
-			std::list<window*> m_windowStack;
+            std::list<window*> m_windowStack;
 
-			std::unordered_set<widget*> m_destroyQueue;
+            std::unordered_set<widget*> m_destroyQueue;
 
-			friend class widget;
-			friend class window;
+            friend class widget;
+            friend class window;
 
-			void register_widget(widget * widget);
-			void unregister_widget(widget * widget);
+            void register_widget(widget * widget);
+            void unregister_widget(widget * widget);
 
-			void register_window(window * wnd);
-			void unregister_window(window * wnd);
+            void register_window(window * wnd);
+            void unregister_window(window * wnd);
 
-			void set_focus(widget * widget);
-			void set_hover(widget * widget);
+            void set_focus(widget * widget);
+            void set_hover(widget * widget);
 
-			void move_on_top(window * wnd);
-			window * find_first_window(widget * w);
+            void move_on_top(window * wnd);
+            window * find_first_window(widget * w);
 
-			gui_manager(const gui_manager &) = default;
+            gui_manager(const gui_manager &) = default;
 
-			gui_event_handler * get_event_handler(void);
+            gui_event_handler * get_event_handler(void);
 
-			void enqueue_destruction(widget * widget);
+            void enqueue_destruction(widget * widget);
 
-			bool has_pending_objects(void) const;
-			void destroy_pending_objects(void);
+            bool has_pending_objects(void) const;
+            void destroy_pending_objects(void);
 
-		};
-	}
+        };
+    }
 }

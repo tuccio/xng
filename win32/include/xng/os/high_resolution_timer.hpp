@@ -6,35 +6,35 @@
 
 namespace xng
 {
-	namespace os
-	{
-		template <typename T = double>
-		class high_resolution_stopwatch
-		{
-		public:
+    namespace os
+    {
+        template <typename T = double>
+        class high_resolution_stopwatch
+        {
+        public:
 
-			high_resolution_stopwatch(void)
-			{
-				m_last = timestamp();
-			}
+            high_resolution_stopwatch(void)
+            {
+                m_last = timestamp();
+            }
 
-			XNG_INLINE T get_elapsed_seconds(void)
-			{
-				high_resolution_timestamp now = timestamp();
-				high_resolution_timestamp dt  = now - m_last;
-				m_last = now;
-				return to_seconds<T>(dt);
-			}
+            XNG_INLINE T get_elapsed_seconds(void)
+            {
+                high_resolution_timestamp now = timestamp();
+                high_resolution_timestamp dt  = now - m_last;
+                m_last = now;
+                return to_seconds<T>(dt);
+            }
 
-			XNG_INLINE high_resolution_timestamp get_last_timestamp(void) const
-			{
-				return m_last;
-			}
+            XNG_INLINE high_resolution_timestamp get_last_timestamp(void) const
+            {
+                return m_last;
+            }
 
-		private:
+        private:
 
-			high_resolution_timestamp m_last;
-		};
+            high_resolution_timestamp m_last;
+        };
 
-	}
+    }
 }
