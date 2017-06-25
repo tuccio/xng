@@ -56,11 +56,10 @@ namespace xng
 
             std::array<float3, 8> get_corners(void) const;
 
-            struct
-            {
-                float3 center;
-                float3 halfExtents;
-            };
+            bool empty(void) const;
+
+            float3 center;
+            float3 halfExtents;
 
         };
 

@@ -164,6 +164,9 @@ bool assimp_loader::load_mesh(mesh * m)
             }
         }
 
+        m->compute_aabb();
+        m->compute_bounding_sphere();
+
         return true;
     }
     else

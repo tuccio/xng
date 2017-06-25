@@ -5,6 +5,7 @@
 #include <functional>
 
 using namespace xng::graphics;
+using namespace xng::math;
 
 extracted_scene scene::extract(void)
 {
@@ -50,8 +51,47 @@ extracted_scene scene::extract(void)
 
         xscene.m_activeCamera = *cam->get_camera();
 
-        std::for_each(frustumCullingDynamic.begin(), frustumCullingDynamic.end(), std::bind(add_geometry, std::ref(xscene.m_visibleDynamicObjects), std::placeholders::_1));
-        std::for_each(frustumCullingStatic.begin(), frustumCullingStatic.end(), std::bind(add_geometry, std::ref(xscene.m_visibleStaticObjects), std::placeholders::_1));
+        std::for_each(frustumCullingDynamic.begin(),
+                      frustumCullingDynamic.end(),
+                      std::bind(add_geometry, std::ref(xscene.m_visibleDynamicObjects), std::placeholders::_1));
+
+        std::for_each(frustumCullingStatic.begin(),
+                      frustumCullingStatic.end(),
+                      std::bind(add_geometry, std::ref(xscene.m_visibleStaticObjects), std::placeholders::_1));
+
+        // Compute scene AABB
+
+        aabb dynBB, staBB;
+        dynBB = staBB = aabb::from_min_max(float3(0), float3(0));
+
+        #pragma omp parallel sections
+        {
+
+            #pragma omp section
+            {
+                std::for_each(frustumCullingDynamic.begin(),
+                              frustumCullingDynamic.end(),
+                              [&](scene_graph_geometry * geometry)
+                {
+                    sphere s  = geometry->get_sphere();
+                    aabb   bb = aabb::from_center_half_extents(s.center, s.radius);
+                    dynBB = bb + dynBB;
+                });
+            }
+            #pragma omp section
+            {
+                std::for_each(frustumCullingStatic.begin(),
+                              frustumCullingStatic.end(),
+                              [&](scene_graph_geometry * geometry)
+                {
+                    sphere s  = geometry->get_sphere();
+                    aabb   bb = aabb::from_center_half_extents(s.center, s.radius);
+                    staBB = bb + staBB;
+                });
+            }
+        }
+
+        xscene.m_aabb = dynBB + staBB;
 
         // Add lights
         
@@ -73,26 +113,6 @@ extracted_scene scene::extract(void)
 
             return extractedLight;
         });
-
-        // Add shadow casters
-
-        for (auto & light : lights)
-        {
-            switch (light->get_light_type())
-            {
-
-            case XNG_LIGHT_DIRECTIONAL:
-
-                break;
-
-            case XNG_LIGHT_SPOT:
-                break;
-
-            case XNG_LIGHT_POINT:
-                break;
-
-            }
-        }
     }
 
     return xscene;
@@ -130,7 +150,7 @@ const light_vector & extracted_scene::get_lights(void) const
     return m_lights;
 }
 
-const renderable_index_vector & extracted_scene::get_shadow_casting_objects(uint32_t index) const
+const aabb & extracted_scene::get_aabb(void) const
 {
-    return m_shadowCastingObjects[index];
+    return m_aabb;
 }

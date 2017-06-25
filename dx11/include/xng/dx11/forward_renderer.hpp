@@ -11,6 +11,9 @@ namespace xng
     {
         class forward_renderer 
         {
+        public:
+
+            static constexpr int MaxShadowMapsPerObject = 7;
 
         public:
 
@@ -31,6 +34,11 @@ namespace xng
                         bool debugNormals);
 
             void reload_shaders(void);
+
+        private:
+
+            void setup_lights(ID3D11DeviceContext * deviceContext,
+                              const graphics::extracted_scene & extractedScene);
 
         private:
 

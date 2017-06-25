@@ -34,7 +34,7 @@ namespace xng
             XNG_INLINE static type zero(void)
             {
                 type m;
-                fill(m, T(1), T(0));
+                fill(m, T(0), T(0));
                 return m;
             }
 

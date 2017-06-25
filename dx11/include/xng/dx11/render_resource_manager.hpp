@@ -63,7 +63,7 @@ namespace xng
 
         private:
 
-            std::multimap<uint64_t, detail::render_resource_wrapper*>                     m_descriptionMap;
+            std::multimap<uint64_t, detail::render_resource_wrapper*>                  m_descriptionMap;
             std::vector<std::pair<render_resource*, detail::render_resource_wrapper*>> m_resources;
 
             detail::render_resource_wrapper * find_texture_2d(const D3D11_TEXTURE2D_DESC & description);

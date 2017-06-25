@@ -34,10 +34,11 @@ bool dx11_render_module::init(native_window * wnd)
     debug = true;
 #endif
 
-    m_context        = std::make_unique<dx11_api_context>();
-    m_renderer       = std::make_unique<forward_renderer>();
-    m_guiRenderer    = std::make_unique<dx11_gui_renderer>();
-    m_visualDebugger = std::make_unique<visual_debugger>();
+    m_context           = std::make_unique<dx11_api_context>();
+    m_renderer          = std::make_unique<forward_renderer>();
+    m_guiRenderer       = std::make_unique<dx11_gui_renderer>();
+    m_visualDebugger    = std::make_unique<visual_debugger>();
+    m_shadowMapRenderer = std::make_unique<shadow_map_renderer>();
 
     render_variables rvars;
     m_configuration.get_render_variables(&rvars, nullptr);
@@ -45,7 +46,8 @@ bool dx11_render_module::init(native_window * wnd)
     if (m_context->init(wnd->get_native_handle(), XNG_API_DIRECTX_11, debug) &&
         m_guiRenderer->init(m_context.get()) &&
         m_renderer->init(m_context.get(), rvars) &&
-        m_visualDebugger->init(m_context.get(), rvars))
+        m_visualDebugger->init(m_context.get(), rvars) &&
+        m_shadowMapRenderer->init(m_context.get(), rvars))
     {
         m_window         = wnd;
         m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
@@ -73,6 +75,8 @@ bool dx11_render_module::init(native_window * wnd)
 
 void dx11_render_module::shutdown(void)
 {
+    m_shadowMaps.clear();
+
     m_window->remove_observer(&g_shaderRefresher);
     m_window->remove_observer(&m_windowObserver);
 
@@ -105,6 +109,8 @@ bool dx11_render_module::is_initialized(void) const
 
 void dx11_render_module::render(const extracted_scene & extractedScene, const gui_command_list & guiCommandList)
 {
+    m_shadowMaps.clear();
+
     render_variables rvars;
     render_variables_updates updates;
 
@@ -174,24 +180,20 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
         m_renderer->depth_prepass(immediateContext,
                                   depthBuffer->get_depth_stencil_view(),
                                   extractedScene);
+    }
 
-        m_renderer->render(immediateContext,
-                           backBuffer,
-                           depthBuffer->get_depth_stencil_view(),
-                           false,
-                           extractedScene,
-                           rvars.debug_normals);
-    }
-    else
-    {
-        m_renderer->render(immediateContext,
-                           backBuffer,
-                           depthBuffer->get_depth_stencil_view(),
-                           true,
-                           extractedScene,
-                           rvars.debug_normals);
-    }
-    
+    m_shadowMapRenderer->render(immediateContext,
+                                m_shadowMaps,
+                                m_renderResourceManager,
+                                extractedScene);
+
+    m_renderer->render(immediateContext,
+                       backBuffer,
+                       depthBuffer->get_depth_stencil_view(),
+                       !rvars.forward_depth_prepass,
+                       extractedScene,
+                       rvars.debug_normals);
+
     m_guiRenderer->render(immediateContext, backBuffer, rvars.render_resolution, guiCommandList);
     m_visualDebugger->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), extractedScene.get_active_camera());
     

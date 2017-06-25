@@ -131,9 +131,6 @@ void debug_renderer::render(const frustum & f, const float4 & color)
     render(corners[XNG_FRUSTUM_NEAR_BOTTOM_RIGHT], corners[XNG_FRUSTUM_FAR_BOTTOM_RIGHT], color);
     render(corners[XNG_FRUSTUM_NEAR_TOP_RIGHT],    corners[XNG_FRUSTUM_FAR_TOP_RIGHT], color);
     render(corners[XNG_FRUSTUM_NEAR_TOP_LEFT],     corners[XNG_FRUSTUM_FAR_TOP_LEFT], color);
-
-    write_octave_plot_script(f, "C:\\Users\\Davide\\Desktop\\frustum.m");
-    write_octave_plot_script(corners.begin(), corners.end(), "C:\\Users\\Davide\\Desktop\\frustum_corners.m");
 }
 
 

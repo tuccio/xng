@@ -41,8 +41,8 @@ namespace xng
             float invFmN = 1.f / (f - n);
 
             return float4x4(
-                2.f / invRmL, 0, 0, -(l + r) * invRmL,
-                0, 2.f / invTmB, 0, -(t + b) * invTmB,
+                2.f * invRmL, 0, 0, -(l + r) * invRmL,
+                0, 2.f * invTmB, 0, -(t + b) * invTmB,
                 0, 0, 1.f * invFmN, -n * invFmN,
                 0, 0, 0, 1
             );

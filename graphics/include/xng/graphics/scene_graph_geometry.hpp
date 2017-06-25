@@ -24,6 +24,8 @@ namespace xng
             bool is_static(void) const;
             void set_static(bool s);
 
+            math::sphere get_sphere(void);
+
         protected:
 
             void update_impl(void) override;

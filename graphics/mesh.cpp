@@ -1,4 +1,5 @@
 #include <xng/graphics/mesh.hpp>
+#include <algorithm>
 
 using namespace xng::res;
 using namespace xng::math;
@@ -386,6 +387,63 @@ size_t mesh::calculate_stride(uint32_t flags)
     }
 
     return sizeof(float) * 3 * verticesMultiplier + sizeof(float) * 2 * texcoordsMultiplier;
+}
+
+const aabb & mesh::get_aabb(void) const
+{
+    return m_aabb;
+}
+
+const sphere & mesh::get_bounding_sphere(void) const
+{
+    return m_sphere;
+}
+
+void mesh::compute_aabb(void)
+{
+    if (!m_numVertices)
+    {
+        m_aabb = aabb::from_min_max(float3(0), float3(0));
+        return;
+    }
+
+    auto minMaxX = std::minmax_element(m_vertices.begin(), m_vertices.end(), [](const float3 & lhs, const float3 & rhs) { return lhs.x < rhs.x; });
+    auto minMaxY = std::minmax_element(m_vertices.begin(), m_vertices.end(), [](const float3 & lhs, const float3 & rhs) { return lhs.y < rhs.y; });
+    auto minMaxZ = std::minmax_element(m_vertices.begin(), m_vertices.end(), [](const float3 & lhs, const float3 & rhs) { return lhs.z < rhs.z; });
+
+    float3 aabbMin = { minMaxX.first->x, minMaxY.first->y, minMaxZ.first->z };
+    float3 aabbMax = { minMaxX.second->x, minMaxY.second->y, minMaxZ.second->z };
+
+    m_aabb = aabb::from_min_max(aabbMin, aabbMax);
+}
+
+void mesh::compute_bounding_sphere(void)
+{
+    
+    if (!m_numVertices)
+    {
+        m_sphere = sphere(float3(0), 0.f);
+        return;
+    }
+
+    float3 centroid(0.f);
+
+    for (const float3 & v : m_vertices)
+    {
+        centroid = centroid + v;
+    }
+
+    centroid = centroid / m_vertices.size();
+
+    auto it = std::max_element(m_vertices.begin(),
+                               m_vertices.end(),
+                               [&centroid](const float3 & lhs, const float3 & rhs)
+    {
+        return dot(lhs, centroid) < dot(rhs, centroid);
+    });
+
+
+    m_sphere = sphere(centroid, length(*it - centroid));
 }
 
 // box_mesh_loader

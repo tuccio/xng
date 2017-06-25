@@ -1,6 +1,7 @@
 #pragma once
 
 #include "geometry/aabb.hpp"
+#include "geometry/obb.hpp"
 #include "geometry/frustum.hpp"
 #include "geometry/plane.hpp"
 #include "geometry/ray.hpp"

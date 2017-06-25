@@ -95,7 +95,7 @@ namespace xng
 
             const light_vector & get_lights(void) const;
 
-            const renderable_index_vector & get_shadow_casting_objects(uint32_t index) const;
+            const math::aabb & get_aabb(void) const;
 
         private:
 
@@ -106,7 +106,8 @@ namespace xng
             renderable_index_vector m_visibleStaticObjects;
 
             light_vector            m_lights;
-            light_lit_vector        m_shadowCastingObjects;
+
+            math::aabb              m_aabb;
 
             friend class scene;
         };

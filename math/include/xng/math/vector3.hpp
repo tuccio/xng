@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math_fwd.hpp"
+#include "forward.hpp"
 #include "matrix.hpp"
 
 namespace xng

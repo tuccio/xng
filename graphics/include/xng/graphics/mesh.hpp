@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xng/math.hpp>
+#include <xng/geometry.hpp>
 #include <xng/res.hpp>
 
 #include <cstdint>
@@ -80,6 +81,11 @@ namespace xng
             std::vector<uint8_t> pack_interleaved_data(bool packPositions, uint32_t flags) const;
             static size_t calculate_stride(uint32_t flags);
 
+            const math::aabb & get_aabb(void) const;
+            const math::sphere & get_bounding_sphere(void) const;
+
+            void compute_aabb(void);
+            void compute_bounding_sphere(void);
 
         protected:
 
@@ -89,12 +95,18 @@ namespace xng
 
         private:
 
+
+        private:
+
             std::vector<math::float3> m_vertices;
             std::vector<math::float3> m_normals;
             std::vector<math::float3> m_tangents;
             std::vector<math::float3> m_bitangents;
             std::vector<math::float2> m_texcoords[XNG_MESH_MAX_TEXCOORDS];
             std::vector<math::uint3>  m_indices;
+
+            math::aabb   m_aabb;
+            math::sphere m_sphere;
 
             uint32_t   m_numVertices;
             uint32_t   m_numTriangles;

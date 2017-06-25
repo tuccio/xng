@@ -1,0 +1,25 @@
+struct VSInput
+{
+	float3 position : POSITION;
+};
+
+struct PSInput
+{
+	float4 position: SV_Position;
+};
+
+#xng section(vertex:main_vs)
+
+cbuffer cbPerObject : register(b0)
+{
+	float4x4 viewProjectionMatrix;
+};
+
+PSInput main_vs(VSInput input)
+{
+	PSInput output;
+	
+	output.position  = mul(float4(input.position, 1), viewProjectionMatrix);
+	
+	return output;
+}

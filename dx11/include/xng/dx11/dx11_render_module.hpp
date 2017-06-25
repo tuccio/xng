@@ -6,8 +6,11 @@
 #include <xng/dx11/dx11_gui_renderer.hpp>
 #include <xng/dx11/default_samplers.hpp>
 #include <xng/dx11/render_resource_manager.hpp>
+#include <xng/dx11/shadows/shadow_mapping.hpp>
+#include <xng/dx11/shadows/shadow_map_renderer.hpp>
 
 #include <memory>
+#include <unordered_map>
 
 namespace xng
 {
@@ -36,6 +39,9 @@ namespace xng
             std::unique_ptr<forward_renderer>  m_renderer;
             std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
             std::unique_ptr<visual_debugger>   m_visualDebugger;
+
+            std::unordered_map<int, std::vector<shadow_map>> m_shadowMaps;
+            std::unique_ptr<shadow_map_renderer> m_shadowMapRenderer;
 
             render_resource_manager m_renderResourceManager;
 

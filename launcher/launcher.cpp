@@ -56,6 +56,10 @@ int CALLBACK WinMain(
         game->set_quit_on_close(true);
         game->run();
     }
+    else
+    {
+        xng::os::message_box("Error", "Initialization failed", XNG_MESSAGE_BOX_ERROR);
+    }
 
     // Cleanup before closing
 

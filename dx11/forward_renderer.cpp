@@ -15,34 +15,44 @@ using namespace xng::graphics;
 using namespace xng::res;
 using namespace xng::math;
 
-#define NORMAL_MAP    (1)
-#define BASE_TEXTURE  (1 << 1)
-#define SPECULAR_MAP  (1 << 2)
-#define DEBUG_NORMALS (1 << 10)
-
-struct alignas(16) __cbPerObject
+namespace
 {
-    float4x4 modelMatrix;
-    float4x4 modelViewMatrix;
-    float4x4 modelViewProjectionMatrix;
-};
+    struct alignas(16) cb_per_object
+    {
+        float4x4 modelMatrix;
+        float4x4 modelViewMatrix;
+        float4x4 modelViewProjectionMatrix;
+    };
 
-struct alignas(16) __cbPerFrame
-{
-    unsigned int numLights;
-};
+    struct alignas(16) cb_per_frame
+    {
+        unsigned int numLights;
+    };
 
-struct __Light
-{
-    float3 luminance;
-    int    type;
-    float3 ambient;
-    float  __fill0;
-    float3 position;
-    float  __fill1;
-    float3 direction;
-    float  cutoff;
-};
+    struct light_buffer
+    {
+        float3   luminance;
+        int      type;
+        float3   ambient;
+        float    __fill0;
+        float3   position;
+        float    __fill1;
+        float3   direction;
+        float    cutoff;
+    };
+
+    enum 
+   {
+        NormalMap    = 1,
+        BaseTexture  = 1 << 1,
+        SpecularMap  = 1 << 2,
+        DebugNormals = 1 << 10
+    };
+    
+    constexpr int LightBufferSRVSlot = 8;
+}
+
+
 
 bool forward_renderer::init(dx11_api_context * context, const render_variables & rvars)
 {
@@ -84,8 +94,8 @@ bool forward_renderer::init(dx11_api_context * context, const render_variables &
 
     return device != nullptr &&
         m_program.preprocess(XNG_DX11_SHADER_FILE("forward.xhlsl")) &&
-        m_cbPerFrame.create<__cbPerFrame>(device) &&
-        m_cbPerObject.create<__cbPerObject>(device) &&
+        m_cbPerFrame.create<cb_per_frame>(device) &&
+        m_cbPerObject.create<cb_per_object>(device) &&
         m_cbPerObjectDepth.create<float4x4>(device) &&
         !XNG_HR_FAILED(device->CreateBlendState(&blendNoRTDesc, &m_blendNoRTState)) &&
         !XNG_HR_FAILED(device->CreateDepthStencilState(&depthCompareDesc, &m_depthCompareState)) &&
@@ -107,17 +117,17 @@ void make_shader_permutation(uint32_t & shaderPermutationKey, const material_ptr
 
     if (material->get_normal_map())
     {
-        shaderPermutationKey |= NORMAL_MAP;
+        shaderPermutationKey |= NormalMap;
     }
 
     if (material->get_base_texture())
     {
-        shaderPermutationKey |= BASE_TEXTURE;
+        shaderPermutationKey |= BaseTexture;
     }
 
     if (material->get_specular_map())
     {
-        shaderPermutationKey |= SPECULAR_MAP;
+        shaderPermutationKey |= SpecularMap;
     }
 }
 
@@ -125,22 +135,22 @@ void make_shader_permutation_macros(std::vector<shader_macro> & macros, uint32_t
 {
     macros.clear();
 
-    if (shaderPermutationKey & DEBUG_NORMALS)
+    if (shaderPermutationKey & DebugNormals)
     {
         macros.push_back(shader_macro{ "DEBUG_NORMALS", "" });
     }
 
-    if (shaderPermutationKey & NORMAL_MAP)
+    if (shaderPermutationKey & NormalMap)
     {
         macros.push_back(shader_macro{ "NORMAL_MAP", "" });
     }
 
-    if (shaderPermutationKey & BASE_TEXTURE)
+    if (shaderPermutationKey & BaseTexture)
     {
         macros.push_back(shader_macro{ "BASE_TEXTURE", "" });
     }
 
-    if (shaderPermutationKey & SPECULAR_MAP)
+    if (shaderPermutationKey & SpecularMap)
     {
         macros.push_back(shader_macro{ "SPECULAR_MAP", "" });
     }
@@ -197,7 +207,8 @@ void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
             // Fill constant buffer
 
             const float4x4 & modelMatrix = renderable.world;
-            m_cbPerObjectDepth.write(deviceContext, &(viewProjectionMatrix * modelMatrix));
+            const float4x4 mvp = viewProjectionMatrix * modelMatrix;
+            m_cbPerObjectDepth.write(deviceContext, &mvp);
 
             // Draw
 
@@ -259,7 +270,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
     auto & dynamicGeometry = scene.get_frustum_culling_dynamic();
     auto & staticGeometry  = scene.get_frustum_culling_static();
 
-    __cbPerFrame cbPerFrameData = {};
+    cb_per_frame cbPerFrameData = {};
 
     cbPerFrameData.numLights = scene.get_lights().size();
 
@@ -327,54 +338,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
         return lhs.key < rhs.key;
     });
 
-    // Setup lights
-
-    auto & extractedLights = scene.get_lights();
-    uint32_t numLights = extractedLights.size();
-
-    if (numLights > m_maxLights)
-    {
-        CD3D11_BUFFER_DESC bufferDesc(
-            sizeof(__Light) * numLights,
-            D3D11_BIND_SHADER_RESOURCE,
-            D3D11_USAGE_DYNAMIC,
-            D3D11_CPU_ACCESS_WRITE,
-            D3D11_RESOURCE_MISC_BUFFER_STRUCTURED,
-            sizeof(__Light));
-
-        if (!XNG_HR_FAILED(device->CreateBuffer(&bufferDesc, nullptr, m_sbLights.reset_and_get_address())) &&
-            !XNG_HR_FAILED(device->CreateShaderResourceView(m_sbLights.get(), nullptr, m_srvLights.reset_and_get_address())))
-        {
-            m_maxLights = numLights;
-        }
-    }
-
-    if (numLights > 0)
-    {
-        std::vector<__Light> lights(numLights);
-
-        for (uint32_t i = 0; i < numLights; ++i)
-        {
-            auto & xLight = extractedLights[i];
-
-            lights[i].ambient   = xLight.ambient;
-            lights[i].type      = xLight.type;
-            lights[i].direction = xLight.direction;
-            lights[i].position  = xLight.position;
-            lights[i].cutoff    = xLight.cutoff;
-            lights[i].luminance = xLight.luminance;
-        }
-
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-
-        if (!XNG_HR_FAILED(deviceContext->Map(m_sbLights.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
-        {
-            memcpy(mappedResource.pData, &lights[0], sizeof(__Light) * numLights);
-            deviceContext->Unmap(m_sbLights.get(), 0);
-        }
-
-        deviceContext->PSSetShaderResources(8, 1, &m_srvLights);
-    }
+    setup_lights(deviceContext, scene);
 
     // Render
 
@@ -394,7 +358,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
 
             if (debugNormals)
             {
-                shaderPermutationKey |= DEBUG_NORMALS;
+                shaderPermutationKey |= DebugNormals;
             }
             
             if (currentShader != shaderPermutationKey)
@@ -411,7 +375,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
 
             const float4x4 & modelMatrix = renderable.world;
 
-            __cbPerObject bufferPerObjectData;
+            cb_per_object bufferPerObjectData;
             
             bufferPerObjectData.modelMatrix               = modelMatrix;
             bufferPerObjectData.modelViewMatrix           = viewMatrix * modelMatrix;
@@ -423,7 +387,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
 
             ID3D11ShaderResourceView * srvs[3] = { 0 };
 
-            if (shaderPermutationKey & NORMAL_MAP)
+            if (shaderPermutationKey & NormalMap)
             {
                 texture_ptr normalMap = resource_factory::get_singleton()->create<texture>(
                     "",
@@ -437,7 +401,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
                 }
             }
 
-            if (shaderPermutationKey & BASE_TEXTURE)
+            if (shaderPermutationKey & BaseTexture)
             {
                 static const resource_parameters texParams = make_resource_parameters("generate_mipmaps", true);
 
@@ -453,7 +417,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
                 }
             }
 
-            if (shaderPermutationKey & SPECULAR_MAP)
+            if (shaderPermutationKey & SpecularMap)
             {
                 texture_ptr specularMap = resource_factory::get_singleton()->create<texture>(
                     "",
@@ -520,4 +484,57 @@ void forward_renderer::update_render_variables(const render_variables & rvars, c
 void forward_renderer::reload_shaders(void)
 {
     m_program.reload();
+}
+
+void forward_renderer::setup_lights(ID3D11DeviceContext * deviceContext,
+                                    const extracted_scene & scene)
+{
+    ID3D11Device * device = m_apiContext->get_device();
+
+    auto & extractedLights = scene.get_lights();
+    uint32_t numLights = extractedLights.size();
+
+    if (numLights > m_maxLights)
+    {
+        CD3D11_BUFFER_DESC bufferDesc(
+            sizeof(light_buffer) * numLights,
+            D3D11_BIND_SHADER_RESOURCE,
+            D3D11_USAGE_DYNAMIC,
+            D3D11_CPU_ACCESS_WRITE,
+            D3D11_RESOURCE_MISC_BUFFER_STRUCTURED,
+            sizeof(light_buffer));
+
+        if (!XNG_HR_FAILED(device->CreateBuffer(&bufferDesc, nullptr, m_sbLights.reset_and_get_address())) &&
+            !XNG_HR_FAILED(device->CreateShaderResourceView(m_sbLights.get(), nullptr, m_srvLights.reset_and_get_address())))
+        {
+            m_maxLights = numLights;
+        }
+    }
+
+    if (numLights > 0)
+    {
+        std::vector<light_buffer> lights(numLights);
+
+        for (uint32_t i = 0; i < numLights; ++i)
+        {
+            auto & xLight = extractedLights[i];
+
+            lights[i].ambient = xLight.ambient;
+            lights[i].type = xLight.type;
+            lights[i].direction = xLight.direction;
+            lights[i].position = xLight.position;
+            lights[i].cutoff = xLight.cutoff;
+            lights[i].luminance = xLight.luminance;
+        }
+
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+
+        if (!XNG_HR_FAILED(deviceContext->Map(m_sbLights.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
+        {
+            memcpy(mappedResource.pData, &lights[0], sizeof(light_buffer) * numLights);
+            deviceContext->Unmap(m_sbLights.get(), 0);
+        }
+
+        deviceContext->PSSetShaderResources(LightBufferSRVSlot, 1, &m_srvLights);
+    }
 }

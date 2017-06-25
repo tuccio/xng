@@ -21,8 +21,17 @@ if (XNG_USE_DX11)
 	
 	add_definitions(-DXNG_DX11)
 
-	file(GLOB XNG_DX11_SOURCE_FILES *.cpp)
-	file(GLOB XNG_DX11_INCLUDE_FILES include/xng/*.hpp include/xng/*.inl include/xng/dx11/*.hpp include/xng/dx11/*.inl)
+	file(GLOB XNG_DX11_CORE_SOURCE_FILES *.cpp)
+	file(GLOB XNG_DX11_CORE_INCLUDE_FILES include/xng/*.hpp include/xng/*.inl include/xng/dx11/*.hpp include/xng/dx11/*.inl)
+	
+	file(GLOB XNG_DX11_SHADOWS_SOURCE_FILES shadows/*.cpp)
+	file(GLOB XNG_DX11_SHADOWS_INCLUDE_FILES include/xng/dx11/shadows/*.hpp include/xng/dx11/shadows/*.inl)
+	
+	set(XNG_DX11_SOURCE_FILES ${XNG_DX11_CORE_SOURCE_FILES} ${XNG_DX11_SHADOWS_SOURCE_FILES})
+	set(XNG_DX11_INCLUDE_FILES ${XNG_DX11_CORE_INCLUDE_FILES} ${XNG_DX11_SHADOWS_INCLUDE_FILES})
+	
+	source_group("shadows\\Header Files" FILES ${XNG_DX11_SHADOWS_INCLUDE_FILES})
+	source_group("shadows\\Source Files" FILES ${XNG_DX11_SHADOWS_SOURCE_FILES})
 	
 	include_directories(${XNG_INCLUDE_DIRS})
 	include_directories(include)

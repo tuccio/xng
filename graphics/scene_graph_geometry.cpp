@@ -1,6 +1,7 @@
 #include <xng/graphics/scene_graph_geometry.hpp>
 
 using namespace xng::graphics;
+using namespace xng::math;
 
 scene_graph_geometry::scene_graph_geometry(scene_graph_node * parent) :
     scene_graph_node(XNG_SCENE_GRAPH_GEOMETRY, parent, parent->get_scene_graph()),
@@ -24,6 +25,11 @@ bool scene_graph_geometry::is_static(void) const
 void scene_graph_geometry::set_static(bool s)
 {
     m_static = s;
+}
+
+sphere scene_graph_geometry::get_sphere(void)
+{
+    return transform(m_mesh->get_bounding_sphere(), get_global_matrix());
 }
 
 material_ptr scene_graph_geometry::get_material(void) const

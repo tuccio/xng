@@ -4,7 +4,7 @@
 #include <cassert>
 #include <type_traits>
 
-#include "math/math_fwd.hpp"
+#include "math/forward.hpp"
 #include "math/utility.hpp"
 
 /* Template matrices */

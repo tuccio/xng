@@ -95,7 +95,7 @@ namespace xng
 
 				XNG_INLINE static void max(MatrixType & r, const MatrixType & a, const MatrixType & b)
 				{
-					matrix_cwise<MatrixType, I - 1>::min(r, a, b);
+					matrix_cwise<MatrixType, I - 1>::max(r, a, b);
 					get<I - 1>(r) = xng::math::max(get<I - 1>(a), get<I - 1>(b));
 				}
 
