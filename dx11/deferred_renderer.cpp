@@ -1,4 +1,4 @@
-#include <xng/dx11/forward_renderer.hpp>
+#include <xng/dx11/deferred_renderer.hpp>
 
 #include <xng/dx11.hpp>
 #include <xng/graphics/mesh.hpp>
@@ -41,20 +41,20 @@ namespace
         float    cutoff;
     };
 
-    enum 
-   {
-        NormalMap    = 1,
-        BaseTexture  = 1 << 1,
-        SpecularMap  = 1 << 2,
+    enum
+    {
+        NormalMap = 1,
+        BaseTexture = 1 << 1,
+        SpecularMap = 1 << 2,
         DebugNormals = 1 << 10
     };
-    
+
     constexpr int LightBufferSRVSlot = 8;
 }
 
 
 
-bool forward_renderer::init(dx11_api_context * context, const render_variables & rvars)
+bool deferred_renderer::init(dx11_api_context * context, const render_variables & rvars)
 {
     m_apiContext = context;
 
@@ -64,10 +64,20 @@ bool forward_renderer::init(dx11_api_context * context, const render_variables &
 
     CD3D11_DEPTH_STENCIL_DESC depthCompareDesc(D3D11_DEFAULT);
 
-    depthCompareDesc.DepthFunc      = D3D11_COMPARISON_EQUAL;
+    depthCompareDesc.DepthFunc = D3D11_COMPARISON_EQUAL;
     depthCompareDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 
     D3D11_BLEND_DESC blendNoRTDesc = {};
+    D3D11_BLEND_DESC blendAccumulateDesc = {};
+
+    blendAccumulateDesc.RenderTarget[0].BlendEnable           = TRUE;
+    blendAccumulateDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
+    blendAccumulateDesc.RenderTarget[0].DestBlend             = D3D11_BLEND_ONE;
+    blendAccumulateDesc.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
+    blendAccumulateDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+    blendAccumulateDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ONE;
+    blendAccumulateDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+    blendAccumulateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
     switch (rvars.culling_mode)
     {
@@ -84,8 +94,8 @@ bool forward_renderer::init(dx11_api_context * context, const render_variables &
     }
 
     ID3D11Device * device = m_apiContext ? m_apiContext->get_device() : nullptr;
-    
-    m_program.set_ilv_functor([](D3D11_INPUT_ELEMENT_DESC * inputElementDesc)
+
+    m_gbufferProgram.set_ilv_functor([](D3D11_INPUT_ELEMENT_DESC * inputElementDesc)
     {
         inputElementDesc->InputSlot = strcmp(inputElementDesc->SemanticName, "POSITION") ? 1 : 0;
     });
@@ -93,21 +103,24 @@ bool forward_renderer::init(dx11_api_context * context, const render_variables &
     m_maxLights = 0;
 
     return device != nullptr &&
-        m_program.preprocess(XNG_DX11_SHADER_FILE("forward.xhlsl")) &&
+        m_gbufferProgram.preprocess(XNG_DX11_SHADER_FILE("deferred_gbuffer.xhlsl")) &&
+        m_shadingProgram.preprocess(XNG_DX11_SHADER_FILE("deferred_shading.xhlsl")) &&
         m_cbPerFrame.create<cb_per_frame>(device) &&
         m_cbPerObject.create<cb_per_object>(device) &&
         m_cbPerObjectDepth.create<float4x4>(device) &&
+        m_cbPerLight.create<light_buffer>(device) &&
         !XNG_HR_FAILED(device->CreateBlendState(&blendNoRTDesc, &m_blendNoRTState)) &&
+        !XNG_HR_FAILED(device->CreateBlendState(&blendAccumulateDesc, &m_blendAccumulate)) &&
         !XNG_HR_FAILED(device->CreateDepthStencilState(&depthCompareDesc, &m_depthCompareState)) &&
         !XNG_HR_FAILED(device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState));
 }
 
-void forward_renderer::shutdown(void)
+void deferred_renderer::shutdown(void)
 {
     m_apiContext = nullptr;
     m_rasterizerState.reset();
     m_cbPerObject.reset();
-    m_program.clear();
+    m_gbufferProgram.clear();
     m_vbFactory.clear();
 }
 
@@ -159,7 +172,7 @@ namespace
     }
 }
 
-void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
+void deferred_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
                                      ID3D11DepthStencilView * dsv,
                                      const extracted_scene & scene)
 {
@@ -178,13 +191,13 @@ void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
 
     const camera * camera = scene.get_active_camera();
 
-    const float4x4 & viewMatrix       = camera->get_directx_view_matrix();
+    const float4x4 & viewMatrix = camera->get_directx_view_matrix();
     const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
 
     float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
 
     auto & dynamicGeometry = scene.get_frustum_culling_dynamic();
-    auto & staticGeometry  = scene.get_frustum_culling_static();
+    auto & staticGeometry = scene.get_frustum_culling_static();
 
     deviceContext->VSSetConstantBuffers(1, 1, &m_cbPerObjectDepth);
 
@@ -192,7 +205,7 @@ void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
 
     gpu_mesh::load_data meshLoadData = { m_apiContext->get_device() };
 
-    shader_program program = m_program.compile(device, "depth_prepass", { { "DEPTH_PREPASS", "" } });
+    shader_program program = m_gbufferProgram.compile(device, "depth_prepass", { { "DEPTH_PREPASS", "" } });
     program.use(deviceContext);
 
     deviceContext->PSSetShader(nullptr, nullptr, 0);
@@ -232,16 +245,16 @@ void forward_renderer::depth_prepass(ID3D11DeviceContext * deviceContext,
     program.dispose(deviceContext);
 }
 
-void forward_renderer::render(ID3D11DeviceContext * deviceContext,
-                              ID3D11RenderTargetView * rtv,
-                              ID3D11DepthStencilView * dsv,
-                              bool renderDepth,
-                              const extracted_scene & scene,
-                              bool debugNormals)
+void deferred_renderer::render_gbuffer(ID3D11DeviceContext * deviceContext,
+                                       ID3D11DepthStencilView * dsv,
+                                       ID3D11RenderTargetView ** gbufferRTV,
+                                       ID3D11ShaderResourceView ** gbufferSRV,
+                                       bool renderDepth,
+                                       const extracted_scene & scene)
 {
     ID3D11Device * device = m_apiContext->get_device();
 
-    m_apiContext->profile_start("Forward Pass", deviceContext);
+    m_apiContext->profile_start("GBuffer Pass", deviceContext);
 
     deviceContext->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
     deviceContext->RSSetState(m_rasterizerState.get());
@@ -257,21 +270,23 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
     }
 
     deviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
-    deviceContext->OMSetRenderTargets(1, &rtv, dsv);
+    deviceContext->OMSetRenderTargets(3, gbufferRTV, dsv);
 
-    float clearColor[4] = { 0 };
+    float clearColor[4] = {};
 
-    deviceContext->ClearRenderTargetView(rtv, clearColor);    
+    deviceContext->ClearRenderTargetView(gbufferRTV[0], clearColor);
+    deviceContext->ClearRenderTargetView(gbufferRTV[1], clearColor);
+    deviceContext->ClearRenderTargetView(gbufferRTV[2], clearColor);
 
     const camera * camera = scene.get_active_camera();
 
-    const float4x4 & viewMatrix       = camera->get_directx_view_matrix();
+    const float4x4 & viewMatrix = camera->get_directx_view_matrix();
     const float4x4 & projectionMatrix = camera->get_directx_projection_matrix();
 
     float4x4 viewProjectionMatrix = projectionMatrix * viewMatrix;
 
     auto & dynamicGeometry = scene.get_frustum_culling_dynamic();
-    auto & staticGeometry  = scene.get_frustum_culling_static();
+    auto & staticGeometry = scene.get_frustum_culling_static();
 
     cb_per_frame cbPerFrameData = {};
 
@@ -318,9 +333,9 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
             // TODO: Should use some hashing function
 
             uint64_t shaderProgram64 = shaderProgram;
-            uint64_t baseTexture64   = material->get_base_texture() ? material->get_base_texture()->get_id() : 0;
-            uint64_t normalMap64     = material->get_normal_map() ? material->get_normal_map()->get_id() : 0;
-            uint64_t specularMap64   = material->get_specular_map() ? material->get_specular_map()->get_id() : 0;
+            uint64_t baseTexture64 = material->get_base_texture() ? material->get_base_texture()->get_id() : 0;
+            uint64_t normalMap64 = material->get_normal_map() ? material->get_normal_map()->get_id() : 0;
+            uint64_t specularMap64 = material->get_specular_map() ? material->get_specular_map()->get_id() : 0;
 
             key =
                 ((shaderProgram64 & 0xFFFF) << 48) |
@@ -329,19 +344,17 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
                 ((specularMap64 & 0xFFFF));
         }
 
-        return geometry_key_index{ key, geometryIndex };        
+        return geometry_key_index{ key, geometryIndex };
     };
 
     std::transform(dynamicGeometry.begin(), dynamicGeometry.end(), std::back_inserter(geometry), computeSortKey);
     std::transform(staticGeometry.begin(), staticGeometry.end(), std::back_inserter(geometry), computeSortKey);
 
     std::sort(geometry.begin(), geometry.end(),
-        [](const geometry_key_index & lhs, const geometry_key_index & rhs)
+              [](const geometry_key_index & lhs, const geometry_key_index & rhs)
     {
         return lhs.key < rhs.key;
     });
-
-    setup_lights(deviceContext, scene);
 
     // Render
 
@@ -359,16 +372,11 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
         {
             make_shader_permutation(shaderPermutationKey, material);
 
-            if (debugNormals)
-            {
-                shaderPermutationKey |= DebugNormals;
-            }
-            
             if (currentShader != shaderPermutationKey)
             {
                 make_shader_permutation_macros(shaderMacros, shaderPermutationKey);
 
-                shader_program program = m_program.compile(m_apiContext->get_device(), std::to_string(shaderPermutationKey).c_str(), shaderMacros);
+                shader_program program = m_gbufferProgram.compile(m_apiContext->get_device(), std::to_string(shaderPermutationKey).c_str(), shaderMacros);
                 program.use(deviceContext);
 
                 currentShader = shaderPermutationKey;
@@ -379,9 +387,9 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
             const float4x4 & modelMatrix = renderable.world;
 
             cb_per_object bufferPerObjectData;
-            
-            bufferPerObjectData.modelMatrix               = modelMatrix;
-            bufferPerObjectData.modelViewMatrix           = viewMatrix * modelMatrix;
+
+            bufferPerObjectData.modelMatrix = modelMatrix;
+            bufferPerObjectData.modelViewMatrix = viewMatrix * modelMatrix;
             bufferPerObjectData.modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
             m_cbPerObject.write(deviceContext, &bufferPerObjectData);
@@ -397,7 +405,7 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
                     resource_parameters(),
                     resource_loader_ptr(),
                     material->get_normal_map());
-                
+
                 if (normalMap && normalMap->load(&texture::load_data{ device, deviceContext }))
                 {
                     srvs[0] = normalMap->get_shader_resource_view();
@@ -450,13 +458,108 @@ void forward_renderer::render(ID3D11DeviceContext * deviceContext,
         }
     }
 
-    m_apiContext->profile_complete("Forward Pass", deviceContext);
+    m_apiContext->profile_complete("GBuffer Pass", deviceContext);
 
     shader_program clearState;
     clearState.dispose(deviceContext);
 }
 
-void forward_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & updates)
+void deferred_renderer::render_shading(ID3D11DeviceContext * deviceContext,
+                                       ID3D11RenderTargetView * rtv,
+                                       ID3D11ShaderResourceView ** gbufferSRV,
+                                       const extracted_scene & extractedScene,
+                                       bool debugNormals)
+{
+    ID3D11Device * device = m_apiContext->get_device();
+
+    m_apiContext->profile_start("Shading Pass", deviceContext);
+
+    deviceContext->RSSetViewports(1, &CD3D11_VIEWPORT(0.f, 0.f, m_rvars.render_resolution.x, m_rvars.render_resolution.y));
+    deviceContext->RSSetState(m_rasterizerState.get());
+
+    deviceContext->OMSetBlendState(m_blendAccumulate.get(), nullptr, 0xFFFFFFFF);
+    deviceContext->OMSetDepthStencilState(nullptr, 0);
+    deviceContext->OMSetRenderTargets(1, &rtv, nullptr);
+
+    float clearColor[4] = {};
+    deviceContext->ClearRenderTargetView(rtv, clearColor);
+    deviceContext->PSSetShaderResources(0, 3, gbufferSRV);
+
+    if (debugNormals)
+    {
+        auto program = m_shadingProgram.compile(device, "debug-normals", { { "DEBUG_NORMALS", "" } });
+        program.use(deviceContext);
+
+        deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        deviceContext->Draw(4, 0);
+    }
+    else
+    {
+        deviceContext->PSSetConstantBuffers(0, 1, &m_cbPerLight);
+
+        auto & lights = extractedScene.get_lights();
+
+        auto sortedLights = lights;
+
+        std::sort(sortedLights.begin(), sortedLights.end(),
+                  [](const extracted_light & lhs, const extracted_light & rhs)
+        {
+            return lhs.type < rhs.type;
+        });
+
+        int lastLight = -1;
+
+        for (auto & light : sortedLights)
+        {
+            if (lastLight != static_cast<int>(light.type))
+            {
+                lastLight = static_cast<int>(light.type);
+
+                switch (light.type)
+                {
+                case xng_light_type::XNG_LIGHT_DIRECTIONAL:
+                {
+                    auto program = m_shadingProgram.compile(device, "directional", { { "LIGHT_TYPE", "DIRECTIONAL" } });
+                    program.use(deviceContext);
+                }
+                break;
+                default:
+                    XNG_LOG_DEBUG("Light not implemented yet");
+                    break;
+                }
+            }
+
+            light_buffer lightBuf;
+
+            lightBuf.ambient   = light.ambient;
+            lightBuf.type      = light.type;
+            lightBuf.direction = light.direction;
+            lightBuf.position  = light.position;
+            lightBuf.cutoff    = light.cutoff;
+            lightBuf.luminance = light.luminance;
+
+            m_cbPerLight.write(deviceContext, &lightBuf);
+
+            switch (light.type)
+            {
+            case xng_light_type::XNG_LIGHT_DIRECTIONAL:
+                deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+                deviceContext->Draw(4, 0);
+                break;
+            default:
+                XNG_LOG_DEBUG("Light not implemented yet");
+                break;
+            }
+        }
+    }
+
+    ID3D11ShaderResourceView * clear[3] = {};
+    deviceContext->PSSetShaderResources(0, 3, clear);
+
+    m_apiContext->profile_complete("Shading Pass", deviceContext);
+}
+
+void deferred_renderer::update_render_variables(const render_variables & rvars, const render_variables_updates & updates)
 {
     m_rvars = rvars;
 
@@ -484,60 +587,8 @@ void forward_renderer::update_render_variables(const render_variables & rvars, c
     }
 }
 
-void forward_renderer::reload_shaders(void)
+void deferred_renderer::reload_shaders(void)
 {
-    m_program.reload();
-}
-
-void forward_renderer::setup_lights(ID3D11DeviceContext * deviceContext,
-                                    const extracted_scene & scene)
-{
-    ID3D11Device * device = m_apiContext->get_device();
-
-    auto & extractedLights = scene.get_lights();
-    uint32_t numLights = extractedLights.size();
-
-    if (numLights > m_maxLights)
-    {
-        CD3D11_BUFFER_DESC bufferDesc(
-            sizeof(light_buffer) * numLights,
-            D3D11_BIND_SHADER_RESOURCE,
-            D3D11_USAGE_DYNAMIC,
-            D3D11_CPU_ACCESS_WRITE,
-            D3D11_RESOURCE_MISC_BUFFER_STRUCTURED,
-            sizeof(light_buffer));
-
-        if (!XNG_HR_FAILED(device->CreateBuffer(&bufferDesc, nullptr, m_sbLights.reset_and_get_address())) &&
-            !XNG_HR_FAILED(device->CreateShaderResourceView(m_sbLights.get(), nullptr, m_srvLights.reset_and_get_address())))
-        {
-            m_maxLights = numLights;
-        }
-    }
-
-    if (numLights > 0)
-    {
-        std::vector<light_buffer> lights(numLights);
-
-        for (uint32_t i = 0; i < numLights; ++i)
-        {
-            auto & xLight = extractedLights[i];
-
-            lights[i].ambient   = xLight.ambient;
-            lights[i].type      = xLight.type;
-            lights[i].direction = xLight.direction;
-            lights[i].position  = xLight.position;
-            lights[i].cutoff    = xLight.cutoff;
-            lights[i].luminance = xLight.luminance;
-        }
-
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-
-        if (!XNG_HR_FAILED(deviceContext->Map(m_sbLights.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource)))
-        {
-            memcpy(mappedResource.pData, &lights[0], sizeof(light_buffer) * numLights);
-            deviceContext->Unmap(m_sbLights.get(), 0);
-        }
-
-        deviceContext->PSSetShaderResources(LightBufferSRVSlot, 1, &m_srvLights);
-    }
+    m_gbufferProgram.reload();
+    m_shadingProgram.reload();
 }

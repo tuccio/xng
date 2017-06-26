@@ -37,8 +37,8 @@ namespace xng
             void set_vsync(bool vsync) override;
             bool get_vsync(void) const override;
 
-            void profile_start(const char * name) override;
-            void profile_complete(const char * name) override;
+            void profile_start(const char * name, ID3D11DeviceContext * context);
+            void profile_complete(const char * name, ID3D11DeviceContext * context);
 
             graphics::profiler_data get_profiler_data(void) override;
 

@@ -38,9 +38,6 @@ namespace xng
             virtual void set_vsync(bool vsync) = 0;
             virtual bool get_vsync(void) const = 0;
 
-            virtual void profile_start(const char * name) {}
-            virtual void profile_complete(const char * name) {}
-
             virtual profiler_data get_profiler_data(void)
             {
                 return profiler_data();

@@ -12,7 +12,7 @@ void logger::log(const char * label, const char * message) const
     auto now   = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
     
-    *m_logStream << "[" << std::put_time(std::localtime(&now_c), "%c") << "] " << label << ": " << message << std::endl;
+    *m_logStream << "[" << std::put_time(std::localtime(&now_c), "%c") << "] " << label << ": " << message << "\n";
 }
 
 void logger::log(const char * label, const decltype(XNG_LOG_STREAM()) & os) const
@@ -21,7 +21,7 @@ void logger::log(const char * label, const decltype(XNG_LOG_STREAM()) & os) cons
     auto now   = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
 
-    *m_logStream << "[" << std::put_time(std::localtime(&now_c), "%c") << "] " << label << ": " << os.rdbuf() << std::endl;
+    *m_logStream << "[" << std::put_time(std::localtime(&now_c), "%c") << "] " << label << ": " << os.rdbuf() << "\n";
 }
 
 void logger::log(const char * label, const std::basic_ostream<char> & os) const
@@ -30,5 +30,5 @@ void logger::log(const char * label, const std::basic_ostream<char> & os) const
     auto now = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
 
-    *m_logStream << "[" << std::put_time(std::localtime(&now_c), "%c") << "] " << label << ": " << os.rdbuf() << std::endl;
+    *m_logStream << "[" << std::put_time(std::localtime(&now_c), "%c") << "] " << label << ": " << os.rdbuf() << "\n";
 }

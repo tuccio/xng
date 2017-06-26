@@ -1,4 +1,4 @@
- #include <xng/dx11/dx11_render_module.hpp>
+#include <xng/dx11/dx11_deferred_module.hpp>
 #include <xng/dx11/gpu_mesh.hpp>
 #include <xng/dx11/texture.hpp>
 
@@ -9,33 +9,37 @@ using namespace xng::res;
 using namespace xng::gui;
 using namespace xng::math;
 
-const char *          dx11_render_module::module_name        = "xngdx11";
-const char *          dx11_render_module::module_description = "XNG DirectX 11 Render Module";
-const xng_module_type dx11_render_module::module_type        = XNG_MODULE_TYPE_RENDER;
+const char *          dx11_deferred_module::module_name        = "xngdx11-deferred";
+const char *          dx11_deferred_module::module_description = "XNG DirectX 11 Forward Rendering Module";
+const xng_module_type dx11_deferred_module::module_type        = XNG_MODULE_TYPE_RENDER;
 
-static std::atomic<bool> g_reloadShaders;
-
-static struct shader_refresh_observer :
-    native_window_observer
+namespace
 {
-    void on_keyboard_key_down(native_window * wnd, xng_keyboard_key key) override
-    {
-        if (key == XNG_KEYBOARD_F5)
-        {
-            g_reloadShaders = true;
-        }
-    }
-} g_shaderRefresher;
+    std::atomic<bool> g_reloadShaders;
 
-bool dx11_render_module::init(native_window * wnd)
+    struct shader_refresh_observer :
+        native_window_observer
+    {
+        void on_keyboard_key_down(native_window * wnd, xng_keyboard_key key) override
+        {
+            if (key == XNG_KEYBOARD_F5)
+            {
+                g_reloadShaders = true;
+            }
+        }
+    } g_shaderRefresher;
+}
+
+
+bool dx11_deferred_module::init(native_window * wnd)
 {
     bool debug = false;
-#ifdef XNG_DX11_DEBUG
+    #ifdef XNG_DX11_DEBUG
     debug = true;
-#endif
+    #endif
 
     m_context           = std::make_unique<dx11_api_context>();
-    m_renderer          = std::make_unique<forward_renderer>();
+    m_renderer          = std::make_unique<deferred_renderer>();
     m_guiRenderer       = std::make_unique<dx11_gui_renderer>();
     m_visualDebugger    = std::make_unique<visual_debugger>();
     m_shadowMapRenderer = std::make_unique<shadow_map_renderer>();
@@ -49,7 +53,7 @@ bool dx11_render_module::init(native_window * wnd)
         m_visualDebugger->init(m_context.get(), rvars) &&
         m_shadowMapRenderer->init(m_context.get(), rvars))
     {
-        m_window         = wnd;
+        m_window = wnd;
         m_windowObserver = realtime_window_observer(&m_configuration, m_context.get());
 
         wnd->add_observer(&m_windowObserver);
@@ -62,7 +66,7 @@ bool dx11_render_module::init(native_window * wnd)
 
         resource_factory::get_singleton()->register_manager(xng_new gpu_mesh_manager());
         resource_factory::get_singleton()->register_manager(xng_new texture_manager());
-        
+
         return m_samplers.init(m_context->get_device());
     }
     else
@@ -73,7 +77,7 @@ bool dx11_render_module::init(native_window * wnd)
     }
 }
 
-void dx11_render_module::shutdown(void)
+void dx11_deferred_module::shutdown(void)
 {
     m_shadowMaps.clear();
 
@@ -102,24 +106,24 @@ void dx11_render_module::shutdown(void)
     m_context.reset();
 }
 
-bool dx11_render_module::is_initialized(void) const
+bool dx11_deferred_module::is_initialized(void) const
 {
     return m_context && m_renderer;
 }
 
-void dx11_render_module::render(const extracted_scene & extractedScene, const gui_command_list & guiCommandList)
+void dx11_deferred_module::render(const extracted_scene & extractedScene, const gui_command_list & guiCommandList)
 {
     m_shadowMaps.clear();
 
     render_variables rvars;
     render_variables_updates updates;
 
-    // Update render variables
+    // Update render_gbuffer variables
 
     m_windowObserver.update(&rvars, &updates);
 
     std::for_each(updates.begin(), updates.end(),
-        [&](xng_render_variable rvar)
+                  [&](xng_render_variable rvar)
     {
         switch (rvar)
         {
@@ -161,6 +165,30 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
         m_context->get_device(),
         CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, rvars.render_resolution.x, rvars.render_resolution.y, 1, 0, D3D11_BIND_DEPTH_STENCIL));
 
+    render_resource_handle_ptr gbuffer[] = {
+        m_renderResourceManager.get_texture_2d(
+            m_context->get_device(),
+            CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R16G16B16A16_FLOAT, rvars.render_resolution.x, rvars.render_resolution.y, 1, 0, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE)),
+        m_renderResourceManager.get_texture_2d(
+            m_context->get_device(),
+            CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R8G8B8A8_UNORM, rvars.render_resolution.x, rvars.render_resolution.y, 1, 0, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE)),
+        m_renderResourceManager.get_texture_2d(
+            m_context->get_device(),
+            CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R8G8B8A8_UNORM, rvars.render_resolution.x, rvars.render_resolution.y, 1, 0, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE))
+    };
+
+    ID3D11RenderTargetView * gbufferRTV[] = {
+        gbuffer[0]->get_render_resource()->get_render_target_view(),
+        gbuffer[1]->get_render_resource()->get_render_target_view(),
+        gbuffer[2]->get_render_resource()->get_render_target_view()
+    };
+
+    ID3D11ShaderResourceView * gbufferSRV[] = {
+        gbuffer[0]->get_render_resource()->get_shader_resource_view(),
+        gbuffer[1]->get_render_resource()->get_shader_resource_view(),
+        gbuffer[2]->get_render_resource()->get_shader_resource_view()
+    };
+
     const render_resource * depthBuffer = depthBufferHandle->get_render_resource();
 
     // Setup common samplers
@@ -187,20 +215,26 @@ void dx11_render_module::render(const extracted_scene & extractedScene, const gu
                                 m_renderResourceManager,
                                 extractedScene);
 
-    m_renderer->render(immediateContext,
-                       backBuffer,
-                       depthBuffer->get_depth_stencil_view(),
-                       !rvars.forward_depth_prepass,
-                       extractedScene,
-                       rvars.debug_normals);
+    m_renderer->render_gbuffer(immediateContext,
+                               depthBuffer->get_depth_stencil_view(),
+                               gbufferRTV,
+                               gbufferSRV,
+                               !rvars.forward_depth_prepass,
+                               extractedScene);
+
+    m_renderer->render_shading(immediateContext,
+                               backBuffer,
+                               gbufferSRV,
+                               extractedScene,
+                               rvars.debug_normals);
 
     m_guiRenderer->render(immediateContext, backBuffer, rvars.render_resolution, guiCommandList);
     m_visualDebugger->render(immediateContext, backBuffer, depthBuffer->get_depth_stencil_view(), extractedScene.get_active_camera());
-    
+
     m_context->frame_complete();
 }
 
-api_context * dx11_render_module::get_api_context(void)
+api_context * dx11_deferred_module::get_api_context(void)
 {
     return m_context.get();
 }

@@ -7,7 +7,7 @@
 
 // Struct is 16-byte aligned to be used efficiently with a StructuredBuffer
 
-struct Light
+struct light_data
 {
 	float3 luminance;
 	int    type;

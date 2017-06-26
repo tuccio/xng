@@ -16,11 +16,6 @@ struct PSInput
 	float2 texcoord0 : TEXCOORD0;
 };
 
-cbuffer cbPerFrame : register(b0)
-{
-	uint numLights;
-};
-
 #xng section(vertex:main_vs)
 
 #ifdef DEPTH_PREPASS
@@ -65,11 +60,10 @@ PSInput main_vs(VSInput input)
 
 #xng section(pixel:main_ps)
 
-#xng include("utilslights.xhlsl")
-#xng include("utilsnormals.xhlsl")
+#xng include("utils/lights.xhlsl")
+#xng include("utils/normals.xhlsl")
 #xng include("utils/samplers.xhlsl")
-
-StructuredBuffer<light_data> lights : register(t8);
+#xng include("deferred/gbuffer.xhlsl")
 
 #ifdef NORMAL_MAP
 Texture2D<float4> NormalMap   : register(t0);
@@ -79,44 +73,26 @@ Texture2D<float4> NormalMap   : register(t0);
 Texture2D<float4> BaseTexture : register(t1);
 #endif
 
-float4 main_ps(PSInput input) : SV_Target0
+gbuffer_packed main_ps(PSInput input) : SV_Target0
 {
-	float3 N;
-	float3 baseColor;
+    gbuffer_data data = (gbuffer_data) 0;
 	
-	N = normalize(input.normal);
+	data.normal = normalize(input.normal);
 	
 #ifdef NORMAL_MAP
 	
-	NormalMapping(N, input.texcoord0, NormalMap, LinearWrap);
+	NormalMapping(data.normal, input.texcoord0, NormalMap, LinearWrap);
 	
-#endif
-
-#ifdef DEBUG_NORMALS
-	return float4((N * .5f) + .5f, 1);
 #endif
 
 #ifndef BASE_TEXTURE
-	baseColor = float3(1, 1, 1);
+	data.baseColor = float3(1, 1, 1);
 #else
-	baseColor = BaseTexture.Sample(LinearWrap, input.texcoord0).rgb;
+	data.baseColor = BaseTexture.Sample(LinearWrap, input.texcoord0).rgb;
 #endif
 	
-	float3 reflectance = 0;
-	float3 ambient     = 0;
-	
-	for (int i = 0; i < numLights; ++i)
-	{
-		light_data light = lights[i];
-		
-		// TODO: Proper lighting
-		float3 L = -light.direction;
-		
-		reflectance += dot(N, L) * light.luminance;
-		ambient     += light.ambient;
-	}
-	
-	float3 radiance = baseColor * reflectance + ambient;
-	
-	return float4(radiance / (radiance + 1), 1);
+	gbuffer_packed output = (gbuffer_packed) 0;    
+    gbuffer_write(output, data);
+    
+    return output;
 }

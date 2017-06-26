@@ -396,17 +396,23 @@ void editor::create_menu(void)
                 instance->stop_rendering();
                 instance->pause();
 
+                instance->set_render_module(nullptr);
+
+                if (oldModule)
+                {
+                    newModule->configuration() = oldModule->configuration();
+
+                    oldModule->shutdown();
+                    xng_delete oldModule;
+                }
+
                 if (newModule && newModule->init(instance->get_window()))
                 {
                     instance->set_render_module(newModule);
-
-                    if (oldModule)
-                    {
-                        newModule->configuration() = oldModule->configuration();
-
-                        oldModule->shutdown();
-                        xng_delete oldModule;
-                    }
+                }
+                else
+                {
+                    xng_delete newModule;
                 }
                 
                 instance->unpause();

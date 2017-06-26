@@ -117,12 +117,13 @@ add_subdirectory(launcher)
 
 if (XNG_USE_FREETYPE)
 	add_subdirectory(tools/fontbaker)
+	xng_make_importer(xngfontbaker)
 endif ()
 
 # Export linking
 
 xng_make_exporter(${XNG_EXPORT_LIBRARIES} xngexporter)
-xng_make_importer(${XNG_IMPORT_LIBRARIES} ${XNG_MODULES_LIBRARIES} xnglauncher xngfontbaker)
+xng_make_importer(${XNG_IMPORT_LIBRARIES} ${XNG_MODULES_LIBRARIES} xnglauncher)
 
 # Test stuff
 

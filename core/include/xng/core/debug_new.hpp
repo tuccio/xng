@@ -21,8 +21,8 @@
 
 #else
 
-#define XNG_NEW    new
-#define XNG_DELETE delete
+#define xng_new    new
+#define xng_delete delete
 #define XNG_DEBUG_NEW_REPORT()
 #define XNG_DEBUG_NEW_INIT()
 

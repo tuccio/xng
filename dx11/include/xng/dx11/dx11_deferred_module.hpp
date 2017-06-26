@@ -1,7 +1,7 @@
 #include <xng/engine.hpp>
 
 #include <xng/dx11/dx11_api_context.hpp>
-#include <xng/dx11/forward_renderer.hpp>
+#include <xng/dx11/deferred_renderer.hpp>
 #include <xng/dx11/visual_debugger.hpp>
 #include <xng/dx11/dx11_gui_renderer.hpp>
 #include <xng/dx11/default_samplers.hpp>
@@ -16,7 +16,7 @@ namespace xng
 {
     namespace dx11
     {
-        class dx11_render_module :
+        class dx11_deferred_module :
             public engine::render_module
         {
 
@@ -36,7 +36,7 @@ namespace xng
         private:
 
             std::unique_ptr<dx11_api_context>  m_context;
-            std::unique_ptr<forward_renderer>  m_renderer;
+            std::unique_ptr<deferred_renderer>  m_renderer;
             std::unique_ptr<dx11_gui_renderer> m_guiRenderer;
             std::unique_ptr<visual_debugger>   m_visualDebugger;
 

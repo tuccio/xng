@@ -1,0 +1,68 @@
+#ifndef QUAD_XHLSL
+#define QUAD_XHLSL
+
+#ifndef QUAD_Z
+#define QUAD_Z 0
+#endif
+
+struct quad_input
+{
+	float4 positionCS : SV_Position;
+	float2 texcoord   : TEXCOORD;
+	
+#ifdef QUAD_INSTANCE_ID
+	uint   instance   : SV_InstanceID;
+#endif
+	
+#ifdef QUAD_VIEW_RAY
+	float3 viewRay : VIEWRAY;
+#endif
+
+};
+
+struct quad_vs_input
+{
+	uint vertexID : SV_VertexID;
+
+#ifdef QUAD_INSTANCE_ID
+	uint instance : SV_InstanceID;
+#endif
+};
+
+quad_input make_quad_input(in quad_vs_input input)
+{
+    quad_input output;
+    
+	if (input.vertexID == 0)
+	{
+		output.positionCS = float4(1, -1, QUAD_Z, 1);
+		output.texcoord   = float2(1, 1);
+	}
+	else if (input.vertexID == 1)
+	{
+		output.positionCS = float4(1, 1, QUAD_Z, 1);
+		output.texcoord   = float2(1, 0);
+	}
+    else if (input.vertexID == 2)
+	{
+		output.positionCS = float4(-1, -1, QUAD_Z, 1);
+		output.texcoord   = float2(0, 1);
+	}
+	else /* if (input.vertexID == 3) */
+	{
+		output.positionCS = float4(-1, 1, QUAD_Z, 1);
+		output.texcoord   = float2(0, 0);
+	}
+	
+#ifdef QUAD_INSTANCE_ID
+	output.instance   = input.instance;
+#endif
+
+#ifdef QUAD_VIEW_RAY
+	output.viewRay = normalize(float3(output.positionCS.xy, 1));
+#endif
+
+	return output;
+}
+
+#endif

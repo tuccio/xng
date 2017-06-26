@@ -1,0 +1,38 @@
+#xng include("utils/quad_input.xhlsl")
+
+#xng section(vertex:main_vs)
+
+quad_input main_vs(quad_vs_input input)
+{
+    return make_quad_input(input);
+}
+
+#xng section(pixel:main_ps)
+
+#xng include("utils/lights.xhlsl")
+#xng include("deferred/gbuffer.xhlsl")
+
+Texture2D<float4> GBuffer0 : register(t0);
+Texture2D<float4> GBuffer1 : register(t1);
+Texture2D<float4> GBuffer2 : register(t2);
+
+cbuffer cbPerLight
+{
+    light_data light;
+};
+
+float4 main_ps(quad_input input) : SV_Target0
+{
+    gbuffer_packed_input GBuffer = { GBuffer0, GBuffer1, GBuffer2 };
+    
+    gbuffer_data data;
+    gbuffer_read(data, GBuffer, int2(input.positionCS.x, input.positionCS.y));
+    
+#ifdef DEBUG_NORMALS
+    return float4(data.normal * .5f + .5f, 1);
+#else
+    float NdL = saturate(-dot(data.normal, light.direction));
+    float3 radiance = data.baseColor *(NdL * light.luminance + light.ambient);
+	return float4(radiance, 1);
+#endif
+}

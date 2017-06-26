@@ -163,14 +163,14 @@ bool dx11_api_context::get_vsync(void) const
     return m_vsync;
 }
 
-void dx11_api_context::profile_start(const char * name)
+void dx11_api_context::profile_start(const char * name, ID3D11DeviceContext * context)
 {
-    m_profiler.profile_start(name, m_immediateContext.get());
+    m_profiler.profile_start(name, context);
 }
 
-void dx11_api_context::profile_complete(const char * name)
+void dx11_api_context::profile_complete(const char * name, ID3D11DeviceContext * context)
 {
-    m_profiler.profile_complete(name, m_immediateContext.get());
+    m_profiler.profile_complete(name, context);
 }
 
 profiler_data dx11_api_context::get_profiler_data(void)

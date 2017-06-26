@@ -46,8 +46,8 @@ PSInput main_vs(VSInput input)
 
 #xng section(pixel:main_ps)
 
-#xng include("samplers.xhlsl")
-#xng include("text.xhlsl")
+#xng include("utils/samplers.xhlsl")
+#xng include("utils/text.xhlsl")
 
 float4 RenderTexturedRectangle(in float2 uv, in Texture2D<float4> tex, in SamplerState s)
 {

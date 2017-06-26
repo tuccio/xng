@@ -28,7 +28,7 @@ namespace xng
 
             void update_render_variables(const graphics::render_variables & rvars, const graphics::render_variables_updates & updates);
 
-            void render(ID3D11DeviceContext * immediateContext,
+            void render(ID3D11DeviceContext * deviceContext,
                         std::unordered_map<int, std::vector<shadow_map>> & shadowMaps,
                         render_resource_manager & renderResourceManager,
                         const graphics::extracted_scene & scene);

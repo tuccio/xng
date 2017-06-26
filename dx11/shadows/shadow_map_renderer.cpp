@@ -44,15 +44,7 @@ namespace
         }
 
         float4x4 proj = ortho_lh_directx(m.x, M.x, m.y, M.y, m.z, M.z);
-
         float4x4 projView = proj * view;
-
-        //float4x4 proj = lightCamera.get_directx_projection_matrix() * lightCamera.get_directx_view_matrix();
-
-        for (int i = 0; i < corners.size(); ++i)
-        {
-            XNG_LOG("Corner", std::stringstream() << i << " " << projView * float4(corners[i], 1));
-        }
 
         return std::vector<float4x4> { projView };
     }
@@ -69,11 +61,13 @@ namespace
     }
 }
 
-void shadow_map_renderer::render(ID3D11DeviceContext * immediateContext,
+void shadow_map_renderer::render(ID3D11DeviceContext * deviceContext,
                                  std::unordered_map<int, std::vector<shadow_map>> & shadowMaps,
                                  render_resource_manager & renderResourceManager,
                                  const extracted_scene & scene)
 {
+    m_context->profile_start("Shadow Maps", deviceContext);
+
     auto lights = scene.get_lights();
 
     std::vector<int> castingLights;
@@ -130,7 +124,7 @@ void shadow_map_renderer::render(ID3D11DeviceContext * immediateContext,
                                                                    nullptr,
                                                                    &CD3D11_DEPTH_STENCIL_VIEW_DESC(D3D11_DSV_DIMENSION_TEXTURE2D, DXGI_FORMAT_D24_UNORM_S8_UINT));
 
-            m_shadowMapping.render(immediateContext,
+            m_shadowMapping.render(deviceContext,
                                    sm[i].shadowMap->get_render_resource()->get_depth_stencil_view(),
                                    sm[i].matrix,
                                    scene,
@@ -142,4 +136,6 @@ void shadow_map_renderer::render(ID3D11DeviceContext * immediateContext,
 
         shadowMaps.emplace(lightIndex, std::move(sm));
     }
+
+    m_context->profile_complete("Shadow Maps", deviceContext);
 }

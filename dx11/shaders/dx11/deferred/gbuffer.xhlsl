@@ -1,0 +1,52 @@
+#ifndef GBUFFER_XHLSL
+#define GBUFFER_XHLSL
+
+struct gbuffer_packed
+{
+	float4 gbuffer0 : SV_Target0;
+	float4 gbuffer1 : SV_Target1;
+	float4 gbuffer2 : SV_Target2;
+};
+
+struct gbuffer_packed_input
+{
+	Texture2D gbuffer0;
+	Texture2D gbuffer1;
+	Texture2D gbuffer2;
+};
+
+struct gbuffer_data
+{
+	float3 position;
+	float3 normal;
+	float3 baseColor;
+	float  metallic;
+	float  roughness;
+	float  specular;
+};
+
+void gbuffer_write(out gbuffer_packed output, in gbuffer_data input)
+{
+    output.gbuffer0.xyz = input.position;
+    output.gbuffer0.w   = input.metallic;
+    output.gbuffer1.xyz = input.normal * .5f + .5f;
+    output.gbuffer1.w   = input.roughness;
+    output.gbuffer2.xyz = input.baseColor;
+    output.gbuffer2.w   = input.specular;
+}
+
+void gbuffer_read(out gbuffer_data output, in gbuffer_packed_input input, in int2 position)
+{
+    float4 gbuffer0 = input.gbuffer0.Load(int3(position, 0));
+    float4 gbuffer1 = input.gbuffer1.Load(int3(position, 0));
+    float4 gbuffer2 = input.gbuffer2.Load(int3(position, 0));
+
+    output.position  = gbuffer0.xyz;
+    output.metallic  = gbuffer0.w;
+    output.normal    = gbuffer1.xyz * 2.f - 1.f;
+    output.roughness = gbuffer1.w;
+    output.baseColor = gbuffer2.xyz;
+    output.specular  = gbuffer2.w;
+}
+
+#endif
