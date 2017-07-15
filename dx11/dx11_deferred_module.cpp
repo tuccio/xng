@@ -226,6 +226,7 @@ void dx11_deferred_module::render(const extracted_scene & extractedScene, const 
                                backBuffer,
                                gbufferSRV,
                                extractedScene,
+                               m_shadowMaps,
                                rvars.debug_normals);
 
     m_guiRenderer->render(immediateContext, backBuffer, rvars.render_resolution, guiCommandList);

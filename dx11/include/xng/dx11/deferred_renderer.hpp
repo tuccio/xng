@@ -4,6 +4,7 @@
 #include <xng/dx11/uber_shader.hpp>
 #include <xng/dx11/constant_buffer.hpp>
 #include <xng/dx11/vertex_buffers_factory.hpp>
+#include <xng/dx11/shadows/shadow_map_renderer.hpp>
 
 namespace xng
 {
@@ -37,6 +38,7 @@ namespace xng
                                 ID3D11RenderTargetView * rtv,
                                 ID3D11ShaderResourceView ** gbufferSRV,
                                 const graphics::extracted_scene & extractedScene,
+                                const std::unordered_map<int, std::vector<shadow_map>> & shadowMaps,
                                 bool debugNormals);
 
             void reload_shaders(void);

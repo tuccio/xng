@@ -468,6 +468,7 @@ void deferred_renderer::render_shading(ID3D11DeviceContext * deviceContext,
                                        ID3D11RenderTargetView * rtv,
                                        ID3D11ShaderResourceView ** gbufferSRV,
                                        const extracted_scene & extractedScene,
+                                       const std::unordered_map<int, std::vector<shadow_map>> & shadowMaps,
                                        bool debugNormals)
 {
     ID3D11Device * device = m_apiContext->get_device();
@@ -502,31 +503,45 @@ void deferred_renderer::render_shading(ID3D11DeviceContext * deviceContext,
         auto sortedLights = lights;
 
         std::sort(sortedLights.begin(), sortedLights.end(),
-                  [](const extracted_light & lhs, const extracted_light & rhs)
+                  [&shadowMaps](const extracted_light & lhs, const extracted_light & rhs)
         {
-            return lhs.type < rhs.type;
+            int key1 = (static_cast<int>(lhs.type) << 1) | lhs.shadowCasting;
+            int key2 = (static_cast<int>(lhs.type) << 1) | rhs.shadowCasting;
+            return key1 < key2;
         });
 
         int lastLight = -1;
+        bool shadowCaster = false;
 
         for (auto & light : sortedLights)
         {
-            if (lastLight != static_cast<int>(light.type))
+            if (lastLight != static_cast<int>(light.type) ||
+                shadowCaster != light.shadowCasting)
             {
                 lastLight = static_cast<int>(light.type);
+
+                std::string name;
+                std::vector<shader_macro> defines;
 
                 switch (light.type)
                 {
                 case xng_light_type::XNG_LIGHT_DIRECTIONAL:
-                {
-                    auto program = m_shadingProgram.compile(device, "directional", { { "LIGHT_TYPE", "DIRECTIONAL" } });
-                    program.use(deviceContext);
-                }
-                break;
+					defines.emplace_back(shader_macro { "LIGHT_TYPE", "DIRECTIONAL" });
+                    name = "directional";
+                    break;
                 default:
                     XNG_LOG_DEBUG("Light not implemented yet");
                     break;
                 }
+
+                if (light.shadowCasting)
+                {
+                    name.append("-shadows");
+                    defines.emplace_back(shader_macro { "SHADOW_CASTER", "" });
+                }
+
+                auto program = m_shadingProgram.compile(device, name.c_str(), defines);
+                program.use(deviceContext);
             }
 
             light_buffer lightBuf;
@@ -539,6 +554,13 @@ void deferred_renderer::render_shading(ID3D11DeviceContext * deviceContext,
             lightBuf.luminance = light.luminance;
 
             m_cbPerLight.write(deviceContext, &lightBuf);
+
+            if (light.shadowCasting)
+            {
+                auto it = shadowMaps.find(light.id);
+                auto & csm = it->second;
+                // TODO: Render csm
+            }
 
             switch (light.type)
             {
