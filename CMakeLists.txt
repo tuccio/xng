@@ -40,6 +40,7 @@ endif()
 
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
 # Search Assimp if used
 
@@ -106,7 +107,7 @@ set(XNG_LIBRARIES ${XNG_IMPORT_LIBRARIES} xngexporter)
 
 # Modules
 
-xng_add_modules(scene gl dx11 editor)
+xng_add_modules(scene gl dx11 vk editor)
 xng_make_modules_projects()
 
 # Launcher

@@ -10,7 +10,7 @@ using namespace xng::gui;
 using namespace xng::math;
 
 const char *          dx11_deferred_module::module_name        = "xngdx11-deferred";
-const char *          dx11_deferred_module::module_description = "XNG DirectX 11 Forward Rendering Module";
+const char *          dx11_deferred_module::module_description = "XNG DirectX 11 Deferred Rendering Module";
 const xng_module_type dx11_deferred_module::module_type        = XNG_MODULE_TYPE_RENDER;
 
 namespace

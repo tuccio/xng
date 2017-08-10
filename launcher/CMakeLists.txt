@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.4)
 
 project(xnglauncher)
 
+find_package(Boost COMPONENTS program_options REQUIRED)
+
 file(GLOB XNG_LAUNCHER_SOURCE_FILES *.cpp)
 file(GLOB XNG_LAUNCHER_INCLUDE_FILES *.hpp *inl)
 

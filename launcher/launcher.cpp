@@ -3,6 +3,8 @@
 #include <xng/engine.hpp>
 #include <xng/graphics.hpp>
 
+#include <boost/program_options.hpp>
+
 int CALLBACK WinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -10,6 +12,34 @@ int CALLBACK WinMain(
     int       nCmdShow)
 {
     XNG_DEBUG_NEW_INIT();
+
+	// Handle options
+
+	namespace po = boost::program_options;
+
+	// Declare the supported options.
+
+	std::string runtime;
+
+	{
+		int argc;
+		wchar_t ** argv;
+
+		
+		argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+
+		po::variables_map vm;
+		po::options_description desc("Allowed options");
+		desc.add_options()
+			("runtime", po::value<std::string>()->default_value("xngeditor"), "pick runtime module")
+			;
+
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
+
+		runtime = vm["runtime"].as<std::string>();
+	}
 
     // Initialize logger
 
@@ -36,7 +66,9 @@ int CALLBACK WinMain(
 
     modules->register_shared_library("xngdx11");
     modules->register_shared_library("xnggl");
-    modules->register_shared_library("xngeditor");
+	modules->register_shared_library("xngvk");
+    modules->register_shared_library(runtime);
+	modules->register_shared_library("xngvktests");
     modules->register_shared_library("xngscene");
 
     xng::engine::module_factory * renderFactory  = modules->find_module_by_type(XNG_MODULE_TYPE_RENDER);
